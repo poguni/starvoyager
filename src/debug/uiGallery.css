@@ -1,0 +1,32 @@
+/* ?debug=ui 부품 견본 전용 배치(design/html/design-system.html의 <style>을 옮긴 것). 앱 화면에는 쓰지 않는다. */
+  .ds { position:relative; width:1920px; padding:80px 80px 120px; font-family:var(--sv-font); color:var(--sv-text); background:var(--sv-space-900); }
+  .ds h1 { margin:0 0 8px; font-size:56px; font-weight:800; }
+  .ds .lead { margin:0 0 56px; font-size:var(--sv-fs-body); color:var(--sv-text-muted); }
+  .ds h2 { margin:64px 0 8px; font-size:34px; font-weight:700; display:flex; align-items:baseline; gap:16px; }
+  .ds h2 code { font-family:var(--sv-font-num); font-size:var(--sv-fs-small); color:var(--sv-text-muted); font-weight:500; }
+  .ds .rule { height:1px; background:var(--sv-rule); margin-bottom:28px; }
+  .row { display:flex; flex-wrap:wrap; gap:24px; align-items:flex-start; }
+  .cap { font-size:var(--sv-fs-small); color:var(--sv-text-muted); font-family:var(--sv-font-num); }
+  .item { display:flex; flex-direction:column; gap:10px; }
+  .sw { width:200px; height:110px; border-radius:var(--sv-radius); border:1px solid var(--sv-glass-line); }
+  .acc { width:320px; border-radius:var(--sv-radius); overflow:hidden; border:1px solid var(--sv-glass-line); }
+  .acc-top { height:110px; background:var(--sv-accent); color:var(--sv-on-accent); padding:16px 18px; display:flex; flex-direction:column; justify-content:space-between; }
+  .acc-top b { font-size:28px; }
+  .acc-top span { font-family:var(--sv-font-num); font-size:16px; }
+  .acc-bottom { background:var(--sv-paper); color:var(--sv-paper-text); padding:12px 14px; display:flex; gap:10px; align-items:center; font-size:18px; }
+  .acc-bottom .sv-option { min-height:44px; flex:1; font-size:18px; }
+  .acc-dark { background:var(--sv-space-800); padding:12px 14px; display:flex; align-items:center; gap:12px; font-size:18px; }
+  .acc-dark .line { flex:1; height:3px; background:var(--sv-accent); }
+  .type-row { display:grid; grid-template-columns:260px 1fr; align-items:baseline; gap:24px; padding:10px 0; border-bottom:1px solid var(--sv-rule); }
+  .paper-box { background:var(--sv-paper); color:var(--sv-paper-text); border-radius:var(--sv-radius); padding:28px; }
+  .paper-box .cap { color:var(--sv-paper-muted); }
+  .glass-box { background:var(--sv-space-800); border-radius:var(--sv-radius); padding:28px; border:1px solid var(--sv-glass-line); }
+  .icons { display:grid; grid-template-columns:repeat(10, minmax(0,1fr)); gap:16px; }
+  .icon-cell { display:flex; flex-direction:column; align-items:center; gap:10px; padding:20px 8px; border-radius:var(--sv-radius); border:1px solid var(--sv-glass-line); }
+  .icon-cell svg { width:36px; height:36px; }
+  .icon-cell span { font-family:var(--sv-font-num); font-size:14px; color:var(--sv-text-muted); }
+  .ctl-demo { width:170px; height:var(--sv-button-h); }
+  .ctl-demo .sv-ctl { width:100%; }
+  .ds-toolbar { position:sticky; top:0; z-index:10; display:flex; align-items:center; gap:var(--sv-gap-m); padding:var(--sv-gap-m) 80px; background:var(--sv-glass-strong); border-bottom:1px solid var(--sv-glass-line); font-family:var(--sv-font); color:var(--sv-text); font-size:var(--sv-fs-small); }
+  .ds-toolbar select { font:inherit; padding:6px 10px; }
+  .ds { width:auto; }
