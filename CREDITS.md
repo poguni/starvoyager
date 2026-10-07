@@ -9,7 +9,8 @@
 - 원본: https://www.solarsystemscope.com/textures/
 - 라이선스: https://creativecommons.org/licenses/by/4.0/
 - 내려받은 곳: Wikimedia Commons에 올라온 같은 파일(아래 표)
-- 가공: 앱에서 쓰는 크기(1024·2048·4096px 폭)로 줄이고 JPG(품질 88)로 저장. 토성 고리는 세로를 64px로 줄인 PNG(투명도 유지)
+- 가공: 앱에서 쓰는 크기(1024·2048·4096px 폭, 원본보다 크게 늘리지 않음)로 줄이고 JPG(품질 88)로 저장. 토성 고리는 세로를 64px로 줄인 PNG(투명도 유지)
+- 목성·천왕성·해왕성의 희미한 고리는 질감 없이 코드로 직접 그린다(`src/scene/rings.js`).
 
 | 앱 파일 | 내용 | 원본(Commons) |
 |---|---|---|
@@ -30,7 +31,10 @@
 | 앱 파일 | 내용 | 원본 |
 |---|---|---|
 | `public/textures/*/earth.jpg` | 지구 낮 | NASA Earth Observatory, Blue Marble Next Generation with Topography and Bathymetry (2004년 12월) |
+| `public/textures/*/earth_night.jpg` | 지구 밤(도시 불빛) | NASA Earth Observatory, Earth at Night 2012 (원본 3600×1800이 최대) |
+| `public/textures/*/earth_clouds.jpg` | 지구 구름(회색) | NASA Earth Observatory, Blue Marble cloud composite (원본 2048×1024가 최대) |
 | `public/textures/*/moon.jpg` | 달 표면 | NASA Scientific Visualization Studio, CGI Moon Kit (LRO / LROC) |
+| `public/textures/*/moon_bump.jpg` | 달 지형 높낮이(회색) | NASA Scientific Visualization Studio, CGI Moon Kit (LRO LOLA) |
 
 - 이 자료는 NASA가 특정 제품이나 서비스를 보증한다는 뜻이 아닙니다.
 

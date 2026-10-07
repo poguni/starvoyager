@@ -3,8 +3,8 @@
 import * as THREE from 'three';
 import { SUN, PLANETS, MOON, COMET, ASTEROID_BELT } from '../model/world.js';
 import { circularPosition, cometPosition, moonPosition } from '../model/orbit.js';
-
-const textureUrl = (name) => `${import.meta.env.BASE_URL}textures/1k/${name}`;
+import { createSunMaterial, createEarthMaterial, createAtmosphere } from './materials.js';
+import { createSaturnRing, createFaintRing, FAINT_RING_PLANETS } from './rings.js';
 
 // 3D 장면의 빛·재질 색(화면 요소가 아니라 그림의 색이므로 tokens.css가 아닌 여기에 둔다).
 const COLORS = {
@@ -14,18 +14,10 @@ const COLORS = {
   asteroid: 0x8a8178,
   cometNucleus: 0xd8dde6,
   cometTail: 0xbfe2ff,
-  saturnRing: 0xd9c690,
   star: 0xffffff
 };
 const SUNLIGHT = 3.2;
 const AMBIENT = 0.22; // 밤 쪽도 색이 조금 보이게(태양 빛 가리기를 켜면 0)
-
-function loadTexture(loader, name) {
-  const tex = loader.load(textureUrl(name));
-  tex.colorSpace = THREE.SRGBColorSpace;
-  tex.anisotropy = 4;
-  return tex;
-}
 
 // 가운데가 밝고 바깥으로 갈수록 투명해지는 원(빛무리·혜성 머리용)
 function radialGlowTexture(stops) {
@@ -73,7 +65,7 @@ function starField(count = 3500, radius = 1500) {
 function asteroidBelt() {
   const { inner, outer, count } = ASTEROID_BELT;
   // 울퉁불퉁한 돌 모양: 꼭짓점을 조금씩 흔든 다면체
-  const geo = new THREE.IcosahedronGeometry(0.11, 1);
+  const geo = new THREE.IcosahedronGeometry(0.07, 1);
   const gp = geo.attributes.position;
   const v = new THREE.Vector3();
   for (let i = 0; i < gp.count; i++) {
@@ -98,19 +90,19 @@ function asteroidBelt() {
   return mesh;
 }
 
-export function createSolarMap({ fx = true } = {}) {
+// textures: textureManager(질감 단계 불러오기). 천체마다 1K로 시작해 가까이 가면 고해상도로 바뀐다.
+export function createSolarMap({ fx = true, textures }) {
   const scene = new THREE.Scene();
-  const loader = new THREE.TextureLoader();
   const sunlight = new THREE.PointLight(COLORS.sunLight, SUNLIGHT, 0, 0);
   const ambient = new THREE.AmbientLight(COLORS.ambient, AMBIENT);
   scene.add(sunlight, ambient, starField());
 
-  // ---- 태양: 스스로 빛나는 구 + 빛무리 ----
-  const sun = new THREE.Mesh(
-    new THREE.SphereGeometry(SUN.radius, 64, 32),
-    new THREE.MeshBasicMaterial({ map: loadTexture(loader, 'sun.jpg'), toneMapped: false })
-  );
+  // ---- 태양: 스스로 빛나며 표면이 일렁이는 구 + 빛무리 ----
+  const sunMaterial = createSunMaterial(null);
+  const sun = new THREE.Mesh(new THREE.SphereGeometry(SUN.radius, 96, 48), sunMaterial);
+  sun.rotation.z = THREE.MathUtils.degToRad(SUN.tilt);
   scene.add(sun);
+  textures.bind('sun', 'sun.jpg', (tex) => { sunMaterial.uniforms.map.value = tex; });
   let glow = null;
   if (fx) {
     glow = new THREE.Sprite(new THREE.SpriteMaterial({
@@ -121,32 +113,70 @@ export function createSolarMap({ fx = true } = {}) {
     scene.add(glow);
   }
 
-  // ---- 행성 ----
+  // ---- 행성: 공전하는 무리(group) → 기울어진 축(tilt) → 자전하는 구(mesh). 고리는 기울어진 축에 붙는다. ----
   const meshes = { sun };
+  const groups = {};
   const objects = { sun: { body: SUN, mesh: sun, position: new THREE.Vector3() } };
+  const rings = [];
+  let earthMaterial = null;
+  let atmosphere = null;
+  let clouds = null;
   for (const p of PLANETS) {
-    const mesh = new THREE.Mesh(
-      new THREE.SphereGeometry(p.radius, 64, 32),
-      new THREE.MeshStandardMaterial({ map: loadTexture(loader, `${p.id}.jpg`), roughness: 1, metalness: 0 })
-    );
-    scene.add(mesh, orbitLine(p.orbitRadius));
+    const group = new THREE.Group();
+    const tilt = new THREE.Group();
+    tilt.rotation.z = THREE.MathUtils.degToRad(p.tilt);
+    const geometry = new THREE.SphereGeometry(p.radius, 128, 64);
+    let material;
+    if (p.id === 'earth') {
+      material = earthMaterial = createEarthMaterial(null, null);
+      textures.bind('earth', 'earth.jpg', (tex) => { material.uniforms.dayMap.value = tex; });
+      textures.bind('earth', 'earth_night.jpg', (tex) => { material.uniforms.nightMap.value = tex; });
+    } else {
+      material = new THREE.MeshStandardMaterial({ roughness: 1, metalness: 0 });
+      textures.bind(p.id, `${p.id}.jpg`, (tex) => {
+        material.map = tex;
+        // 수성은 색 질감의 밝고 어두운 차이로 충돌 구덩이가 입체적으로 보이게 한다.
+        if (p.id === 'mercury') { material.bumpMap = tex; material.bumpScale = 2.2; }
+        material.needsUpdate = true;
+      });
+    }
+    const mesh = new THREE.Mesh(geometry, material);
+    tilt.add(mesh);
+    group.add(tilt);
+    scene.add(group, orbitLine(p.orbitRadius));
     meshes[p.id] = mesh;
-    objects[p.id] = { body: p, mesh, position: mesh.position };
+    groups[p.id] = group;
+    objects[p.id] = { body: p, mesh, position: group.position };
+
+    if (p.id === 'saturn') {
+      const ring = createSaturnRing(p.radius);
+      textures.bind('saturn', 'saturn_ring.png', (tex) => ring.setMap(tex));
+      tilt.add(ring.mesh);
+      rings.push(ring);
+    } else if (FAINT_RING_PLANETS.includes(p.id)) {
+      const ring = createFaintRing(p.id, p.radius);
+      tilt.add(ring.mesh);
+      rings.push(ring);
+    }
+    if (p.id === 'earth') {
+      clouds = new THREE.Mesh(
+        new THREE.SphereGeometry(p.radius * 1.012, 128, 64),
+        new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.9, depthWrite: false, roughness: 1 })
+      );
+      textures.bind('earth', 'earth_clouds.jpg', (tex) => { clouds.material.alphaMap = tex; clouds.material.needsUpdate = true; }, { color: false });
+      tilt.add(clouds);
+      if (fx) {
+        atmosphere = createAtmosphere(p.radius * 1.035);
+        tilt.add(atmosphere);
+      }
+    }
   }
-  // 토성 고리(이번 Phase는 간단한 반투명 고리. 정식 고리는 Phase 3)
-  const saturn = meshes.saturn;
-  const ring = new THREE.Mesh(
-    new THREE.RingGeometry(saturn.geometry.parameters.radius * 1.25, saturn.geometry.parameters.radius * 2.2, 96),
-    new THREE.MeshStandardMaterial({ color: COLORS.saturnRing, transparent: true, opacity: 0.4, side: THREE.DoubleSide, roughness: 1 })
-  );
-  ring.rotation.x = -Math.PI / 2 + 0.47; // 토성의 기울기만큼
-  saturn.add(ring);
 
   // ---- 달 ----
-  const moon = new THREE.Mesh(
-    new THREE.SphereGeometry(MOON.radius, 48, 24),
-    new THREE.MeshStandardMaterial({ map: loadTexture(loader, 'moon.jpg'), roughness: 1 })
-  );
+  const moonMaterial = new THREE.MeshStandardMaterial({ roughness: 1, metalness: 0 });
+  const moon = new THREE.Mesh(new THREE.SphereGeometry(MOON.radius, 96, 48), moonMaterial);
+  textures.bind('moon', 'moon.jpg', (tex) => { moonMaterial.map = tex; moonMaterial.needsUpdate = true; });
+  textures.bind('moon', 'moon_bump.jpg', (tex) => { moonMaterial.bumpMap = tex; moonMaterial.bumpScale = 3; moonMaterial.needsUpdate = true; }, { color: false });
   scene.add(moon);
   objects.moon = { body: MOON, mesh: moon, position: moon.position };
 
@@ -183,16 +213,20 @@ export function createSolarMap({ fx = true } = {}) {
 
   let sunlightOn = true;
 
-  function update(t) {
+  // t: 공전 시각, spin: 자전 시각(행성 탐사 중에는 공전만 멈추고 자전은 계속한다)
+  function update(t, spin = t, seconds = spin) {
     for (const p of PLANETS) {
       const pos = circularPosition(p, t);
-      meshes[p.id].position.set(pos.x, pos.y, pos.z);
-      meshes[p.id].rotation.y = t * 0.25;
+      groups[p.id].position.set(pos.x, pos.y, pos.z);
+      meshes[p.id].rotation.y = spin * 0.25;
     }
-    const e = meshes.earth.position;
+    if (clouds) clouds.rotation.y = spin * 0.25 + seconds * 0.006; // 구름은 지구보다 아주 조금 더 흐른다
+    const e = groups.earth.position;
     const mp = moonPosition(MOON, e, t);
     moon.position.set(mp.x, mp.y, mp.z);
-    sun.rotation.y = t * 0.02;
+    moon.lookAt(e); // 달은 늘 같은 면이 지구를 향한다
+    sun.rotation.y = spin * 0.02;
+    sunMaterial.uniforms.time.value = seconds;
 
     const cp = cometPosition(COMET, t);
     comet.position.set(cp.x, cp.y, cp.z);
@@ -212,6 +246,15 @@ export function createSolarMap({ fx = true } = {}) {
     sunlightOn = on;
     sunlight.intensity = on ? SUNLIGHT : 0;
     ambient.intensity = on ? AMBIENT : 0;
+    const k = on ? 1 : 0;
+    if (earthMaterial) earthMaterial.uniforms.sunlight.value = k;
+    if (atmosphere) atmosphere.material.uniforms.sunlight.value = k;
+    for (const ring of rings) ring.setSunlight(on);
+  }
+
+  // 고리 찾기 돋보기: 희미한 고리(목성·천왕성·해왕성)를 밝게 강조한다. 토성 고리도 조금 밝아진다.
+  function setLoupe(on) {
+    for (const ring of rings) ring.setLoupe(on);
   }
 
   // 천체의 월드 위치(소행성 띠는 가장 가까운 띠 위의 점을 쓰도록 near를 받는다)
@@ -228,5 +271,5 @@ export function createSolarMap({ fx = true } = {}) {
     return id === 'asteroids' ? (ASTEROID_BELT.outer - ASTEROID_BELT.inner) / 2 : objects[id].body.radius;
   }
 
-  return { scene, update, setSunlight, worldPosition, radiusOf, objects, glow };
+  return { scene, update, setSunlight, setLoupe, worldPosition, radiusOf, objects, glow };
 }

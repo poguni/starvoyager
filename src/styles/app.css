@@ -34,7 +34,14 @@
 .sv-labels .sv-label[hidden] { display: none; }
 .sv-label--small { font-size: var(--sv-fs-small); }
 .sv-hud-cell--empty { visibility: hidden; }
-.sv-controls [hidden] { display: none; }
+.sv-controls [hidden], .sv-members[hidden], .sv-model-note[hidden] { display: none; }
+
+/* 강조 색 전환(motion.md '공통'): 천체에 다가가면 목적지·버튼·이름표의 강조 색이 0.6초 동안 바뀐다.
+   꺾쇠는 components.css에 이미 전환이 있다. */
+.sv-hud-dest, .sv-hud-dest .sv-hud-val, .sv-ctl, .sv-ctl svg, .sv-seg button, .sv-panel-handle, .sv-member {
+  transition: color var(--sv-dur-accent) var(--sv-ease), border-color var(--sv-dur-accent) var(--sv-ease),
+    background-color var(--sv-dur-accent) var(--sv-ease), box-shadow var(--sv-dur-accent) var(--sv-ease);
+}
 /* 크롬북: 조작 버튼 높이(64px) 안에 누르는 크기 48px 빠르기 버튼을 넣기 위해 '빠르기' 글자를 숨긴다(aria-label은 남김). */
 .sv-stage--cb .sv-ctl-group-label { display: none; }
 

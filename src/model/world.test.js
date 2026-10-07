@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BODIES, PLANETS, SUN, MOON, COMET, ASTEROID_BELT, SIZE_RATIO, bodyById } from './world.js';
+import { BODIES, PLANETS, SUN, MOON, COMET, ASTEROID_BELT, SIZE_RATIO, bodyById, planetNeighbors, isExplorable } from './world.js';
 import { circularPosition, cometPosition, moonPosition, distance } from './orbit.js';
 import { createMemberProgress, MEMBERS } from './memberProgress.js';
 import { euro, withEuro } from './josa.js';
@@ -46,6 +46,31 @@ describe('천체 목록 (기획서 15장)', () => {
   it('누를 수 있는 천체의 종류가 구성원 다섯 가지와 맞는다', () => {
     const kinds = new Set(BODIES.map((b) => b.kind));
     expect([...kinds].sort()).toEqual(MEMBERS.map((m) => m.id).sort());
+  });
+});
+
+describe('이전/다음 행성 (docs/결정기록.md: 행성 8개만)', () => {
+  it('수성에서 다음을 계속 누르면 해왕성까지 8개를 지나고 멈춘다', () => {
+    const seen = ['mercury'];
+    let id = 'mercury';
+    while (planetNeighbors(id).next) { id = planetNeighbors(id).next; seen.push(id); }
+    expect(seen.map((x) => bodyById(x).name)).toEqual(['수성', '금성', '지구', '화성', '목성', '토성', '천왕성', '해왕성']);
+  });
+
+  it('태양에서 다음은 수성이고, 태양과 수성에서는 이전이 없다', () => {
+    expect(planetNeighbors('sun')).toEqual({ prev: null, next: 'mercury' });
+    expect(planetNeighbors('mercury').prev).toBeNull();
+    expect(planetNeighbors('neptune').next).toBeNull();
+    expect(planetNeighbors('earth')).toEqual({ prev: 'venus', next: 'mars' });
+  });
+
+  it('행성 탐사 화면은 태양과 행성만 연다', () => {
+    expect(['sun', ...PLANETS.map((p) => p.id)].every(isExplorable)).toBe(true);
+    expect(['moon', 'comet', 'asteroids'].some(isExplorable)).toBe(false);
+  });
+
+  it('천왕성은 거의 누워 있다(기울기 90° 넘음)', () => {
+    expect(bodyById('uranus').tilt).toBeGreaterThan(90);
   });
 });
 
