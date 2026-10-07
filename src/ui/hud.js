@@ -22,8 +22,10 @@ export function createHud(root, handlers) {
   const destKey = el('span', { class: 'sv-hud-key' }, '목적지');
   const destVal = el('span', { class: 'sv-hud-val' }, '태양계 지도');
   const destCell = el('div', { class: 'sv-glass sv-hud-cell sv-hud-dest', role: 'status' }, [destKey, destVal]);
+  // 진행 칸: 태양계 지도에서는 '구성원 찾기 n/5'(S03), 행성 탐사 화면에서는 '도감 n/8'(S04)
+  const progressKey = el('span', { class: 'sv-hud-key' }, '구성원 찾기');
   const progressNum = el('span', { class: 'sv-hud-num' }, '0/5');
-  const progressCell = el('div', { class: 'sv-glass sv-hud-cell' }, [el('span', { class: 'sv-hud-key' }, '구성원 찾기'), progressNum]);
+  const progressCell = el('div', { class: 'sv-glass sv-hud-cell' }, [progressKey, progressNum]);
   const top = el('header', { class: 'sv-hud-top' }, [missionCell, destCell, progressCell]);
 
   // ---- 구성원 칩(S03 오른쪽 위) ----
@@ -72,6 +74,24 @@ export function createHud(root, handlers) {
   let locked = false;
   let landable = false;
   let landing = null; // null | 'landing'(내려가는 중) | 'landed'(땅 위)
+  let memberCount = { count: 0, total: 5 };
+  let journalCount = { count: 0, total: 8 };
+  let shownCount = null;
+
+  // 진행 칸을 지금 화면에 맞게 쓴다. 같은 칸의 숫자가 늘면 잠깐 커졌다 돌아온다(motion.md '도감').
+  function refreshProgress() {
+    const planet = mode === 'planet';
+    const { count, total } = planet ? journalCount : memberCount;
+    const key = planet ? '도감' : '구성원 찾기';
+    if (shownCount && shownCount.key === key && count > shownCount.count) {
+      progressNum.classList.remove('sv-hud-num--pop');
+      void progressNum.offsetWidth;
+      progressNum.classList.add('sv-hud-num--pop');
+    }
+    shownCount = { key, count };
+    progressKey.textContent = key;
+    progressNum.textContent = `${count}/${total}`;
+  }
 
   function refreshDisabled() {
     const off = locked || landing !== null;
@@ -110,6 +130,7 @@ export function createHud(root, handlers) {
       chipBar.hidden = mode === 'planet';
       modelNote.hidden = mode === 'planet';
       refreshDisabled();
+      refreshProgress();
     },
     setPlaying(playing) {
       setPressed(playButton, playing);
@@ -140,7 +161,14 @@ export function createHud(root, handlers) {
         chip.className = on ? 'sv-member is-found' : 'sv-member';
         chip.replaceChildren(...(on ? [icon('i-check'), m.label] : [m.label]));
       }
-      progressNum.textContent = `${count}/${total}`;
+      memberCount = { count, total };
+      refreshProgress();
+    },
+    setJournalCount(count, total) { journalCount = { count, total }; refreshProgress(); },
+    // 도감이 펼쳐졌는지. bar: 크롬북에서 접힌 막대(S10b)가 손잡이 대신 보이는지
+    setJournalOpen(open, bar = false) {
+      setPressed(journalButton, open);
+      handle.hidden = open || bar;
     },
     getMode: () => mode
   };
