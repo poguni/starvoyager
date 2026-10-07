@@ -18,6 +18,7 @@ import { createSizeLabels } from './ui/sizeLabels.js';
 import { createArrangeBoard } from './ui/arrangeBoard.js';
 import { createDiscoveryCards } from './ui/components/discovery.js';
 import { createSizeLab } from './scene/sizeLab.js';
+import { createBloom } from './scene/bloom.js';
 import { createNorthSky } from './scene/northSky.js';
 import { createStarLinker } from './ui/starLinker.js';
 import { createStarLink } from './model/starLink.js';
@@ -39,6 +40,7 @@ const app = document.getElementById('app');
 installIconSprite();
 
 // 크롬북 크기(1440px 이하)에서는 components.css의 .sv-stage--cb 배치를 쓴다.
+const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 const cbQuery = matchMedia('(max-width: 1440px)');
 const stageSizeListeners = [];
 const syncStageSize = () => {
@@ -59,8 +61,10 @@ if (params.get('debug') === 'ui') {
 }
 
 function startSolarMap() {
+  // ?fx=off: 후처리(블룸·빛무리·대기광) 끄기. ?quality=low: 저사양(화면 배율 1.5까지, 블룸 끄기, 질감 2K까지)
   const fx = params.get('fx') !== 'off';
-  const high = params.get('quality') === 'low' ? '2k' : '4k';
+  const low = params.get('quality') === 'low';
+  const high = low ? '2k' : '4k';
   // orbitPaused: 행성 탐사 중에는 공전을 멈추고 자전(spin)만 계속한다(docs/결정기록.md).
   // landingLocked: 미션이 착륙 버튼을 잠글 때(Phase 9A). landing: 착륙 연출 중인 정보
   // target: 날아가는 중이면 도착할 천체. presenting: 발표 화면을 보는 중. size: 크기 비교 실험실에 있을 때의 상태
@@ -68,8 +72,11 @@ function startSolarMap() {
 
   // ---- 3D ----
   const renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.setPixelRatio(Math.min(devicePixelRatio, low ? 1.5 : 2));
   renderer.domElement.className = 'sv-canvas';
+  // 우주 배경은 토큰의 가장 짙은 남색(시안 S03~S09의 배경 톤, 실제 우주처럼 아주 어둡게).
+  // 블룸을 거칠 때도 같은 색이 되도록 지우기 색이 아닌 장면 배경으로 준다.
+  const spaceColor = new THREE.Color(getComputedStyle(document.documentElement).getPropertyValue('--sv-space-900').trim());
   const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 4000);
   const loader = new THREE.TextureLoader();
   const maxAniso = renderer.capabilities.getMaxAnisotropy();
@@ -82,7 +89,11 @@ function startSolarMap() {
     }),
     prepare: (tex) => renderer.initTexture(tex) // 바꾸기 전에 GPU에 올려 두어 멈칫하지 않게
   });
-  const map = createSolarMap({ fx, textures });
+  const bloom = fx && !low ? createBloom(renderer) : null;
+  renderer.info.autoReset = false; // 블룸 단계까지 한 프레임의 그리기 수를 모두 센다(?debug=fps)
+  const draw = (scene, cam) => (bloom ? bloom.render(scene, cam) : renderer.render(scene, cam));
+  const map = createSolarMap({ fx, textures, stars: starData, pixelRatio: renderer.getPixelRatio() });
+  map.scene.background = spaceColor;
   const rig = createCameraRig(camera, renderer.domElement);
 
   // ---- 화면 요소 ----
@@ -105,13 +116,13 @@ function startSolarMap() {
   let sunNotice = null;
 
   const hud = createHud(app, {
-    onMap: () => (state.size ? exitSizeLab() : goHome()),
+    onMap: () => (state.size ? withFade(exitSizeLab) : goHome()),
     onPrev: () => goTo(planetNeighbors(state.focus).prev),
     onNext: () => goTo(planetNeighbors(state.focus).next),
     onPlay(playing) { state.playing = playing; hud.setPlaying(playing); },
     onSpeed(speed) { state.speed = speed; hud.setSpeed(speed); },
     onSunlightBlock: setSunlightBlocked,
-    onLoupe(on) { map.setLoupe(on); },
+    onLoupe(on) { map.setLoupe(on); syncRingCue(); },
     onLand: startLanding,
     onAscend: liftOff,
     onNames(on) { state.names = on; labels.setVisible(on); sizeLabels?.setVisible(on); starLinker?.setNamesVisible(on); },
@@ -146,7 +157,7 @@ function startSolarMap() {
     onOpenChange: syncJournalLayout
   });
   const present = createPresentView(app, { journal, onClose: endPresent });
-  journal.subscribe(() => { hud.setJournalCount(journal.count(), journal.total); persist(); });
+  journal.subscribe(() => { hud.setJournalCount(journal.count(), journal.total); syncRingCue(); persist(); });
   hud.setJournalCount(journal.count(), journal.total);
   progress.subscribe(persist);
   landingLog.subscribe(persist);
@@ -164,6 +175,14 @@ function startSolarMap() {
     journalPanel.setBarAllowed(bar);
     hud.setJournalOpen(journalPanel.isOpen(), bar && !journalPanel.isOpen());
     setFrameTarget();
+    syncRingCue();
+  }
+
+  // 펼친 카드에 '고리' 칸 힌트가 보이면 '고리 찾기' 버튼을 안내한다.
+  function syncRingCue() {
+    const id = journalPanel.activeCardId();
+    const card = id && id === state.focus && hud.getMode() === 'planet' ? journal.getCard(id) : null;
+    hud.setRingCue(card?.status === 'retry' && 'ring' in card.wrongPicks);
   }
 
   // ---- 발표 화면(S09) ----
@@ -207,7 +226,7 @@ function startSolarMap() {
     if (planet && state.presenting) {
       // S09처럼 행성이 화면 높이의 절반쯤 되게(토성은 고리까지 보이게 더 작게)
       x = w / 4;
-      z = state.target === 'saturn' ? 0.55 : 0.82;
+      z = state.target === 'saturn' ? 0.42 : 0.82;
     }
     else if (planet && journalPanel.isShown() && cbQuery.matches) {
       // 위 계기판 아래부터 하단 조작 버튼 위까지의 가운데
@@ -286,6 +305,7 @@ function startSolarMap() {
       journalPanel.showToc();
     }
     state.orbitPaused = explore;
+    map.isolate(explore ? id : null); // 행성 탐사 중에는 그 천체만 남긴다
     setFrameTarget({ instant });
     hud.setFlying(body.name);
     hud.setLocked(true);
@@ -304,6 +324,7 @@ function startSolarMap() {
     state.focus = null;
     state.target = null;
     state.orbitPaused = false;
+    map.isolate(null);
     journalPanel.setOpen(false);
     journalPanel.showToc();
     setFrameTarget();
@@ -331,6 +352,7 @@ function startSolarMap() {
   // board: 'sort' | 'classify'이면 끌어다 놓기 활동을 함께 연다. 줄 세우기는 실제 크기 보기를 켠 채로 시작한다(9-4 문항 3-3).
   function enterSizeLab({ board = null } = {}) {
     sizeLab ??= createSizeLab({ load: loadSizeTexture, fx });
+    sizeLab.scene.background = spaceColor;
     sizeLabels ??= createSizeLabels(app);
     state.size = { real: false, sun: false, board: null };
     setSunlightBlocked(false);
@@ -351,6 +373,21 @@ function startSolarMap() {
     setRealSize(Boolean(board), { instant: true });
     setSunCompare(false, { instant: true });
     layoutSizeLab();
+  }
+
+  // 장면이 바뀔 때(크기 비교 실험실·북쪽 밤하늘 ↔ 태양계 지도) 0.2초 어두워졌다가 0.2초 밝아진다.
+  // 착륙 때 쓰는 어두운 막을 함께 쓴다.
+  let switching = false;
+  function withFade(change) {
+    if (switching) return;
+    switching = true;
+    fade.style.transition = `opacity ${FADE_SECONDS / 2}s ease-in-out`;
+    fade.style.opacity = 1;
+    setTimeout(() => {
+      change();
+      fade.style.opacity = 0;
+      setTimeout(() => { fade.style.transition = ''; switching = false; }, FADE_SECONDS * 500);
+    }, FADE_SECONDS * 500);
   }
 
   function exitSizeLab() {
@@ -556,6 +593,7 @@ function startSolarMap() {
   function resize() {
     const { clientWidth: w, clientHeight: h } = app;
     renderer.setSize(w, h, false);
+    bloom?.setSize(w, h);
     camera.aspect = w / h;
     landingView.camera.aspect = w / h;
     landingView.camera.updateProjectionMatrix();
@@ -602,6 +640,7 @@ function startSolarMap() {
   let last = performance.now();
   function tick(now) {
     const dt = Math.min((now - last) / 1000, 0.1);
+    renderer.info.reset();
     last = now;
     if (state.playing && !state.orbitPaused) state.t += dt * state.speed;
     state.spin += dt * (state.playing ? state.speed : 0.3);
@@ -611,8 +650,8 @@ function startSolarMap() {
     if (state.size) sizeLab.update(dt, state.seconds);
     if (!state.landing) rig.update(dt);
     countCardTime(dt);
-    // 화면 구도 이동은 비행과 비슷한 빠르기로 부드럽게 따라간다.
-    const ease = Math.min(1, dt * 2.4);
+    // 화면 구도 이동은 비행과 비슷한 빠르기로 부드럽게 따라간다('움직임 줄이기'에서는 바로 맞춘다).
+    const ease = reducedMotion.matches ? 1 : Math.min(1, dt * 2.4);
     frame.x += (frame.tx - frame.x) * ease;
     frame.y += (frame.ty - frame.y) * ease;
     frame.zoom += (frame.tz - frame.zoom) * ease;
@@ -624,9 +663,9 @@ function startSolarMap() {
       starLinker.update();
     } else if (landingFrame) renderer.render(landingFrame.getScene(), landingFrame.camera);
     else if (state.size) {
-      renderer.render(sizeLab.scene, sizeLab.camera);
+      draw(sizeLab.scene, sizeLab.camera);
       sizeLabels.update(sizeLab.items(), sizeLab.sunInfo(), { real: sizeLab.isReal() });
-    } else renderer.render(map.scene, camera);
+    } else draw(map.scene, camera);
     if (!state.size && !state.sky) labels.update(camera, { width: w, height: h });
     fps?.tick(dt);
     requestAnimationFrame(tick);

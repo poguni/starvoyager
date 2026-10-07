@@ -8,7 +8,7 @@
 // 비행 중에는 목적지 칸이 "○○(으)로 이동 중"으로 바뀌고 하단 버튼이 잠긴다.
 import { el } from './components/dom.js';
 import { icon } from './components/icon.js';
-import { controlButton, toggleButton, setPressed } from './components/buttons.js';
+import { controlButton, toggleButton, setPressed, setCue } from './components/buttons.js';
 import { panelHandle } from './components/panel.js';
 import { MEMBERS } from '../model/memberProgress.js';
 import { withEuro } from '../model/josa.js';
@@ -170,6 +170,8 @@ export function createHud(root, handlers) {
       speedButtons.forEach((b, i) => setPressed(b, SPEEDS[i] === speed));
     },
     setSunlightBlocked(on) { setPressed(sunButton, on); },
+    // 도감 '고리' 칸 힌트(돋보기를 켜 봐요)가 보이는 동안 '고리 찾기' 버튼에 눌러 보라는 안내(S04). 켜면 사라진다.
+    setRingCue(on) { setCue(ringButton, on && ringButton.getAttribute('aria-pressed') !== 'true'); },
     // 지금 천체에 착륙할 수 있는지(태양이거나 미션이 잠그면 false)
     setLandable(on) { landable = on; refreshDisabled(); },
     setLanding(next) { landing = next; refreshDisabled(); },

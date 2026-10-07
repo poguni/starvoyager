@@ -8,7 +8,7 @@ const FAINT = {
   uranus: { inner: 1.6, outer: 2.05, bands: [[0.06, 0.1, 0.8], [0.2, 0.24, 0.8], [0.34, 0.38, 0.7], [0.55, 0.6, 0.9], [0.9, 1.0, 1.0]], tint: [0.8, 0.84, 0.86] },
   neptune: { inner: 1.65, outer: 2.55, bands: [[0.0, 0.3, 0.3], [0.48, 0.52, 0.9], [0.62, 0.7, 0.35], [0.94, 0.99, 1.0]], tint: [0.8, 0.82, 0.9] }
 };
-const FAINT_OPACITY = 0.035;  // 평소: 거의 안 보임(빛을 더하는 방식이라 행성을 가리지 않는다)
+const FAINT_OPACITY = 0.015;  // 평소: 거의 안 보임(빛을 더하는 방식이라 행성을 가리지 않는다. 선형 색에 더하므로 아주 작게)
 const LOUPE_OPACITY = 0.8;   // 돋보기: 밝게
 
 // 고리면이 행성 적도(xz 평면)에 놓이도록 눕히고, u가 안쪽(0)→바깥쪽(1)이 되도록 UV를 고친다.
@@ -41,7 +41,9 @@ function bandTexture(bands) {
         a = Math.max(a, k * Math.min(1, edge * 3));
       }
     }
-    img.data.set([255, 255, 255, Math.round(a * 255)], x * 4);
+    // alphaMap은 색(초록) 채널을 읽으므로 진하기를 색에 넣는다(투명도 칸에 넣으면 띠 사이도 비친다)
+    const v = Math.round(a * 255);
+    img.data.set([v, v, v, 255], x * 4);
   }
   ctx.putImageData(img, 0, 0);
   return new THREE.CanvasTexture(canvas);

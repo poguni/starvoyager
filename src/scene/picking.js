@@ -17,7 +17,7 @@ export function screenCircle(camera, rect, worldPos, radius) {
 export function pickBody(camera, rect, px, py, map) {
   let best = null;
   for (const [id, obj] of Object.entries(map.objects)) {
-    if (id === 'asteroids') continue;
+    if (id === 'asteroids' || !map.isShown(id)) continue;
     const c = screenCircle(camera, rect, map.worldPosition(id), obj.body.radius);
     if (!c) continue;
     const reach = Math.max(c.r * 1.15, MIN_HIT_PX);
@@ -31,7 +31,7 @@ export function pickBody(camera, rect, px, py, map) {
   const ray = new THREE.Raycaster();
   ray.setFromCamera(ndc, camera);
   const hit = ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), new THREE.Vector3());
-  if (hit) {
+  if (hit && map.isShown('asteroids')) {
     const r = Math.hypot(hit.x, hit.z);
     if (r >= ASTEROID_BELT.inner - 1 && r <= ASTEROID_BELT.outer + 1) return 'asteroids';
   }

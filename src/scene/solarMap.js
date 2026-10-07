@@ -5,6 +5,7 @@ import { SUN, PLANETS, MOON, COMET, ASTEROID_BELT } from '../model/world.js';
 import { circularPosition, cometPosition, moonPosition } from '../model/orbit.js';
 import { createSunMaterial, createEarthMaterial, createAtmosphere } from './materials.js';
 import { createSaturnRing, createFaintRing, FAINT_RING_PLANETS } from './rings.js';
+import { createStarBackground } from './starBackground.js';
 
 // 3D 장면의 빛·재질 색(화면 요소가 아니라 그림의 색이므로 tokens.css가 아닌 여기에 둔다).
 const COLORS = {
@@ -13,8 +14,7 @@ const COLORS = {
   orbit: 0xffffff,
   asteroid: 0x8a8178,
   cometNucleus: 0xd8dde6,
-  cometTail: 0xbfe2ff,
-  star: 0xffffff
+  cometTail: 0xbfe2ff
 };
 const SUNLIGHT = 3.2;
 const AMBIENT = 0.22; // 밤 쪽도 색이 조금 보이게(태양 빛 가리기를 켜면 0)
@@ -42,24 +42,6 @@ function orbitLine(radius) {
   }
   const geo = new THREE.BufferGeometry().setFromPoints(points);
   return new THREE.Line(geo, new THREE.LineBasicMaterial({ color: COLORS.orbit, transparent: true, opacity: 0.14 }));
-}
-
-function starField(count = 3500, radius = 1500) {
-  const pos = new Float32Array(count * 3);
-  const col = new Float32Array(count * 3);
-  for (let i = 0; i < count; i++) {
-    const u = Math.random() * 2 - 1;
-    const a = Math.random() * Math.PI * 2;
-    const s = Math.sqrt(1 - u * u);
-    pos.set([radius * s * Math.cos(a), radius * u, radius * s * Math.sin(a)], i * 3);
-    const b = 0.35 + Math.random() ** 3 * 0.65; // 어두운 별이 많고 밝은 별은 드물게
-    col.set([b, b, b * (0.95 + Math.random() * 0.1)], i * 3);
-  }
-  const geo = new THREE.BufferGeometry();
-  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-  geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
-  const mat = new THREE.PointsMaterial({ size: 1.6, sizeAttenuation: false, vertexColors: true, depthWrite: false });
-  return new THREE.Points(geo, mat);
 }
 
 function asteroidBelt() {
@@ -91,11 +73,12 @@ function asteroidBelt() {
 }
 
 // textures: textureManager(질감 단계 불러오기). 천체마다 1K로 시작해 가까이 가면 고해상도로 바뀐다.
-export function createSolarMap({ fx = true, textures }) {
+// stars: 배경 별 자료(stars.json), pixelRatio: 별 점 크기를 화면 배율에 맞춘다.
+export function createSolarMap({ fx = true, textures, stars, pixelRatio = 1 }) {
   const scene = new THREE.Scene();
   const sunlight = new THREE.PointLight(COLORS.sunLight, SUNLIGHT, 0, 0);
   const ambient = new THREE.AmbientLight(COLORS.ambient, AMBIENT);
-  scene.add(sunlight, ambient, starField());
+  scene.add(sunlight, ambient, createStarBackground({ stars, pixelRatio }));
 
   // ---- 태양: 스스로 빛나며 표면이 일렁이는 구 + 빛무리 ----
   const sunMaterial = createSunMaterial(null);
@@ -118,6 +101,7 @@ export function createSolarMap({ fx = true, textures }) {
   const groups = {};
   const objects = { sun: { body: SUN, mesh: sun, position: new THREE.Vector3() } };
   const rings = [];
+  const orbitLines = [];
   let earthMaterial = null;
   let atmosphere = null;
   let clouds = null;
@@ -143,7 +127,9 @@ export function createSolarMap({ fx = true, textures }) {
     const mesh = new THREE.Mesh(geometry, material);
     tilt.add(mesh);
     group.add(tilt);
-    scene.add(group, orbitLine(p.orbitRadius));
+    const orbit = orbitLine(p.orbitRadius);
+    orbitLines.push(orbit);
+    scene.add(group, orbit);
     meshes[p.id] = mesh;
     groups[p.id] = group;
     objects[p.id] = { body: p, mesh, position: group.position };
@@ -208,13 +194,45 @@ export function createSolarMap({ fx = true, textures }) {
 
   // ---- 소행성 띠 ----
   const belt = asteroidBelt();
+  belt.material.transparent = true;
   scene.add(belt);
   objects.asteroids = { body: ASTEROID_BELT, mesh: belt, position: new THREE.Vector3() };
 
   let sunlightOn = true;
 
+  // 행성 탐사·발표 중에는 그 천체만 남기고 궤도선·소행성 띠·다른 천체를 0.6초 동안 감춘다(시안 S04·S09).
+  //   다른 천체는 작아지며 사라지고(고리·구름·대기광까지 함께), 궤도선·소행성 띠는 흐려진다.
+  const ISOLATE_SECONDS = 0.6;
+  const shown = Object.fromEntries([...Object.keys(objects), 'orbits'].map((id) => [id, 1]));
+  let keep = null; // null이면 모두 보인다
+  let lastSeconds = null;
+  const wantShown = (id) => !keep || keep.includes(id);
+  const scaleTarget = (id) => (id === 'moon' ? moon : id === 'comet' ? comet : id === 'sun' ? null : groups[id]?.children[0]);
+  function stepIsolate(dt) {
+    const k = dt / ISOLATE_SECONDS;
+    for (const id of Object.keys(shown)) {
+      const want = id === 'orbits' ? (keep ? 0 : 1) : wantShown(id) ? 1 : 0;
+      if (shown[id] === want) continue;
+      shown[id] = want > shown[id] ? Math.min(want, shown[id] + k) : Math.max(want, shown[id] - k);
+      const e = shown[id] * shown[id] * (3 - 2 * shown[id]); // 부드럽게 시작하고 멈춤
+      if (id === 'orbits') {
+        for (const line of orbitLines) { line.material.opacity = 0.14 * e; line.visible = e > 0; }
+      } else if (id === 'asteroids') {
+        belt.material.opacity = e;
+        belt.visible = e > 0;
+      } else {
+        const obj = scaleTarget(id);
+        if (!obj) continue;
+        obj.scale.setScalar(Math.max(e, 1e-4));
+        obj.visible = e > 0;
+      }
+    }
+  }
+
   // t: 공전 시각, spin: 자전 시각(행성 탐사 중에는 공전만 멈추고 자전은 계속한다)
   function update(t, spin = t, seconds = spin) {
+    stepIsolate(lastSeconds === null ? 0 : Math.max(0, seconds - lastSeconds));
+    lastSeconds = seconds;
     for (const p of PLANETS) {
       const pos = circularPosition(p, t);
       groups[p.id].position.set(pos.x, pos.y, pos.z);
@@ -252,6 +270,14 @@ export function createSolarMap({ fx = true, textures }) {
     for (const ring of rings) ring.setSunlight(on);
   }
 
+  // id: 행성 탐사 중인 천체(지구는 달도 함께 남긴다). null이면 모두 다시 보인다.
+  function isolate(id) {
+    keep = id ? ['sun', id, ...(id === 'earth' ? ['moon'] : [])] : null;
+  }
+  const isShown = (id) => (id === 'asteroids' ? belt.visible : shown[id] > 0);
+  // 이름표를 달 천체: 감추는 중에는 남긴 천체만(태양은 빛만 남기고 이름표는 달지 않는다)
+  const labelKept = (id) => !keep || (wantShown(id) && id !== 'sun');
+
   // 고리 찾기 돋보기: 희미한 고리(목성·천왕성·해왕성)를 밝게 강조한다. 토성 고리도 조금 밝아진다.
   function setLoupe(on) {
     for (const ring of rings) ring.setLoupe(on);
@@ -277,5 +303,5 @@ export function createSolarMap({ fx = true, textures }) {
     return meshes[id]?.material.map?.image ?? null;
   }
 
-  return { scene, update, setSunlight, setLoupe, worldPosition, radiusOf, surfaceImage, objects, glow };
+  return { scene, update, setSunlight, setLoupe, isolate, isShown, labelKept, worldPosition, radiusOf, surfaceImage, objects, glow };
 }

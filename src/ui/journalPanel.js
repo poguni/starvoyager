@@ -53,7 +53,8 @@ export function createJournalPanel(app, { journal, members, onOpenPlanet, onPres
   const kicker = el('span', { class: 'sv-journal-kicker' }, '탐사 도감');
   const name = el('span', { class: 'sv-journal-name' });
   const headSide = el('div', { class: 'sv-jp-head-side' });
-  const head = el('div', { class: 'sv-journal-head' }, [el('div', { class: 'sv-journal-title' }, [kicker, name]), headSide]);
+  const headHints = el('div', { class: 'sv-jp-head-hints' }); // 크롬북: 틀린 칸 힌트는 머리줄에(시트 높이 안에 보이도록)
+  const head = el('div', { class: 'sv-journal-head' }, [el('div', { class: 'sv-journal-title' }, [kicker, name]), headHints, headSide]);
   const grip = el('button', { type: 'button', class: 'sv-sheet-grip', 'aria-label': '도감 접기', onclick: () => setOpen(false) });
   const body = el('div', { class: 'sv-jp-body' });
   const panel = el('section', { class: 'sv-journal sv-jp', 'aria-label': '탐사 도감' }, [grip, head, body]);
@@ -130,18 +131,21 @@ export function createJournalPanel(app, { journal, members, onOpenPlanet, onPres
       el('span', { class: 'sv-option-text' }, value), !multi && icon('i-check', 'sv-check')]);
   }
 
+  const showsHint = (card, field) => card.status === 'retry' && field.id in card.wrongPicks;
+  const hintEl = (text) => el('div', { class: 'sv-hint', role: 'status' }, [icon('i-hint'), el('span', {}, text)]);
+
   function fieldSection(id, field, index, card) {
     const how = field.multi ? (compact ? '여러 개' : '여러 개 고르기 (안 골라도 돼요)') : (compact ? '하나' : '하나 고르기');
-    const showHint = card.status === 'retry' && field.id in card.wrongPicks;
     return el('div', { class: `sv-section sv-jp-field sv-jp-field--${field.id}` }, [
       el('div', { class: 'sv-section-title' }, [`${index + 1} ${field.title} `, el('small', {}, `· ${how}`)]),
       el('div', { class: 'sv-options' }, field.options.map((v) => optionButton(id, field, v, card))),
-      showHint && el('div', { class: 'sv-hint', role: 'status' }, [icon('i-hint'), el('span', {}, HINTS[field.id])])
+      !compact && showsHint(card, field) && hintEl(HINTS[field.id])
     ]);
   }
 
   function renderForm(id, card) {
     headSide.replaceChildren(tocButton(), statusTag(card.status === 'todo' ? 'editing' : card.status));
+    if (compact) headHints.replaceChildren(...FIELDS.map((f, i) => showsHint(card, f) && hintEl(`${i + 1} ${HINTS[f.id]}`)).filter(Boolean));
     const sections = FIELDS.map((f, i) => fieldSection(id, f, i, card));
     const retry = card.status === 'retry';
     const submit = primaryButton({
@@ -198,6 +202,7 @@ export function createJournalPanel(app, { journal, members, onOpenPlanet, onPres
   }
 
   function render() {
+    headHints.replaceChildren();
     if (view.kind === 'toc') renderToc();
     else if (view.kind === 'sun') renderSun();
     else {

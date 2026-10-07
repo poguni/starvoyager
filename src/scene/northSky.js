@@ -35,7 +35,7 @@ function gaussian() {
 }
 
 // 은하수 점: [적경, 적위, 밝기]
-function milkyWayPoints() {
+export function milkyWayPoints() {
   const pts = [];
   for (let i = 0; i < MILKY_POINTS; i++) {
     const l = Math.random() * 360;
@@ -52,7 +52,7 @@ function milkyWayPoints() {
 }
 
 // 색 지수(B-V) → 아주 옅은 별 색
-function starColor(bv) {
+export function starColor(bv) {
   const t = Math.max(-0.3, Math.min(1.6, bv));
   const r = t < 0.4 ? 200 + (t + 0.3) * 79 : 255;
   const g = t < 0.4 ? 215 + (t + 0.3) * 50 : 250 - (t - 0.4) * 45;
