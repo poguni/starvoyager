@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>S06 미션 패널 · 오답 후 확인 단계</title>
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../components.css">
+</head>
+<body data-accent="jupiter">
+<script src="../icons/icons.js"></script>
+<main class="sv-stage">
+
+  <div class="sv-ph-planet" style="left:236px; top:168px; width:740px; height:740px; background:repeating-linear-gradient(172deg, #EADBC0 0 34px, #C99566 34px 58px, #F1E4CC 58px 84px, #A86F45 84px 100px); box-shadow:inset -120px -60px 160px rgba(0,0,0,.75), 0 0 80px rgba(217,160,102,.2)"></div>
+  <p class="sv-ph-note" style="left:48px; bottom:150px; margin:0">3D 장면 자리 · 실제 앱에서는 Three.js로 그린 목성</p>
+
+  <div class="sv-corner sv-corner--tl"></div><div class="sv-corner sv-corner--tr"></div>
+  <div class="sv-corner sv-corner--bl"></div><div class="sv-corner sv-corner--br"></div>
+
+  <header class="sv-hud-top">
+    <div class="sv-glass sv-hud-cell"><span class="sv-hud-code">MISSION 02</span><span class="sv-hud-val">탐사 2 · 행성 탐사</span></div>
+    <div class="sv-glass sv-hud-cell sv-hud-dest"><span class="sv-hud-key">목적지</span><span class="sv-hud-val">목성</span></div>
+    <div class="sv-glass sv-hud-cell"><span class="sv-hud-key">도감</span><span class="sv-hud-num">5/8</span></div>
+  </header>
+  <div class="sv-hud-rule"></div>
+
+  <nav class="sv-controls" aria-label="조작">
+    <button class="sv-ctl"><svg aria-hidden="true"><use href="#i-map"/></svg>태양계 지도</button>
+    <button class="sv-ctl"><svg aria-hidden="true"><use href="#i-prev"/></svg>이전 행성</button>
+    <button class="sv-ctl"><svg aria-hidden="true"><use href="#i-next"/></svg>다음 행성</button>
+    <button class="sv-ctl is-cue"><svg aria-hidden="true"><use href="#i-land"/></svg>착륙하기</button>
+    <button class="sv-ctl" aria-pressed="false"><svg aria-hidden="true"><use href="#i-ring"/></svg>고리 찾기</button>
+    <button class="sv-ctl" aria-pressed="false"><svg aria-hidden="true"><use href="#i-label"/></svg>이름 보기</button>
+    <button class="sv-ctl" disabled><svg aria-hidden="true"><use href="#i-journal"/></svg>도감</button>
+  </nav>
+
+  <section class="sv-panel sv-mission" aria-label="미션">
+    <div class="sv-mission-progress">
+      <span>탐사 2 · 문항 1/3</span>
+      <span class="sv-dots" aria-hidden="true"><span class="is-on"></span><span></span><span></span></span>
+    </div>
+    <h2 class="sv-question">탐사선을 목성에 착륙시킬 수 있을까요?</h2>
+    <div class="sv-choices">
+      <button class="sv-choice is-wrong" aria-pressed="false"><span class="sv-choice-key">1</span>착륙할 수 있어요</button>
+      <button class="sv-choice" aria-pressed="false"><span class="sv-choice-key">2</span>착륙할 수 없어요</button>
+    </div>
+    <div class="sv-hint-dark" role="status"><svg aria-hidden="true"><use href="#i-hint"/></svg><span>목성에 내려가 보면서 발을 디딜 땅이 있는지 봐요.</span></div>
+    <div class="sv-guide"><svg aria-hidden="true"><use href="#i-land"/></svg><span>직접 관찰한 뒤 답을 다시 골라요.</span></div>  </section>
+</main>
+</body>
+</html>

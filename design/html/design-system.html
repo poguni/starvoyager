@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>별빛 탐사선 디자인 시스템 (A 관제실형)</title>
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../components.css">
+<style>
+  .ds { position:relative; width:1920px; padding:80px 80px 120px; font-family:var(--sv-font); color:var(--sv-text); background:var(--sv-space-900); }
+  .ds h1 { margin:0 0 8px; font-size:56px; font-weight:800; }
+  .ds .lead { margin:0 0 56px; font-size:var(--sv-fs-body); color:var(--sv-text-muted); }
+  .ds h2 { margin:64px 0 8px; font-size:34px; font-weight:700; display:flex; align-items:baseline; gap:16px; }
+  .ds h2 code { font-family:var(--sv-font-num); font-size:var(--sv-fs-small); color:var(--sv-text-muted); font-weight:500; }
+  .ds .rule { height:1px; background:var(--sv-rule); margin-bottom:28px; }
+  .row { display:flex; flex-wrap:wrap; gap:24px; align-items:flex-start; }
+  .cap { font-size:var(--sv-fs-small); color:var(--sv-text-muted); font-family:var(--sv-font-num); }
+  .item { display:flex; flex-direction:column; gap:10px; }
+  .sw { width:200px; height:110px; border-radius:var(--sv-radius); border:1px solid var(--sv-glass-line); }
+  .acc { width:320px; border-radius:var(--sv-radius); overflow:hidden; border:1px solid var(--sv-glass-line); }
+  .acc-top { height:110px; background:var(--sv-accent); color:var(--sv-on-accent); padding:16px 18px; display:flex; flex-direction:column; justify-content:space-between; }
+  .acc-top b { font-size:28px; }
+  .acc-top span { font-family:var(--sv-font-num); font-size:16px; }
+  .acc-bottom { background:var(--sv-paper); color:var(--sv-paper-text); padding:12px 14px; display:flex; gap:10px; align-items:center; font-size:18px; }
+  .acc-bottom .sv-option { min-height:44px; flex:1; font-size:18px; }
+  .acc-dark { background:var(--sv-space-800); padding:12px 14px; display:flex; align-items:center; gap:12px; font-size:18px; }
+  .acc-dark .line { flex:1; height:3px; background:var(--sv-accent); }
+  .type-row { display:grid; grid-template-columns:260px 1fr; align-items:baseline; gap:24px; padding:10px 0; border-bottom:1px solid var(--sv-rule); }
+  .paper-box { background:var(--sv-paper); color:var(--sv-paper-text); border-radius:var(--sv-radius); padding:28px; }
+  .paper-box .cap { color:var(--sv-paper-muted); }
+  .glass-box { background:var(--sv-space-800); border-radius:var(--sv-radius); padding:28px; border:1px solid var(--sv-glass-line); }
+  .icons { display:grid; grid-template-columns:repeat(10, minmax(0,1fr)); gap:16px; }
+  .icon-cell { display:flex; flex-direction:column; align-items:center; gap:10px; padding:20px 8px; border-radius:var(--sv-radius); border:1px solid var(--sv-glass-line); }
+  .icon-cell svg { width:36px; height:36px; }
+  .icon-cell span { font-family:var(--sv-font-num); font-size:14px; color:var(--sv-text-muted); }
+  .ctl-demo { width:170px; height:var(--sv-button-h); }
+  .ctl-demo .sv-ctl { width:100%; }
+</style>
+</head>
+<body data-accent="mars">
+<script src="../icons/icons.js"></script>
+<main class="ds">
+  <h1>별빛 탐사선 디자인 시스템</h1>
+  <p class="lead">A. 차분한 관제실형 · 전자칠판 1920×1080 기준 · 값은 모두 tokens.css, 모양은 components.css</p>
+
+  <!-- 1. 바탕과 상태 색 -->
+  <h2>1 바탕 · 종이 · 상태 색 <code>--sv-space-* --sv-paper* --sv-ok* --sv-warn*</code></h2><div class="rule"></div>
+  <div class="row">
+    <div class="item"><div class="sw" style="background:var(--sv-space-900)"></div><span class="cap">space-900 #060A17</span></div>
+    <div class="item"><div class="sw" style="background:var(--sv-space-800)"></div><span class="cap">space-800 #0B1230</span></div>
+    <div class="item"><div class="sw" style="background:var(--sv-glass); backdrop-filter:blur(10px)"></div><span class="cap">glass 58%</span></div>
+    <div class="item"><div class="sw" style="background:var(--sv-glass-strong)"></div><span class="cap">glass-strong 82%</span></div>
+    <div class="item"><div class="sw" style="background:var(--sv-text)"></div><span class="cap">text #E8ECF6</span></div>
+    <div class="item"><div class="sw sv-journal" style="border-top:none"></div><span class="cap">paper + 모눈 24px</span></div>
+    <div class="item"><div class="sw" style="background:var(--sv-paper-text)"></div><span class="cap">paper-text #1D2333</span></div>
+    <div class="item"><div class="sw" style="background:var(--sv-ok-bright)"></div><span class="cap">ok-bright #5ED39B</span></div>
+    <div class="item"><div class="sw" style="background:var(--sv-warn-bright)"></div><span class="cap">warn-bright #FFB547</span></div>
+    <div class="item"><div class="sw" style="background:var(--sv-stamp)"></div><span class="cap">stamp #B5401F</span></div>
+  </div>
+
+  <!-- 2. 강조 색 -->
+  <h2>2 강조 색 11개 <code>data-accent="…" → --sv-accent / on-accent / accent-soft / accent-strong</code></h2><div class="rule"></div>
+  <div class="row">
+    <div class="acc" data-accent="default"><div class="acc-top"><b>기본</b><span>default #8FA3FF</span></div><div class="acc-dark"><span>지도·크기 비교</span><span class="line"></span></div><div class="acc-bottom"><button class="sv-option" aria-pressed="true"><span class="sv-option-text">선택됨</span><svg class="sv-check" aria-hidden="true"><use href="#i-check"/></svg></button></div></div>
+    <div class="acc" data-accent="sun"><div class="acc-top"><b>태양</b><span>sun #FFB547</span></div><div class="acc-dark"><span>HUD 선</span><span class="line"></span></div><div class="acc-bottom"><button class="sv-option" aria-pressed="true"><span class="sv-option-text">선택됨</span><svg class="sv-check" aria-hidden="true"><use href="#i-check"/></svg></button></div></div>
+    <div class="acc" data-accent="mercury"><div class="acc-top"><b>수성</b><span>mercury #A8A29E</span></div><div class="acc-dark"><span>HUD 선</span><span class="line"></span></div><div class="acc-bottom"><button class="sv-option" aria-pressed="true"><span class="sv-option-text">선택됨</span><svg class="sv-check" aria-hidden="true"><use href="#i-check"/></svg></button></div></div>
+    <div class="acc" data-accent="venus"><div class="acc-top"><b>금성</b><span>venus #E8C468</span></div><div class="acc-dark"><span>HUD 선</span><span class="line"></span></div><div class="acc-bottom"><button class="sv-option" aria-pressed="true"><span class="sv-option-text">선택됨</span><svg class="sv-check" aria-hidden="true"><use href="#i-check"/></svg></button></div></div>
+    <div class="acc" data-accent="earth"><div class="acc-top"><b>지구</b><span>earth #4A90E2</span></div><div class="acc-dark"><span>HUD 선</span><span class="line"></span></div><div class="acc-bottom"><button class="sv-option" aria-pressed="true"><span class="sv-option-text">선택됨</span><svg class="sv-check" aria-hidden="true"><use href="#i-check"/></svg></button></div></div>
+    <div class="acc" data-accent="mars"><div class="acc-top"><b>화성</b><span>mars #E0603A</span></div><div class="acc-dark"><span>HUD 선</span><span class="line"></span></div><div class="acc-bottom"><button class="sv-option" aria-pressed="true"><span class="sv-option-text">선택됨</span><svg class="sv-check" aria-hidden="true"><use href="#i-check"/></svg></button></div></div>
+    <div class="acc" data-accent="jupiter"><div class="acc-top"><b>목성</b><span>jupiter #D9A066</span></div><div class="acc-dark"><span>HUD 선</span><span class="line"></span></div><div class="acc-bottom"><button class="sv-option" aria-pressed="true"><span class="sv-option-text">선택됨</span><svg class="sv-check" aria-hidden="true"><use href="#i-check"/></svg></button></div></div>
+    <div class="acc" data-accent="saturn"><div class="acc-top"><b>토성</b><span>saturn #E6CF8B</span></div><div class="acc-dark"><span>HUD 선</span><span class="line"></span></div><div class="acc-bottom"><button class="sv-option" aria-pressed="true"><span class="sv-option-text">선택됨</span><svg class="sv-check" aria-hidden="true"><use href="#i-check"/></svg></button></div></div>
+    <div class="acc" data-accent="uranus"><div class="acc-top"><b>천왕성</b><span>uranus #6FD3D0</span></div><div class="acc-dark"><span>HUD 선</span><span class="line"></span></div><div class="acc-bottom"><button class="sv-option" aria-pressed="true"><span class="sv-option-text">선택됨</span><svg class="sv-check" aria-hidden="true"><use href="#i-check"/></svg></button></div></div>
+    <div class="acc" data-accent="neptune"><div class="acc-top"><b>해왕성 (흰 글씨)</b><span>neptune #3D6BE0</span></div><div class="acc-dark"><span>HUD 선</span><span class="line"></span></div><div class="acc-bottom"><button class="sv-option" aria-pressed="true"><span class="sv-option-text">선택됨</span><svg class="sv-check" aria-hidden="true"><use href="#i-check"/></svg></button></div></div>
+    <div class="acc" data-accent="sky"><div class="acc-top"><b>북쪽 밤하늘</b><span>sky #7C8CF8</span></div><div class="acc-dark"><span>HUD 선</span><span class="line"></span></div><div class="acc-bottom"><button class="sv-option" aria-pressed="true"><span class="sv-option-text">선택됨</span><svg class="sv-check" aria-hidden="true"><use href="#i-check"/></svg></button></div></div>
+  </div>
+
+  <!-- 3. 글꼴 -->
+  <h2>3 글꼴과 크기 <code>Pretendard · IBM Plex Mono(숫자·영문 코드)</code></h2><div class="rule"></div>
+  <div class="type-row"><span class="cap">display 38 / 700</span><span style="font-size:var(--sv-fs-display); font-weight:700">화성 · 목적지 이름</span></div>
+  <div class="type-row"><span class="cap">question 30 / 700</span><span style="font-size:var(--sv-fs-question); font-weight:700">탐사선을 목성에 착륙시킬 수 있을까요?</span></div>
+  <div class="type-row"><span class="cap">title 26 / 700</span><span style="font-size:var(--sv-fs-title); font-weight:700">도감에 기록하기 · 패널 제목</span></div>
+  <div class="type-row"><span class="cap">body 24 / 400</span><span style="font-size:var(--sv-fs-body)">목성은 표면이 기체로 되어 있어서 내려앉을 땅이 없어요.</span></div>
+  <div class="type-row"><span class="cap">control 22</span><span style="font-size:var(--sv-fs-control)">태양계 지도 · 착륙하기 · 고리 찾기</span></div>
+  <div class="type-row"><span class="cap">option 21</span><span style="font-size:var(--sv-fs-option)">파란색 바다와 초록·갈색 땅</span></div>
+  <div class="type-row"><span class="cap">section 20 / 700</span><span style="font-size:var(--sv-fs-section); font-weight:700">3 고리 · 하나 고르기</span></div>
+  <div class="type-row"><span class="cap">small 18 (최소)</span><span style="font-size:var(--sv-fs-small)">모형입니다: 크기와 거리는 실제와 달라요</span></div>
+  <div class="type-row"><span class="cap">hud-num 30 Mono</span><span style="font-family:var(--sv-font-num); font-size:var(--sv-fs-hud-num); font-weight:600">5/8 · MISSION 02</span></div>
+
+  <!-- 4. HUD -->
+  <h2>4 조종석 HUD <code>.sv-hud-cell .sv-hud-dest .sv-corner .sv-hud-flying</code></h2><div class="rule"></div>
+  <div class="glass-box" style="position:relative; height:260px">
+    <div class="sv-corner sv-corner--tl" style="left:16px; top:16px"></div>
+    <div class="sv-corner sv-corner--br" style="right:16px; bottom:16px"></div>
+    <div class="row" style="padding:30px 40px">
+      <div class="item"><div class="sv-glass sv-hud-cell"><span class="sv-hud-code">MISSION 02</span><span class="sv-hud-val">탐사 2 · 행성 탐사</span></div><span class="cap">현재 탐사</span></div>
+      <div class="item"><div class="sv-glass sv-hud-cell sv-hud-dest"><span class="sv-hud-key">목적지</span><span class="sv-hud-val">화성</span></div><span class="cap">목적지(강조 색)</span></div>
+      <div class="item"><div class="sv-glass sv-hud-cell sv-hud-dest sv-hud-flying"><span class="sv-hud-key">이동 중</span><span class="sv-hud-val">화성으로 이동 중</span></div><span class="cap">비행 중</span></div>
+      <div class="item"><div class="sv-glass sv-hud-cell"><span class="sv-hud-key">도감</span><span class="sv-hud-num">5/8</span></div><span class="cap">진행 개수</span></div>
+      <div class="item"><span class="sv-label" style="position:static; transform:none">해왕성</span><span class="cap">3D 이름표</span></div>
+    </div>
+  </div>
+
+  <!-- 5. 조작 버튼 -->
+  <h2>5 조작 버튼 <code>.sv-ctl · aria-pressed · .is-cue · disabled · .sv-seg · .sv-ghost</code></h2><div class="rule"></div>
+  <div class="glass-box"><div class="row">
+    <div class="item"><div class="ctl-demo"><button class="sv-ctl"><svg aria-hidden="true"><use href="#i-land"/></svg>기본</button></div><span class="cap">default</span></div>
+    <div class="item"><div class="ctl-demo"><button class="sv-ctl" aria-pressed="true"><svg aria-hidden="true"><use href="#i-label"/></svg>켜짐</button></div><span class="cap">aria-pressed=true</span></div>
+    <div class="item"><div class="ctl-demo"><button class="sv-ctl is-cue"><svg aria-hidden="true"><use href="#i-ring"/></svg>눌러 봐요</button></div><span class="cap">.is-cue (미션 안내)</span></div>
+    <div class="item"><div class="ctl-demo"><button class="sv-ctl" disabled><svg aria-hidden="true"><use href="#i-next"/></svg>잠김</button></div><span class="cap">disabled (비행·착륙 중)</span></div>
+    <div class="item"><div class="sv-glass sv-ctl-group" style="height:var(--sv-button-h); width:260px" role="group" aria-label="빠르기"><span class="sv-ctl-group-label">빠르기</span><div class="sv-seg"><button aria-pressed="false">×0.5</button><button aria-pressed="true">×1</button><button aria-pressed="false">×2</button></div></div><span class="cap">.sv-ctl-group + .sv-seg</span></div>
+    <div class="item"><button class="sv-ghost"><svg aria-hidden="true"><use href="#i-resend"/></svg>다시 보내기</button><span class="cap">.sv-ghost</span></div>
+    <div class="item" style="width:520px"><div class="sv-glass sv-time" style="height:var(--sv-button-h)"><div class="sv-time-head"><label for="t1" class="sv-time-now">저녁 8시</label><span class="sv-time-ends">저녁 6시 ─ 아침 6시</span></div><input id="t1" class="sv-range" type="range" min="18" max="30" value="20" style="--sv-fill:17%"></div><span class="cap">시각 슬라이더 .sv-time + .sv-range</span></div>
+  </div></div>
+
+  <!-- 6. 도감 -->
+  <h2>6 탐사 도감 <code>.sv-journal .sv-option .sv-swatch .sv-box .sv-hint .sv-record .sv-stamp</code></h2><div class="rule"></div>
+  <div class="row">
+    <div class="paper-box sv-journal" style="width:620px; display:flex; flex-direction:column; gap:14px">
+      <div class="sv-journal-head"><div class="sv-journal-title"><span class="sv-journal-kicker">탐사 도감</span><span class="sv-journal-name">화성</span></div><span class="sv-tag">작성 중</span></div>
+      <div class="sv-section"><div class="sv-section-title">보기 상태 <small>· 기본 / 선택됨 / 틀림 / 여러 개 고르기</small></div>
+        <div class="sv-options">
+          <button class="sv-option"><span class="sv-swatch sv-swatch--gray"></span><span class="sv-option-text">기본</span></button>
+          <button class="sv-option" aria-pressed="true"><span class="sv-swatch sv-swatch--red"></span><span class="sv-option-text">선택됨</span><svg class="sv-check" aria-hidden="true"><use href="#i-check"/></svg></button>
+          <button class="sv-option is-wrong" aria-pressed="true"><span class="sv-option-text">틀린 칸</span></button>
+          <button class="sv-option"><span class="sv-box"></span><span class="sv-option-text">체크 안 함</span></button>
+          <button class="sv-option" aria-pressed="true"><span class="sv-box"><svg aria-hidden="true" style="width:16px;height:16px;color:#fff"><use href="#i-check"/></svg></span><span class="sv-option-text">체크함</span></button>
+        </div>
+      </div>
+      <div class="sv-hint"><svg aria-hidden="true"><use href="#i-hint"/></svg><span>힌트 상자: 정답은 숨기고 관찰 방법만 알려 줘요.</span></div>
+      <div style="display:flex; gap:12px"><button class="sv-secondary" style="flex:1">보조 버튼</button><button class="sv-primary" style="flex:1.3">주요 버튼</button></div>
+    </div>
+    <div class="paper-box sv-journal" style="width:560px; display:flex; flex-direction:column; gap:16px; border-top-color:var(--sv-accent)">
+      <span class="cap">색 견본 8개 (항상 글자와 함께)</span>
+      <div class="sv-options">
+        <span class="sv-option"><span class="sv-swatch sv-swatch--gray"></span>회색</span>
+        <span class="sv-option"><span class="sv-swatch sv-swatch--yellow"></span>노란색</span>
+        <span class="sv-option"><span class="sv-swatch sv-swatch--earth"></span>바다와 땅</span>
+        <span class="sv-option"><span class="sv-swatch sv-swatch--red"></span>붉은색</span>
+        <span class="sv-option"><span class="sv-swatch sv-swatch--stripe"></span>줄무늬</span>
+        <span class="sv-option"><span class="sv-swatch sv-swatch--tan"></span>연한 갈색</span>
+        <span class="sv-option"><span class="sv-swatch sv-swatch--teal"></span>청록색</span>
+        <span class="sv-option"><span class="sv-swatch sv-swatch--blue"></span>파란색</span>
+      </div>
+      <span class="cap">완성 카드 기록 줄 · 태그</span>
+      <dl class="sv-record" style="margin:0"><div class="sv-record-row"><dt>고리</dt><dd>고리가 없어요</dd></div></dl>
+      <div style="display:flex; gap:10px"><span class="sv-tag">작성 중</span><span class="sv-tag sv-tag--done">완성</span></div>
+    </div>
+    <div class="paper-box sv-journal" style="width:420px; display:flex; flex-direction:column; gap:20px; align-items:center">
+      <span class="cap" style="align-self:flex-start">완성 도장 · 교과서 문장</span>
+      <div class="sv-stamp"><span class="sv-stamp-small">STAR VOYAGER</span><span class="sv-stamp-big">관찰 완료</span><span class="sv-stamp-small">05 / 08</span></div>
+      <p class="sv-fact" style="margin:0">화성은 전체적으로 붉게 보여요.</p>
+    </div>
+  </div>
+
+  <!-- 7. 미션 -->
+  <h2>7 미션 패널 <code>.sv-mission .sv-choice .sv-hint-dark .sv-banner-ok .sv-reveal .sv-blank</code></h2><div class="rule"></div>
+  <div class="row">
+    <div class="sv-mission" style="width:620px; display:flex; flex-direction:column; border-radius:var(--sv-radius)">
+      <div class="sv-mission-progress"><span>탐사 2 · 문항 1/3</span><span class="sv-dots"><span class="is-on"></span><span></span><span></span></span></div>
+      <h3 class="sv-question">질문은 30px 굵게, 두 줄까지</h3>
+      <div class="sv-choices">
+        <button class="sv-choice"><span class="sv-choice-key">1</span>기본 보기</button>
+        <button class="sv-choice" aria-pressed="true"><span class="sv-choice-key">2</span>선택됨</button>
+        <button class="sv-choice is-wrong"><span class="sv-choice-key">3</span>오답</button>
+        <button class="sv-choice is-correct"><span class="sv-choice-key">4</span>정답</button>
+      </div>
+    </div>
+    <div class="sv-mission" style="width:620px; display:flex; flex-direction:column; border-radius:var(--sv-radius)">
+      <div class="sv-banner-ok"><svg aria-hidden="true"><use href="#i-check"/></svg>정답이에요!</div>
+      <div class="sv-hint-dark"><svg aria-hidden="true"><use href="#i-hint"/></svg><span>오답 힌트: 정답 없이 관찰 방법만.</span></div>
+      <div class="sv-guide"><svg aria-hidden="true"><use href="#i-land"/></svg><span>관찰 안내 한 줄</span></div>
+      <div class="sv-reveal"><span class="sv-reveal-key">정답은 4개예요</span>두 번째도 틀리면 정답과 이유를 보여 줘요.</div>
+      <p class="sv-sentence">한 줄 정리 빈칸: <span class="sv-blank">단단한 땅</span> <span class="sv-blank"></span></p>
+    </div>
+  </div>
+
+  <!-- 8. 끌어다 놓기 · 안내 -->
+  <h2>8 끌어다 놓기 · 안내 <code>.sv-card .sv-slot .sv-notice .sv-discovery .sv-dialog</code></h2><div class="rule"></div>
+  <div class="row">
+    <div class="glass-box" style="display:flex; gap:20px; align-items:flex-start">
+      <div class="item"><div class="sv-slot" style="width:190px; height:150px"><span class="sv-slot-num">1</span><button class="sv-card"><span class="sv-card-dot" style="background:#D9A066"></span>목성</button></div><span class="cap">카드 기본</span></div>
+      <div class="item"><div class="sv-slot is-target" style="width:190px; height:150px"><span class="sv-slot-num">4</span></div><span class="cap">놓을 수 있는 칸</span></div>
+      <div class="item"><div class="sv-slot" style="width:190px; height:150px"><span class="sv-slot-num">3</span><button class="sv-card is-wrong"><span class="sv-card-dot" style="background:#3D6BE0"></span>해왕성</button></div><span class="cap">틀린 자리</span></div>
+      <div class="item"><div style="width:190px; height:150px; display:flex; align-items:center; justify-content:center"><button class="sv-card is-dragging" style="width:168px"><span class="sv-card-dot" style="background:#6FD3D0"></span>천왕성</button></div><span class="cap">집은 카드</span></div>
+    </div>
+    <div class="glass-box" style="display:flex; flex-direction:column; gap:20px; width:760px; position:relative; min-height:260px">
+      <div class="sv-notice"><svg aria-hidden="true"><use href="#i-warn"/></svg>자리가 맞지 않는 카드가 있어요. 한 번 더 해 봐요.</div>
+      <div class="sv-discovery" style="position:static; transform:none; align-self:flex-start"><svg aria-hidden="true"><use href="#i-star"/></svg>태양은 지구보다 훨씬, 훨씬 커요!</div>
+      <span class="cap">발견 카드: 화면 아래 가운데, 3초</span>
+    </div>
+    <div class="sv-dialog">
+      <h2 style="margin:0; font-size:var(--sv-fs-title)">다른 친구가 사용할까요?</h2>
+      <p>지금 친구의 이름과 도감 기록이 이 기기에서 지워져요. 이미 보낸 기록은 선생님께 남아 있어요.</p>
+      <div class="sv-dialog-actions"><button class="sv-secondary">취소</button><button class="sv-primary" data-accent="default">지우고 바꾸기</button></div>
+    </div>
+  </div>
+
+  <!-- 9. 아이콘 -->
+  <h2>9 아이콘 <code>icons/icons.svg · 24×24 선 아이콘 · currentColor</code></h2><div class="rule"></div>
+  <div class="icons">
+    <div class="icon-cell"><svg aria-hidden="true"><use href="#i-map"/></svg><span>i-map</span></div>
+    <div class="icon-cell"><svg aria-hidden="true"><use href="#i-prev"/></svg><span>i-prev</span></div>
+    <div class="icon-cell"><svg aria-hidden="true"><use href="#i-next"/></svg><span>i-next</span></div>
+    <div class="icon-cell"><svg aria-hidden="true"><use href="#i-land"/></svg><span>i-land</span></div>
+    <div class="icon-cell"><svg aria-hidden="true"><use href="#i-ascend"/></svg><span>i-ascend</span></div>
+    <div class="icon-cell"><svg aria-hidden="true"><use href="#i-ring"/></svg><span>i-ring</span></div>
+    <div class="icon-cell"><svg aria-hidden="true"><use href="#i-label"/></svg><span>i-label</span></div>
+    <div class="icon-cell"><svg aria-hidden="true"><use href="#i-journal"/></svg><span>i-journal</span></div>
+    <div class="icon-cell"><svg aria-hidden="true"><use href="#i-play"/></svg><span>i-play</span></div>
+    <div class="icon-cell"><svg aria-hidden="true"><use href="#i-pause"/></svg><span>i-pause</span></div>
+    <div class="icon-cell"><svg aria-hidden="true"><use href="#i-sun-off"/></svg><span>i-sun-off</span></div>
+    <div class="icon-cell"><svg aria-hidden="true"><use href="#i-sun"/></svg><span>i-sun</span></div>
+    <div class="icon-cell"><svg aria-hidden="true"><use href="#i-city"/></svg><span>i-city</span></div>
+    <div class="icon-cell"><svg aria-hidden="true"><use href="#i-hint"/></svg><span>i-hint</span></div>
+    <div class="icon-cell"><svg aria-hidden="true"><use href="#i-undo"/></svg><span>i-undo</span></div>
+    <div class="icon-cell"><svg aria-hidden="true"><use href="#i-present"/></svg><span>i-present</span></div>
+    <div class="icon-cell"><svg aria-hidden="true"><use href="#i-close"/></svg><span>i-close</span></div>
+    <div class="icon-cell"><svg aria-hidden="true"><use href="#i-check"/></svg><span>i-check</span></div>
+    <div class="icon-cell"><svg aria-hidden="true"><use href="#i-pin"/></svg><span>i-pin</span></div>
+    <div class="icon-cell"><svg aria-hidden="true"><use href="#i-info"/></svg><span>i-info</span></div>
+    <div class="icon-cell"><svg aria-hidden="true"><use href="#i-warn"/></svg><span>i-warn</span></div>
+    <div class="icon-cell"><svg aria-hidden="true"><use href="#i-plus"/></svg><span>i-plus</span></div>
+    <div class="icon-cell"><svg aria-hidden="true"><use href="#i-minus"/></svg><span>i-minus</span></div>
+    <div class="icon-cell"><svg aria-hidden="true"><use href="#i-star"/></svg><span>i-star</span></div>
+    <div class="icon-cell"><svg aria-hidden="true"><use href="#i-resend"/></svg><span>i-resend</span></div>
+    <div class="icon-cell"><svg aria-hidden="true"><use href="#i-pencil"/></svg><span>i-pencil</span></div>
+    <div class="icon-cell"><svg aria-hidden="true"><use href="#i-user"/></svg><span>i-user</span></div>
+    <div class="icon-cell"><svg aria-hidden="true"><use href="#i-scale"/></svg><span>i-scale</span></div>
+  </div>
+</main>
+</body>
+</html>

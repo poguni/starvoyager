@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>S02 탐사 선택</title>
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../components.css">
+<style>
+  .top { position:absolute; left:80px; right:80px; top:64px; display:flex; justify-content:space-between; align-items:center; }
+  .who { display:flex; align-items:center; gap:16px; font-size:var(--sv-fs-body); }
+  .who svg { width:34px; height:34px; color:var(--sv-accent); }
+  .who b { font-size:var(--sv-fs-title); }
+  .heading { position:absolute; left:80px; top:170px; margin:0; font-size:44px; font-weight:800; }
+  .heading small { display:block; font-size:var(--sv-fs-body); font-weight:400; color:var(--sv-text-muted); margin-top:10px; }
+  .cards { position:absolute; left:80px; right:80px; top:330px; display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:28px; }
+  .sv-mission-card { height:520px; }
+  .art { height:150px; border-radius:var(--sv-radius); background:rgba(255,255,255,.03); border:1px solid var(--sv-glass-line); position:relative; overflow:hidden; }
+  .art i { position:absolute; border-radius:50%; display:block; }
+  .meter { display:flex; align-items:center; gap:10px; font-size:var(--sv-fs-section); color:var(--sv-text-muted); }
+  .meter-bar { flex:1; height:8px; border-radius:4px; background:var(--sv-glass-line-strong); overflow:hidden; }
+  .meter-bar span { display:block; height:100%; background:var(--sv-accent); }
+  .bottom { position:absolute; left:80px; right:80px; bottom:60px; display:flex; justify-content:space-between; align-items:center; }
+</style>
+</head>
+<body data-accent="default">
+<script src="../icons/icons.js"></script>
+<main class="sv-stage">
+  <div class="sv-corner sv-corner--tl"></div><div class="sv-corner sv-corner--tr"></div>
+  <div class="sv-corner sv-corner--bl"></div><div class="sv-corner sv-corner--br"></div>
+
+  <div class="top">
+    <div class="who"><svg aria-hidden="true"><use href="#i-user"/></svg><span>4학년 3반 12번</span><b>○○○ 대원</b></div>
+    <button class="sv-ghost">다른 친구가 사용해요</button>
+  </div>
+
+  <h1 class="heading">오늘은 어디를 탐사할까요?<small>탐사를 하나 골라요. 순서대로 하지 않아도 돼요.</small></h1>
+
+  <nav class="cards" aria-label="탐사 고르기">
+    <a class="sv-mission-card" href="#">
+      <div class="art" aria-hidden="true">
+        <i style="left:-40px; top:35px; width:80px; height:80px; background:radial-gradient(circle,#FFF3C4,#FFB547 60%,rgba(255,181,71,0) 72%)"></i>
+        <i style="left:-60px; top:20px; width:300px; height:110px; border:1px solid rgba(255,255,255,.18)"></i>
+        <i style="left:-90px; top:5px; width:440px; height:140px; border:1px solid rgba(255,255,255,.12)"></i>
+        <i style="left:150px; top:120px; width:14px; height:14px; background:#4A90E2"></i>
+        <i style="left:290px; top:20px; width:22px; height:22px; background:#D9A066"></i>
+      </div>
+      <span class="sv-mission-card-num">MISSION 01</span>
+      <span class="sv-mission-card-title">태양계 구성원과 태양</span>
+      <span class="sv-mission-card-desc">태양계 지도에서 태양, 행성, 위성, 혜성, 소행성을 찾아요.</span>
+      <span class="sv-status sv-status--done" style="margin-top:auto"><svg aria-hidden="true"><use href="#i-check"/></svg>완료</span>
+    </a>
+
+    <a class="sv-mission-card is-active" href="#">
+      <div class="art" aria-hidden="true">
+        <i style="left:110px; top:20px; width:110px; height:110px; background:radial-gradient(circle at 34% 32%, #F3A27A, #D9603C 40%, #6E2214 85%)"></i>
+        <i style="left:250px; top:60px; width:40px; height:40px; background:#3D6BE0"></i>
+        <i style="left:40px; top:70px; width:30px; height:30px; background:#E6CF8B"></i>
+      </div>
+      <span class="sv-mission-card-num">MISSION 02</span>
+      <span class="sv-mission-card-title">행성 탐사와 도감</span>
+      <span class="sv-mission-card-desc">행성 8개에 가까이 가서 관찰하고, 탐사 도감을 채워요.</span>
+      <div class="meter"><span>도감</span><span class="meter-bar"><span style="width:62.5%"></span></span><span style="font-family:var(--sv-font-num); color:var(--sv-text)">5/8</span></div>
+      <span class="sv-status sv-status--doing"><svg aria-hidden="true"><use href="#i-play"/></svg>진행 중 · 이어서 하기</span>
+    </a>
+
+    <a class="sv-mission-card" href="#">
+      <div class="art" aria-hidden="true">
+        <i style="left:30px; top:24px; width:104px; height:104px; background:#D9A066"></i>
+        <i style="left:148px; top:52px; width:48px; height:48px; background:#6FD3D0"></i>
+        <i style="left:210px; top:66px; width:20px; height:20px; background:#4A90E2"></i>
+        <i style="left:244px; top:70px; width:12px; height:12px; background:#E0603A"></i>
+        <i style="left:270px; top:72px; width:8px; height:8px; background:#A8A29E"></i>
+      </div>
+      <span class="sv-mission-card-num">MISSION 03</span>
+      <span class="sv-mission-card-title">크기 비교 실험실</span>
+      <span class="sv-mission-card-desc">행성을 실제 크기로 나란히 놓고, 크기 순서대로 줄 세워요.</span>
+      <span class="sv-status sv-status--todo" style="margin-top:auto">시작 전</span>
+    </a>
+
+    <a class="sv-mission-card" href="#">
+      <div class="art" aria-hidden="true" style="background:linear-gradient(180deg, rgba(124,140,248,.08), rgba(0,0,0,0))">
+        <svg viewBox="0 0 320 150" style="position:absolute; inset:0; width:100%; height:100%"><polyline points="40,90 70,70 90,100 120,95 150,110 175,125 205,135" fill="none" stroke="#7C8CF8" stroke-width="2"/><circle cx="210" cy="40" r="4" fill="#fff"/><polyline points="235,60 255,80 275,62 295,82 312,64" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-dasharray="3 6"/></svg>
+      </div>
+      <span class="sv-mission-card-num">MISSION 04</span>
+      <span class="sv-mission-card-title">북쪽 밤하늘 별자리</span>
+      <span class="sv-mission-card-desc">별을 이어 북두칠성과 카시오페이아자리를 찾고, 북극성을 찾아요.</span>
+      <span class="sv-status sv-status--todo" style="margin-top:auto">시작 전</span>
+    </a>
+  </nav>
+
+  <div class="bottom">
+    <span class="sv-queue" role="status"><svg aria-hidden="true"><use href="#i-warn"/></svg>제출 대기 중 2개 · 인터넷이 연결되면 다시 보내요<button class="sv-ghost" style="border-color:var(--sv-warn-bright)"><svg aria-hidden="true"><use href="#i-resend"/></svg>다시 보내기</button></span>
+    <span style="font-size:var(--sv-fs-small); color:var(--sv-text-faint); font-family:var(--sv-font-num)">STAR VOYAGER · 별빛 탐사선</span>
+  </div>
+</main>
+</body>
+</html>

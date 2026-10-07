@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>S09 발표 화면 · 토성</title>
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../components.css">
+<style>
+  .present-card { position:absolute; left:1000px; top:70px; width:860px; height:940px; padding:34px 44px; gap:22px; border-radius:var(--sv-radius); }
+  .present-card .sv-journal-name { font-size:56px; }
+  .present-card .sv-record-row { min-height:74px; font-size:30px; grid-template-columns:200px 1fr; }
+  .present-card .sv-record-row dt { font-size:24px; }
+  .present-card .sv-fact { font-size:30px; }
+  .rap { display:flex; flex-direction:column; gap:6px; padding:20px 24px; border-radius:var(--sv-radius); background:var(--sv-option-bg); border:1.5px solid var(--sv-option-line); }
+  .rap-title { font-size:22px; font-weight:700; color:var(--sv-paper-muted); display:flex; align-items:center; gap:8px; }
+  .rap-title svg { width:22px; height:22px; }
+  .rap p { margin:0; font-size:30px; line-height:1.45; }
+  .close { position:absolute; right:32px; top:28px; width:72px; height:72px; border-radius:var(--sv-radius); background:var(--sv-glass); border:1px solid var(--sv-glass-line-strong); color:var(--sv-text); display:flex; align-items:center; justify-content:center; cursor:pointer; }
+  .close svg { width:34px; height:34px; }
+  .who { position:absolute; left:60px; top:52px; font-size:var(--sv-fs-body); color:var(--sv-text-muted); }
+  .who b { color:var(--sv-text); font-size:var(--sv-fs-title); margin-left:10px; }
+</style>
+</head>
+<body data-accent="saturn">
+<script src="../icons/icons.js"></script>
+<main class="sv-stage">
+
+  <p class="who" style="margin:0">발표하기<b>토성 도감 카드</b></p>
+
+  <!-- 3D 자리(시안 전용) -->
+  <div class="sv-ph-planet" style="left:180px; top:240px; width:600px; height:600px; background:radial-gradient(circle at 40% 32%, #FBF0CE 0%, #E6CF8B 32%, #B8954E 62%, #4F3A16 88%, #1E1606 100%)"></div>
+  <div class="sv-ph-planet" style="left:30px; top:470px; width:900px; height:150px; border:16px solid rgba(230,207,139,.55); border-top-color:rgba(230,207,139,.25); transform:rotate(-12deg)"></div>
+  <p class="sv-ph-note" style="left:60px; bottom:60px; margin:0">3D 장면 자리 · 천천히 도는 토성</p>
+
+  <section class="sv-journal present-card" aria-label="토성 도감 카드" style="display:flex; flex-direction:column; box-shadow:var(--sv-shadow-panel)">
+    <div class="sv-journal-head">
+      <div class="sv-journal-title"><span class="sv-journal-kicker" style="font-size:24px">탐사 도감</span><span class="sv-journal-name">토성</span></div>
+      <div class="sv-stamp" style="width:130px; height:130px" aria-label="완성 도장"><span class="sv-stamp-small">STAR VOYAGER</span><span class="sv-stamp-big" style="font-size:26px">관찰 완료</span><span class="sv-stamp-small">07 / 08</span></div>
+    </div>
+    <dl class="sv-record" style="margin:0">
+      <div class="sv-record-row"><dt>색깔</dt><dd><span class="sv-swatch sv-swatch--tan" style="width:34px;height:34px"></span>연한 갈색</dd></div>
+      <div class="sv-record-row"><dt>표면 상태</dt><dd>기체</dd></div>
+      <div class="sv-record-row"><dt>고리</dt><dd>뚜렷한 고리가 있어요</dd></div>
+    </dl>
+    <p class="sv-fact" style="margin:0">토성은 연한 갈색을 띠고, 뚜렷한 고리가 있어요.</p>
+    <div class="rap">
+      <span class="rap-title"><svg aria-hidden="true"><use href="#i-star"/></svg>내가 만든 행성 랩</span>
+      <p>내 이름은 토성.</p>
+      <p>연한 갈색 옷을 입었지.</p>
+      <p>내 표면은 기체라 착륙은 못 하지.</p>
+      <p>뚜렷한 고리가 나의 자랑이지.</p>
+    </div>
+  </section>
+
+  <button class="close" aria-label="발표 화면 닫기"><svg aria-hidden="true"><use href="#i-close"/></svg></button>
+</main>
+</body>
+</html>

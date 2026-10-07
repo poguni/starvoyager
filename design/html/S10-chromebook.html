@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>S10 크롬북 · 화성 탐사 + 도감 펼침</title>
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../components.css">
+<style>
+  .sv-sheet { height: 47%; padding: 0 20px 14px; gap: 6px; border-top-width: 5px; }
+  .sv-sheet .sv-journal-head { min-height: 40px; }
+  .sheet-cols { flex: 1; min-height: 0; display: grid; grid-template-columns: 1.15fr 0.9fr 1.15fr; gap: 20px; }
+  .sheet-cols .sv-options { gap: 6px; }
+  .sheet-cols .sv-option { padding: 0 10px; gap: 8px; }
+  .sheet-cols .sv-swatch { width: 20px; height: 20px; }
+  .sheet-cols .sv-box { width: 18px; height: 18px; }
+  .sheet-cols .sv-check { width: 18px; height: 18px; }
+</style>
+</head>
+<body data-accent="mars">
+<script src="../icons/icons.js"></script>
+<main class="sv-stage sv-stage--cb">
+
+  <div class="sv-ph-planet" style="left:300px; top:96px; width:420px; height:420px; background:radial-gradient(circle at 34% 32%, #F3A27A 0%, #D9603C 28%, #A8391F 55%, #4A140A 82%, #1C0603 100%)"></div>
+
+  <header class="sv-hud-top">
+    <div class="sv-glass sv-hud-cell"><span class="sv-hud-val">탐사 2 · 행성 탐사</span></div>
+    <div class="sv-glass sv-hud-cell sv-hud-dest"><span class="sv-hud-key">목적지</span><span class="sv-hud-val">화성</span></div>
+    <div class="sv-glass sv-hud-cell"><span class="sv-hud-key">도감</span><span class="sv-hud-num">5/8</span></div>
+  </header>
+  <div class="sv-hud-rule"></div>
+
+  <nav class="sv-controls" aria-label="조작" style="bottom:calc(47% + 10px)">
+    <button class="sv-ctl"><svg aria-hidden="true"><use href="#i-map"/></svg>태양계 지도</button>
+    <button class="sv-ctl"><svg aria-hidden="true"><use href="#i-prev"/></svg>이전 행성</button>
+    <button class="sv-ctl"><svg aria-hidden="true"><use href="#i-next"/></svg>다음 행성</button>
+    <button class="sv-ctl"><svg aria-hidden="true"><use href="#i-land"/></svg>착륙하기</button>
+    <button class="sv-ctl" aria-pressed="false"><svg aria-hidden="true"><use href="#i-ring"/></svg>고리 찾기</button>
+    <button class="sv-ctl" aria-pressed="false"><svg aria-hidden="true"><use href="#i-label"/></svg>이름 보기</button>
+    <button class="sv-ctl" aria-pressed="true"><svg aria-hidden="true"><use href="#i-journal"/></svg>도감</button>
+  </nav>
+
+  <section class="sv-sheet sv-journal" aria-label="탐사 도감">
+    <button class="sv-sheet-grip" aria-label="도감 접기"></button>
+    <div class="sv-journal-head">
+      <div class="sv-journal-title"><span class="sv-journal-kicker">탐사 도감</span><span class="sv-journal-name">화성</span></div>
+      <span class="sv-tag">작성 중</span>
+    </div>
+    <div class="sheet-cols">
+      <div class="sv-section">
+        <div class="sv-section-title">1 색깔 <small>· 하나</small></div>
+        <div class="sv-options">
+          <button class="sv-option"><span class="sv-swatch sv-swatch--gray"></span><span class="sv-option-text">회색</span></button>
+          <button class="sv-option"><span class="sv-swatch sv-swatch--yellow"></span><span class="sv-option-text">노란색</span></button>
+          <button class="sv-option"><span class="sv-swatch sv-swatch--earth"></span><span class="sv-option-text">파란색 바다와 초록·갈색 땅</span></button>
+          <button class="sv-option" aria-pressed="true"><span class="sv-swatch sv-swatch--red"></span><span class="sv-option-text">붉은색</span><svg class="sv-check" aria-hidden="true"><use href="#i-check"/></svg></button>
+          <button class="sv-option"><span class="sv-swatch sv-swatch--stripe"></span><span class="sv-option-text">흰색과 갈색 줄무늬</span></button>
+          <button class="sv-option"><span class="sv-swatch sv-swatch--tan"></span><span class="sv-option-text">연한 갈색</span></button>
+          <button class="sv-option"><span class="sv-swatch sv-swatch--teal"></span><span class="sv-option-text">청록색</span></button>
+          <button class="sv-option"><span class="sv-swatch sv-swatch--blue"></span><span class="sv-option-text">파란색</span></button>
+        </div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:10px">
+        <div class="sv-section">
+          <div class="sv-section-title">2 표면 상태 <small>· 하나</small></div>
+          <div class="sv-options">
+            <button class="sv-option" aria-pressed="true"><span class="sv-option-text">단단한 땅</span><svg class="sv-check" aria-hidden="true"><use href="#i-check"/></svg></button>
+            <button class="sv-option"><span class="sv-option-text">기체</span></button>
+          </div>
+        </div>
+        <div class="sv-section">
+          <div class="sv-section-title">3 고리 <small>· 하나</small></div>
+          <div class="sv-options" style="grid-template-columns:1fr">
+            <button class="sv-option"><span class="sv-option-text">뚜렷한 고리가 있어요</span></button>
+            <button class="sv-option"><span class="sv-option-text">희미한 고리가 있어요</span></button>
+            <button class="sv-option" aria-pressed="true"><span class="sv-option-text">고리가 없어요</span><svg class="sv-check" aria-hidden="true"><use href="#i-check"/></svg></button>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:10px">
+        <div class="sv-section">
+          <div class="sv-section-title">4 그 밖의 특징 <small>· 여러 개</small></div>
+          <div class="sv-options">
+            <button class="sv-option"><span class="sv-box"></span><span class="sv-option-text">충돌 구덩이가 많아요</span></button>
+            <button class="sv-option"><span class="sv-box"></span><span class="sv-option-text">표면이 얼룩져 보여요</span></button>
+            <button class="sv-option"><span class="sv-box"></span><span class="sv-option-text">바다와 육지가 있어요</span></button>
+            <button class="sv-option"><span class="sv-box"></span><span class="sv-option-text">줄무늬가 있어요</span></button>
+            <button class="sv-option"><span class="sv-box"></span><span class="sv-option-text">행성 중 가장 커요</span></button>
+            <button class="sv-option"><span class="sv-box"></span><span class="sv-option-text">행성 중 가장 작아요</span></button>
+          </div>
+        </div>
+        <button class="sv-primary" style="margin-top:auto"><svg aria-hidden="true"><use href="#i-pencil"/></svg>도감에 기록하기</button>
+      </div>
+    </div>
+  </section>
+</main>
+</body>
+</html>

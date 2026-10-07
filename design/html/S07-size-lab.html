@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>S07 크기 비교 실험실 · 줄 세우기</title>
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../components.css">
+<style>
+  .lineup { position:absolute; left:40px; right:40px; top:130px; height:340px; display:flex; align-items:center; justify-content:center; gap:44px; }
+  .lp { display:flex; flex-direction:column; align-items:center; gap:14px; }
+  .lp .ball { border-radius:50%; }
+  .lp .cap { font-size:var(--sv-fs-section); color:var(--sv-text); text-align:center; line-height:1.3; }
+  .lp .cap small { display:block; font-family:var(--sv-font-num); font-size:var(--sv-fs-small); color:var(--sv-text-muted); }
+  .board-head { display:flex; align-items:center; justify-content:space-between; gap:20px; }
+  .board-q { font-size:var(--sv-fs-question); font-weight:700; margin:0; }
+  .sv-slot { height:136px; }
+  .sv-card { height:96px; }
+</style>
+</head>
+<body data-accent="default">
+<script src="../icons/icons.js"></script>
+<main class="sv-stage">
+
+  <!-- 3D 자리(시안 전용): 실제 크기 비율. 지구=27px 기준 -->
+  <div class="lineup" aria-hidden="true">
+    <div class="lp"><div class="ball" style="width:10px;height:10px;background:#A8A29E"></div><div class="cap">수성<small>약 0.4배</small></div></div>
+    <div class="lp"><div class="ball" style="width:26px;height:26px;background:#E8C468"></div><div class="cap">금성<small>약 1배</small></div></div>
+    <div class="lp"><div class="ball" style="width:27px;height:27px;background:radial-gradient(circle at 35% 35%, #8FC1FF, #2F6FC7 60%, #1C3F2A)"></div><div class="cap">지구<small>기준</small></div></div>
+    <div class="lp"><div class="ball" style="width:14px;height:14px;background:#E0603A"></div><div class="cap">화성<small>약 0.5배</small></div></div>
+    <div class="lp"><div class="ball" style="width:302px;height:302px;background:repeating-linear-gradient(172deg, #EADBC0 0 22px, #C99566 22px 36px, #F1E4CC 36px 54px, #A86F45 54px 64px)"></div><div class="cap">목성<small>약 11배</small></div></div>
+    <div class="lp"><div class="ball" style="width:254px;height:254px;background:radial-gradient(circle at 40% 35%, #F4E3B0, #CDAF68 70%); box-shadow:0 0 0 0 transparent"></div><div class="cap">토성<small>약 9배</small></div></div>
+    <div class="lp"><div class="ball" style="width:108px;height:108px;background:#6FD3D0"></div><div class="cap">천왕성<small>약 4배</small></div></div>
+    <div class="lp"><div class="ball" style="width:105px;height:105px;background:#3D6BE0"></div><div class="cap">해왕성<small>약 4배</small></div></div>
+  </div>
+
+  <div class="sv-corner sv-corner--tl"></div><div class="sv-corner sv-corner--tr"></div>
+  <div class="sv-corner sv-corner--bl"></div><div class="sv-corner sv-corner--br"></div>
+
+  <header class="sv-hud-top">
+    <div class="sv-glass sv-hud-cell"><span class="sv-hud-code">MISSION 03</span><span class="sv-hud-val">탐사 3 · 크기 비교 실험실</span></div>
+    <div class="sv-glass sv-hud-cell sv-hud-dest"><span class="sv-hud-key">목적지</span><span class="sv-hud-val">크기 비교 실험실</span></div>
+    <div class="sv-glass sv-hud-cell"><span class="sv-hud-key">문항</span><span class="sv-hud-num">3/4</span></div>
+  </header>
+  <div class="sv-hud-rule"></div>
+
+  <section class="sv-glass sv-board" aria-label="줄 세우기" style="left:40px; right:40px; top:488px; height:436px; background:var(--sv-glass-strong)">
+    <div class="board-head">
+      <h2 class="board-q">행성을 크기가 큰 순서대로 줄 세워 봐요.</h2>
+      <button class="sv-primary" style="min-width:200px"><svg aria-hidden="true"><use href="#i-check"/></svg>확인</button>
+    </div>
+    <div class="sv-arrow-label"><span>큰 쪽 ←</span><span>→ 작은 쪽</span></div>
+    <div class="sv-slots">
+      <div class="sv-slot"><span class="sv-slot-num">1</span><button class="sv-card"><span class="sv-card-dot" style="background:#D9A066"></span>목성</button></div>
+      <div class="sv-slot"><span class="sv-slot-num">2</span><button class="sv-card"><span class="sv-card-dot" style="background:#E6CF8B"></span>토성</button></div>
+      <div class="sv-slot"><span class="sv-slot-num">3</span><button class="sv-card is-wrong"><span class="sv-card-dot" style="background:#3D6BE0"></span>해왕성</button></div>
+      <div class="sv-slot is-target"><span class="sv-slot-num">4</span></div>
+      <div class="sv-slot"><span class="sv-slot-num">5</span><button class="sv-card"><span class="sv-card-dot" style="background:#4A90E2"></span>지구</button></div>
+      <div class="sv-slot"><span class="sv-slot-num">6</span><button class="sv-card"><span class="sv-card-dot" style="background:#E8C468"></span>금성</button></div>
+      <div class="sv-slot"><span class="sv-slot-num">7</span></div>
+      <div class="sv-slot"><span class="sv-slot-num">8</span></div>
+    </div>
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:20px">
+      <div class="sv-tray" aria-label="남은 카드">
+        <button class="sv-card is-dragging"><span class="sv-card-dot" style="background:#6FD3D0"></span>천왕성</button>
+        <button class="sv-card"><span class="sv-card-dot" style="background:#E0603A"></span>화성</button>
+        <button class="sv-card"><span class="sv-card-dot" style="background:#A8A29E"></span>수성</button>
+      </div>
+      <div class="sv-notice" role="status"><svg aria-hidden="true"><use href="#i-warn"/></svg>자리가 맞지 않는 카드가 있어요. 한 번 더 해 봐요.</div>
+    </div>
+  </section>
+
+  <nav class="sv-controls" aria-label="조작" style="width:900px">
+    <button class="sv-ctl" aria-pressed="true"><svg aria-hidden="true"><use href="#i-scale"/></svg>실제 크기로 보기</button>
+    <button class="sv-ctl" aria-pressed="false"><svg aria-hidden="true"><use href="#i-sun"/></svg>태양과 비교하기</button>
+    <button class="sv-ctl" aria-pressed="true"><svg aria-hidden="true"><use href="#i-label"/></svg>이름 보기</button>
+    <button class="sv-ctl"><svg aria-hidden="true"><use href="#i-map"/></svg>태양계 지도</button>
+  </nav>
+</main>
+</body>
+</html>

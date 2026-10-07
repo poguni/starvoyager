@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>S10b 크롬북 · 화성 탐사 + 도감 접힘</title>
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../components.css">
+<style>
+  .sheet-bar {
+    position:absolute; left:0; right:0; bottom:0; height:64px; padding:0 20px;
+    display:flex; align-items:center; gap:14px; border-radius:12px 12px 0 0;
+    border-top:5px solid var(--sv-accent); box-shadow:0 -12px 40px rgba(0,0,0,.5);
+    width:100%; text-align:left; cursor:pointer; font-size:var(--sv-fs-body);
+  }
+  .sheet-bar svg { width:24px; height:24px; color:var(--sv-paper-muted); }
+</style>
+</head>
+<body data-accent="mars">
+<script src="../icons/icons.js"></script>
+<main class="sv-stage sv-stage--cb">
+
+  <div class="sv-ph-planet" style="left:360px; top:110px; width:520px; height:520px; background:radial-gradient(circle at 34% 32%, #F3A27A 0%, #D9603C 28%, #A8391F 55%, #4A140A 82%, #1C0603 100%); box-shadow:0 0 60px rgba(224,96,58,.2)"></div>
+
+  <header class="sv-hud-top">
+    <div class="sv-glass sv-hud-cell"><span class="sv-hud-val">탐사 2 · 행성 탐사</span></div>
+    <div class="sv-glass sv-hud-cell sv-hud-dest"><span class="sv-hud-key">목적지</span><span class="sv-hud-val">화성</span></div>
+    <div class="sv-glass sv-hud-cell"><span class="sv-hud-key">도감</span><span class="sv-hud-num">5/8</span></div>
+  </header>
+  <div class="sv-hud-rule"></div>
+
+  <nav class="sv-controls" aria-label="조작" style="bottom:80px">
+    <button class="sv-ctl"><svg aria-hidden="true"><use href="#i-map"/></svg>태양계 지도</button>
+    <button class="sv-ctl"><svg aria-hidden="true"><use href="#i-prev"/></svg>이전 행성</button>
+    <button class="sv-ctl"><svg aria-hidden="true"><use href="#i-next"/></svg>다음 행성</button>
+    <button class="sv-ctl"><svg aria-hidden="true"><use href="#i-land"/></svg>착륙하기</button>
+    <button class="sv-ctl" aria-pressed="false"><svg aria-hidden="true"><use href="#i-ring"/></svg>고리 찾기</button>
+    <button class="sv-ctl" aria-pressed="false"><svg aria-hidden="true"><use href="#i-label"/></svg>이름 보기</button>
+    <button class="sv-ctl" aria-pressed="false"><svg aria-hidden="true"><use href="#i-journal"/></svg>도감</button>
+  </nav>
+
+  <button class="sheet-bar sv-journal" aria-label="도감 펼치기" style="border-left:none; border-right:none; border-bottom:none">
+    <svg aria-hidden="true"><use href="#i-journal"/></svg>
+    <span class="sv-journal-kicker">탐사 도감</span><b>화성</b>
+    <span class="sv-tag" style="margin-left:6px">작성 중</span>
+    <span style="margin-left:auto; display:flex; align-items:center; gap:6px; color:var(--sv-paper-muted); font-size:var(--sv-fs-section)">펼치기<svg aria-hidden="true" style="transform:rotate(-90deg)"><use href="#i-next"/></svg></span>
+  </button>
+</main>
+</body>
+</html>

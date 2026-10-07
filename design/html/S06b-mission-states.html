@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>S06b 미션 패널 상태 모음</title>
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../components.css">
+<style>
+  .col { display:flex; flex-direction:column; gap:14px; width:600px; }
+  .state-name { font-size:var(--sv-fs-section); color:var(--sv-text-muted); font-family:var(--sv-font-num); }
+  .state-name b { font-family:var(--sv-font); color:var(--sv-text); margin-left:8px; }
+  .sv-mission.static { position:relative; height:880px; width:600px; border-radius:var(--sv-radius); display:flex; flex-direction:column; box-shadow:var(--sv-shadow-panel); }
+</style>
+</head>
+<body data-accent="jupiter">
+<script src="../icons/icons.js"></script>
+<main class="sv-stage" style="display:flex; gap:40px; padding:60px 60px 0; justify-content:center">
+
+  <div class="col">
+    <div class="state-name">STATE A <b>정답 (예측 또는 최종 답)</b></div>
+    <section class="sv-mission static" aria-label="미션 정답 상태">
+      <div class="sv-mission-progress"><span>탐사 2 · 문항 1/3</span><span class="sv-dots" aria-hidden="true"><span class="is-on"></span><span></span><span></span></span></div>
+      <div class="sv-banner-ok" role="status"><svg aria-hidden="true"><use href="#i-check"/></svg>정답이에요!</div>
+      <h2 class="sv-question">탐사선을 목성에 착륙시킬 수 있을까요?</h2>
+      <div class="sv-choices">
+        <button class="sv-choice" disabled><span class="sv-choice-key">1</span>착륙할 수 있어요</button>
+        <button class="sv-choice is-correct" aria-pressed="true" disabled><span class="sv-choice-key">2</span>착륙할 수 없어요</button>
+      </div>
+      <p class="sv-explain" style="margin:0">목성은 표면이 기체로 되어 있어서 내려앉을 땅이 없어요.</p>
+      <button class="sv-primary" style="margin-top:auto">다음 문항<svg aria-hidden="true"><use href="#i-next"/></svg></button>
+    </section>
+  </div>
+
+  <div class="col">
+    <div class="state-name">STATE B <b>두 번째도 오답 → 정답 공개</b></div>
+    <section class="sv-mission static" aria-label="미션 정답 공개 상태">
+      <div class="sv-mission-progress"><span>탐사 2 · 문항 3/3</span><span class="sv-dots" aria-hidden="true"><span class="is-on"></span><span class="is-on"></span><span class="is-on"></span></span></div>
+      <h2 class="sv-question">고리가 있는 행성은 모두 몇 개일까요?</h2>
+      <div class="sv-choices">
+        <button class="sv-choice" disabled><span class="sv-choice-key">1</span>1개</button>
+        <button class="sv-choice is-wrong" disabled><span class="sv-choice-key">2</span>2개</button>
+        <button class="sv-choice is-correct" disabled><span class="sv-choice-key">3</span>4개</button>
+        <button class="sv-choice" disabled><span class="sv-choice-key">4</span>8개</button>
+      </div>
+      <div class="sv-reveal"><span class="sv-reveal-key">정답은 4개예요</span>토성은 뚜렷한 고리, 목성·천왕성·해왕성은 희미한 고리가 있어요.</div>
+      <button class="sv-primary" style="margin-top:auto">한 줄 정리하기<svg aria-hidden="true"><use href="#i-next"/></svg></button>
+    </section>
+  </div>
+
+  <div class="col">
+    <div class="state-name">STATE C <b>한 줄 정리</b></div>
+    <section class="sv-mission static" aria-label="한 줄 정리">
+      <div class="sv-mission-progress"><span>탐사 2 · 한 줄 정리</span></div>
+      <p class="sv-sentence">수성·금성·지구·화성은 표면이 <span class="sv-blank">단단한 땅</span>으로, 목성·토성·천왕성·해왕성은 표면이 <span class="sv-blank">기체</span>로 이루어져 있어요.</p>
+      <div class="sv-choices">
+        <button class="sv-choice" aria-pressed="true"><span class="sv-choice-key">1</span>단단한 땅 / 기체</button>
+        <button class="sv-choice"><span class="sv-choice-key">2</span>기체 / 단단한 땅</button>
+        <button class="sv-choice"><span class="sv-choice-key">3</span>물 / 얼음</button>
+      </div>
+      <button class="sv-primary" style="margin-top:auto">문장 완성하기</button>
+    </section>
+  </div>
+</main>
+</body>
+</html>

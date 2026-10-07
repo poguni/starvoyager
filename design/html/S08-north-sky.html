@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>S08 북쪽 밤하늘 · 별 잇기</title>
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../components.css">
+<style>
+  .lines { position:absolute; inset:0; pointer-events:none; }
+  .done { stroke:var(--sv-accent); stroke-width:3; stroke-linecap:round; }
+  .guide { stroke:rgba(232,236,246,.35); stroke-width:2; stroke-dasharray:4 10; stroke-linecap:round; }
+  .art { fill:none; stroke:var(--sv-accent); stroke-opacity:.22; stroke-width:2; stroke-dasharray:2 8; }
+</style>
+</head>
+<body data-accent="sky">
+<script src="../icons/icons.js"></script>
+<main class="sv-stage" style="background-color:#070B1F">
+
+  <!-- 3D 자리(시안 전용): 별 위치는 모양을 보여 주기 위한 대략값 -->
+  <div style="position:absolute; inset:0; background:radial-gradient(ellipse at 50% 120%, rgba(124,140,248,.16), transparent 60%)"></div>
+
+  <svg class="lines" viewBox="0 0 1920 1080" aria-hidden="true">
+    <!-- 큰곰 선화 자리 (실제 앱: 직접 그린 선화) -->
+    <path class="art" d="M520 470 Q600 400 720 440 Q800 470 820 560 Q900 600 990 700 Q1000 760 960 770 Q900 720 840 690 Q780 700 720 690 L700 760 L660 760 L660 690 Q590 690 560 640 L520 700 L490 700 L500 610 Q470 540 520 470 Z"/>
+    <!-- 북두칠성: 완성 -->
+    <polyline class="done" fill="none" points="700,480 609,522 659,632 750,590 700,480"/>
+    <polyline class="done" fill="none" points="750,590 820,635 885,690 970,760"/>
+    <!-- 카시오페이아자리: 3개 별까지 -->
+    <polyline class="done" fill="none" points="1290,300 1350,370 1420,320"/>
+    <!-- 작은곰자리: 점선 안내 -->
+    <polyline class="guide" fill="none" points="960,360 930,430 905,490 890,545 950,575 932,640 870,615 890,545"/>
+  </svg>
+
+  <!-- 별 -->
+  <span class="sv-star" style="left:960px; top:360px; width:12px; height:12px; box-shadow:0 0 14px #fff"></span>
+  <span class="sv-star" style="left:700px; top:480px; width:10px; height:10px"></span>
+  <span class="sv-star" style="left:609px; top:522px; width:9px; height:9px"></span>
+  <span class="sv-star" style="left:659px; top:632px; width:9px; height:9px"></span>
+  <span class="sv-star" style="left:750px; top:590px; width:7px; height:7px"></span>
+  <span class="sv-star" style="left:820px; top:635px; width:10px; height:10px"></span>
+  <span class="sv-star" style="left:885px; top:690px; width:9px; height:9px"></span>
+  <span class="sv-star" style="left:970px; top:760px; width:9px; height:9px"></span>
+  <span class="sv-star" style="left:1290px; top:300px; width:9px; height:9px"></span>
+  <span class="sv-star" style="left:1350px; top:370px; width:10px; height:10px"></span>
+  <span class="sv-star" style="left:1420px; top:320px; width:9px; height:9px"></span>
+  <span class="sv-star" style="left:1490px; top:390px; width:8px; height:8px"></span>
+  <span class="sv-star" style="left:1550px; top:320px; width:8px; height:8px"></span>
+  <span class="sv-star" style="left:930px; top:430px; width:5px; height:5px"></span>
+  <span class="sv-star" style="left:905px; top:490px; width:5px; height:5px"></span>
+  <span class="sv-star" style="left:890px; top:545px; width:6px; height:6px"></span>
+  <span class="sv-star" style="left:950px; top:575px; width:5px; height:5px"></span>
+  <span class="sv-star" style="left:932px; top:640px; width:8px; height:8px"></span>
+  <span class="sv-star" style="left:870px; top:615px; width:9px; height:9px"></span>
+  <span class="sv-star" style="left:380px; top:300px; width:5px; height:5px; opacity:.7"></span>
+  <span class="sv-star" style="left:1180px; top:540px; width:5px; height:5px; opacity:.7"></span>
+  <span class="sv-star" style="left:1660px; top:600px; width:6px; height:6px; opacity:.8"></span>
+  <span class="sv-star" style="left:260px; top:640px; width:4px; height:4px; opacity:.6"></span>
+  <span class="sv-star" style="left:1720px; top:240px; width:5px; height:5px; opacity:.7"></span>
+
+  <!-- 다음에 이을 별(힌트 반짝임) -->
+  <span class="sv-star-next" style="left:1490px; top:390px"></span>
+
+  <!-- 이름표 -->
+  <span class="sv-label" style="left:960px; top:384px; border-color:var(--sv-accent)">북극성</span>
+  <span class="sv-label" style="left:640px; top:410px; border-color:var(--sv-accent)">북두칠성 · 큰곰자리</span>
+
+  <div class="sv-horizon"></div>
+  <span class="sv-compass" style="left:320px">북서</span>
+  <span class="sv-compass" style="left:960px; color:var(--sv-accent)">북</span>
+  <span class="sv-compass" style="left:1600px">북동</span>
+
+  <div class="sv-corner sv-corner--tl"></div><div class="sv-corner sv-corner--tr"></div>
+  <div class="sv-corner sv-corner--bl"></div><div class="sv-corner sv-corner--br"></div>
+
+  <header class="sv-hud-top">
+    <div class="sv-glass sv-hud-cell"><span class="sv-hud-code">MISSION 04</span><span class="sv-hud-val">탐사 4 · 북쪽 밤하늘</span></div>
+    <div class="sv-glass sv-hud-cell sv-hud-dest"><span class="sv-hud-key">목적지</span><span class="sv-hud-val">북쪽 밤하늘</span></div>
+    <div class="sv-glass sv-hud-cell"><span class="sv-hud-key">이은 별자리</span><span class="sv-hud-num">1/3</span></div>
+  </header>
+  <div class="sv-hud-rule"></div>
+
+  <nav class="sv-controls" aria-label="조작" style="width:1840px">
+    <div class="sv-glass sv-time">
+      <div class="sv-time-head"><label for="time" class="sv-time-now">저녁 8시</label><span class="sv-time-ends">저녁 6시 ─ 밤 12시 ─ 아침 6시</span></div>
+      <input id="time" class="sv-range" type="range" min="18" max="30" step="0.25" value="20" style="--sv-fill:17%">
+    </div>
+    <button class="sv-ctl"><svg aria-hidden="true"><use href="#i-hint"/></svg>힌트</button>
+    <button class="sv-ctl"><svg aria-hidden="true"><use href="#i-undo"/></svg>마지막 선 지우기</button>
+    <button class="sv-ctl" aria-pressed="false"><svg aria-hidden="true"><use href="#i-city"/></svg>주변 불빛</button>
+    <button class="sv-ctl" aria-pressed="true"><svg aria-hidden="true"><use href="#i-label"/></svg>이름 보기</button>
+    <button class="sv-ctl"><svg aria-hidden="true"><use href="#i-journal"/></svg>도감</button>
+  </nav>
+</main>
+</body>
+</html>

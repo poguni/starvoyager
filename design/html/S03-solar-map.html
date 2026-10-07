@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>S03 태양계 지도</title>
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../components.css">
+<style>
+  .orbit { position:absolute; border:1px solid rgba(255,255,255,.14); border-radius:50%; }
+  .p { position:absolute; border-radius:50%; transform:translate(-50%,-50%); }
+  .member { display:inline-flex; align-items:center; gap:8px; padding:8px 14px; border-radius:var(--sv-radius-s); font-size:var(--sv-fs-section); }
+  .member svg { width:20px; height:20px; }
+  .member.is-found { background:var(--sv-accent-soft); color:var(--sv-text); border:1px solid var(--sv-accent); }
+  .member.is-todo { color:var(--sv-text-muted); border:1px dashed var(--sv-glass-line-strong); }
+</style>
+</head>
+<body data-accent="default">
+<script src="../icons/icons.js"></script>
+<main class="sv-stage">
+
+  <!-- 3D 자리(시안 전용): 궤도와 천체 -->
+  <div class="p" style="left:40px; top:560px; width:560px; height:560px; background:radial-gradient(circle, #FFF3C4 0%, #FFC458 30%, #F08A24 58%, rgba(240,138,36,0) 72%)"></div>
+  <div class="orbit" style="left:-340px; top:438px; width:760px; height:244px"></div>
+  <div class="orbit" style="left:-440px; top:406px; width:960px; height:308px"></div>
+  <div class="orbit" style="left:-540px; top:374px; width:1160px; height:372px"></div>
+  <div class="orbit" style="left:-650px; top:339px; width:1380px; height:442px"></div>
+  <div class="orbit" style="left:-740px; top:310px; width:1560px; height:500px; border:6px dotted rgba(200,190,170,.18)"></div>
+  <div class="orbit" style="left:-840px; top:278px; width:1760px; height:564px"></div>
+  <div class="orbit" style="left:-1010px; top:224px; width:2100px; height:672px"></div>
+  <div class="orbit" style="left:-1160px; top:176px; width:2400px; height:768px"></div>
+  <div class="orbit" style="left:-1300px; top:131px; width:2680px; height:858px"></div>
+
+  <div class="p" style="left:414px; top:581px; width:14px; height:14px; background:#A8A29E"></div>
+  <div class="p" style="left:504px; top:520px; width:22px; height:22px; background:#E8C468"></div>
+  <div class="p" style="left:542px; top:653px; width:24px; height:24px; background:radial-gradient(circle at 35% 35%, #8FC1FF, #2F6FC7 60%, #1C3F2A)"></div>
+  <div class="p" style="left:572px; top:636px; width:8px; height:8px; background:#CFCAC4"></div>
+  <div class="p" style="left:638px; top:450px; width:18px; height:18px; background:#E0603A"></div>
+  <div class="p" style="left:901px; top:619px; width:58px; height:58px; background:repeating-linear-gradient(180deg, #E9D7B8 0 7px, #B98656 7px 12px)"></div>
+  <div class="p" style="left:1013px; top:434px; width:48px; height:48px; background:radial-gradient(circle at 40% 35%, #F4E3B0, #CDAF68)"></div>
+  <div class="p" style="left:1013px; top:434px; width:104px; height:24px; border:3px solid rgba(230,207,139,.7); border-left-color:rgba(230,207,139,.35); border-right-color:rgba(230,207,139,.35)"></div>
+  <div class="p" style="left:1228px; top:613px; width:34px; height:34px; background:#6FD3D0"></div>
+  <div class="p" style="left:1340px; top:456px; width:32px; height:32px; background:#3D6BE0"></div>
+  <div class="p" style="left:1520px; top:262px; width:12px; height:12px; background:#E8F4FF; box-shadow:0 0 14px #BFE2FF"></div>
+  <div style="position:absolute; left:1526px; top:256px; width:190px; height:10px; background:linear-gradient(90deg, rgba(191,226,255,.7), rgba(191,226,255,0)); border-radius:5px; transform:rotate(-14deg); transform-origin:left center"></div>
+
+  <!-- 이름 보기 켜짐: 이름표 -->
+  <span class="sv-label" style="left:120px; top:640px">태양</span>
+  <span class="sv-label" style="left:414px; top:600px">수성</span>
+  <span class="sv-label" style="left:504px; top:470px">금성</span>
+  <span class="sv-label" style="left:520px; top:676px">지구</span>
+  <span class="sv-label" style="left:606px; top:690px; font-size:var(--sv-fs-small)">달</span>
+  <span class="sv-label" style="left:638px; top:400px">화성</span>
+  <span class="sv-label" style="left:770px; top:720px">소행성</span>
+  <span class="sv-label" style="left:901px; top:660px">목성</span>
+  <span class="sv-label" style="left:1013px; top:376px">토성</span>
+  <span class="sv-label" style="left:1228px; top:642px">천왕성</span>
+  <span class="sv-label" style="left:1340px; top:484px">해왕성</span>
+  <span class="sv-label" style="left:1540px; top:284px">혜성</span>
+
+  <div class="sv-corner sv-corner--tl"></div><div class="sv-corner sv-corner--tr"></div>
+  <div class="sv-corner sv-corner--bl"></div><div class="sv-corner sv-corner--br"></div>
+
+  <header class="sv-hud-top">
+    <div class="sv-glass sv-hud-cell"><span class="sv-hud-code">MISSION 01</span><span class="sv-hud-val">탐사 1 · 태양계 구성원</span></div>
+    <div class="sv-glass sv-hud-cell sv-hud-dest"><span class="sv-hud-key">목적지</span><span class="sv-hud-val">태양계 지도</span></div>
+    <div class="sv-glass sv-hud-cell"><span class="sv-hud-key">구성원 찾기</span><span class="sv-hud-num">3/5</span></div>
+  </header>
+  <div class="sv-hud-rule"></div>
+
+  <div class="sv-glass" style="position:absolute; right:120px; top:126px; display:flex; gap:8px; padding:10px">
+    <span class="member is-found"><svg aria-hidden="true"><use href="#i-check"/></svg>태양</span>
+    <span class="member is-found"><svg aria-hidden="true"><use href="#i-check"/></svg>행성</span>
+    <span class="member is-found"><svg aria-hidden="true"><use href="#i-check"/></svg>위성</span>
+    <span class="member is-todo">혜성</span>
+    <span class="member is-todo">소행성</span>
+  </div>
+
+  <p class="sv-glass sv-model-note" style="left:40px; top:126px; margin:0"><svg aria-hidden="true" style="width:20px;height:20px;vertical-align:-4px;margin-right:6px"><use href="#i-info"/></svg>모형입니다: 크기와 거리는 실제와 달라요</p>
+
+  <button class="sv-panel-handle" aria-label="도감 열기"><svg aria-hidden="true"><use href="#i-journal"/></svg>도감 열기</button>
+
+  <nav class="sv-controls" aria-label="조작">
+    <button class="sv-ctl" aria-pressed="false"><svg aria-hidden="true"><use href="#i-play"/></svg>재생</button>
+    <div class="sv-glass sv-ctl-group" role="group" aria-label="빠르기">
+      <span class="sv-ctl-group-label">빠르기</span>
+      <div class="sv-seg"><button aria-pressed="false">×0.5</button><button aria-pressed="true">×1</button><button aria-pressed="false">×2</button></div>
+    </div>
+    <button class="sv-ctl" aria-pressed="false"><svg aria-hidden="true"><use href="#i-sun-off"/></svg>태양 빛 가리기</button>
+    <button class="sv-ctl" aria-pressed="false"><svg aria-hidden="true"><use href="#i-ring"/></svg>고리 찾기</button>
+    <button class="sv-ctl" aria-pressed="true"><svg aria-hidden="true"><use href="#i-label"/></svg>이름 보기</button>
+    <button class="sv-ctl"><svg aria-hidden="true"><use href="#i-journal"/></svg>도감</button>
+  </nav>
+</main>
+</body>
+</html>

@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>S01 탐사 대원 등록</title>
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../components.css">
+<style>
+  .reg { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:780px; background:var(--sv-glass-strong); border-top:6px solid var(--sv-accent); }
+  .brand { display:flex; flex-direction:column; gap:6px; }
+  .brand-en { font-family:var(--sv-font-num); font-size:var(--sv-fs-small); letter-spacing:.3em; color:var(--sv-accent); }
+  .brand-ko { font-size:60px; font-weight:800; letter-spacing:-.01em; margin:0; }
+  .brand-sub { font-size:var(--sv-fs-body); color:var(--sv-text-muted); }
+  .grade { display:grid; grid-template-columns:repeat(6, minmax(0,1fr)); gap:8px; }
+  .grade button { height:68px; border-radius:var(--sv-radius); background:transparent; border:1.5px solid var(--sv-glass-line-strong); color:var(--sv-text); font-family:var(--sv-font-num); font-size:30px; font-weight:600; cursor:pointer; }
+  .grade button[aria-pressed="true"] { background:var(--sv-accent); border-color:var(--sv-accent); color:var(--sv-on-accent); }
+  .row2 { display:grid; grid-template-columns:1fr 1fr; gap:32px; }
+</style>
+</head>
+<body data-accent="default">
+<script src="../icons/icons.js"></script>
+<main class="sv-stage">
+  <div class="sv-ph-planet" style="left:-260px; bottom:-420px; width:900px; height:900px; background:radial-gradient(circle at 60% 30%, rgba(143,163,255,.35), rgba(30,40,90,.25) 45%, transparent 70%)"></div>
+  <div class="sv-ph-planet" style="right:-120px; top:-140px; width:420px; height:420px; background:radial-gradient(circle at 30% 70%, rgba(224,96,58,.30), transparent 65%)"></div>
+
+  <div class="sv-corner sv-corner--tl"></div><div class="sv-corner sv-corner--tr"></div>
+  <div class="sv-corner sv-corner--bl"></div><div class="sv-corner sv-corner--br"></div>
+
+  <form class="sv-glass sv-card-panel reg" aria-label="탐사 대원 등록">
+    <div class="brand">
+      <span class="brand-en">STAR VOYAGER</span>
+      <h1 class="brand-ko">별빛 탐사선</h1>
+      <span class="brand-sub">탐사 대원 등록</span>
+    </div>
+
+    <div class="sv-field" role="group" aria-labelledby="g-label">
+      <span id="g-label" class="sv-field-label">학년</span>
+      <div class="grade">
+        <button type="button" aria-pressed="false">1</button><button type="button" aria-pressed="false">2</button>
+        <button type="button" aria-pressed="false">3</button><button type="button" aria-pressed="true">4</button>
+        <button type="button" aria-pressed="false">5</button><button type="button" aria-pressed="false">6</button>
+      </div>
+    </div>
+
+    <div class="row2">
+      <div class="sv-field">
+        <span class="sv-field-label">반</span>
+        <div class="sv-stepper">
+          <button type="button" aria-label="반 줄이기"><svg aria-hidden="true"><use href="#i-minus"/></svg></button>
+          <output aria-label="반">3</output>
+          <button type="button" aria-label="반 늘리기"><svg aria-hidden="true"><use href="#i-plus"/></svg></button>
+        </div>
+      </div>
+      <div class="sv-field">
+        <span class="sv-field-label">번호</span>
+        <div class="sv-stepper">
+          <button type="button" aria-label="번호 줄이기"><svg aria-hidden="true"><use href="#i-minus"/></svg></button>
+          <output aria-label="번호">12</output>
+          <button type="button" aria-label="번호 늘리기"><svg aria-hidden="true"><use href="#i-plus"/></svg></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sv-field">
+      <label for="name" class="sv-field-label">이름</label>
+      <input id="name" class="sv-input is-error" type="text" placeholder="이름을 적어요" aria-describedby="name-err" aria-invalid="true">
+      <span id="name-err" class="sv-error"><svg aria-hidden="true"><use href="#i-warn"/></svg>이름을 적어 주세요.</span>
+    </div>
+
+    <button type="submit" class="sv-primary" style="min-height:76px; font-size:28px">탐사 시작하기<svg aria-hidden="true"><use href="#i-next"/></svg></button>
+  </form>
+</main>
+</body>
+</html>
