@@ -271,5 +271,11 @@ export function createSolarMap({ fx = true, textures }) {
     return id === 'asteroids' ? (ASTEROID_BELT.outer - ASTEROID_BELT.inner) / 2 : objects[id].body.radius;
   }
 
-  return { scene, update, setSunlight, setLoupe, worldPosition, radiusOf, objects, glow };
+  // 착륙 장면의 땅색을 가져올 질감 그림(지금 끼워진 질감)
+  function surfaceImage(id) {
+    if (id === 'earth') return earthMaterial?.uniforms.dayMap.value?.image ?? null;
+    return meshes[id]?.material.map?.image ?? null;
+  }
+
+  return { scene, update, setSunlight, setLoupe, worldPosition, radiusOf, surfaceImage, objects, glow };
 }

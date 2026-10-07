@@ -83,3 +83,14 @@ export function planetNeighbors(id) {
   if (i < 0) return { prev: null, next: null };
   return { prev: PLANETS[i - 1]?.id ?? null, next: PLANETS[i + 1]?.id ?? null };
 }
+
+// 표면 상태(기획서 4-3): 단단한 땅(solid) 또는 기체(gas). 착륙 체험과 도감 '표면 상태'의 기준.
+export const SURFACE = {
+  mercury: 'solid', venus: 'solid', earth: 'solid', mars: 'solid',
+  jupiter: 'gas', saturn: 'gas', uranus: 'gas', neptune: 'gas'
+};
+
+// 착륙할 수 있는 천체(행성 8개). 태양에는 착륙할 수 없다(기획서 5-3 ②).
+export function canLand(id) {
+  return id in SURFACE;
+}
