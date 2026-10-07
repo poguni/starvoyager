@@ -34,7 +34,7 @@
 .sv-labels .sv-label[hidden] { display: none; }
 .sv-label--small { font-size: var(--sv-fs-small); }
 .sv-hud-cell--empty { visibility: hidden; }
-.sv-controls [hidden], .sv-members[hidden], .sv-model-note[hidden] { display: none; }
+.sv-controls [hidden], .sv-members[hidden], .sv-model-note[hidden], .sv-labels[hidden] { display: none; }
 
 /* 강조 색 전환(motion.md '공통'): 천체에 다가가면 목적지·버튼·이름표의 강조 색이 0.6초 동안 바뀐다.
    꺾쇠는 components.css에 이미 전환이 있다. */
@@ -60,6 +60,26 @@
 /* 태양 빛 가리기 안내: 켜져 있는 동안 발견 카드 자리에 머문다. */
 .sv-discovery--sticky { pointer-events: none; }
 
+/* ---------- 착륙(Phase 4) ---------- */
+/* 착륙 결과 배너: 발견 카드를 키운 모양, 그 행성 강조 색 테두리(docs/결정기록.md 2026-10-08) */
+.sv-landing-banner {
+  position: absolute; left: 50%; top: calc(var(--sv-panel-top) + var(--sv-gap-xl)); transform: translateX(-50%);
+  display: flex; align-items: center; gap: var(--sv-gap-m); padding: var(--sv-gap-l) var(--sv-gap-xl);
+  border-radius: var(--sv-radius); background: var(--sv-glass-strong); border: var(--sv-border-sel) solid var(--sv-accent);
+  backdrop-filter: blur(var(--sv-glass-blur)); box-shadow: var(--sv-shadow-panel);
+  font-size: var(--sv-fs-title); font-weight: 700; white-space: nowrap;
+}
+.sv-landing-banner[hidden] { display: none; }
+.sv-landing-banner svg { width: var(--sv-icon); height: var(--sv-icon); color: var(--sv-accent); flex: none; }
+.sv-landing-banner--enter { animation: sv-rise-in var(--sv-dur-fast) var(--sv-ease) both; }
+/* 착륙 장면으로 바뀔 때 잠깐 어두워지는 막 */
+.sv-fade { position: absolute; inset: 0; background: var(--sv-space-900); opacity: 0; pointer-events: none; }
+/* 착륙 중 HUD가 아주 약하게 흔들림(motion.md '착륙', 선택) */
+.sv-hud-shake .sv-corner, .sv-hud-shake .sv-hud-top { animation: sv-shake 0.5s linear infinite; }
+@keyframes sv-shake {
+  0%, 100% { translate: 0 0; } 25% { translate: 1px -1px; } 50% { translate: -1px 1px; } 75% { translate: 1px 1px; }
+}
+
 /* ?debug=fps */
 .sv-debug-fps {
   position: absolute; left: var(--sv-hud-margin); bottom: calc(var(--sv-button-h) + var(--sv-gap-xl));
@@ -67,5 +87,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .sv-discovery--enter, .sv-discovery--leave { animation: none; }
+  .sv-discovery--enter, .sv-discovery--leave, .sv-landing-banner--enter { animation: none; }
+  .sv-hud-shake .sv-corner, .sv-hud-shake .sv-hud-top { animation: none; }
 }

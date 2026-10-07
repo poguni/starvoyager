@@ -37,7 +37,8 @@ export function createHud(root, handlers) {
   const mapButton = controlButton({ iconName: 'i-map', label: '태양계 지도', onClick: handlers.onMap });
   const prevButton = controlButton({ iconName: 'i-prev', label: '이전 행성', onClick: handlers.onPrev });
   const nextButton = controlButton({ iconName: 'i-next', label: '다음 행성', onClick: handlers.onNext });
-  const landButton = controlButton({ iconName: 'i-land', label: '착륙하기', disabled: true }); // 기능은 Phase 4
+  const landButton = controlButton({ iconName: 'i-land', label: '착륙하기', onClick: handlers.onLand });
+  const ascendButton = controlButton({ iconName: 'i-ascend', label: '다시 올라가기', cue: true, onClick: handlers.onAscend });
   const playIcon = icon('i-play');
   const playLabel = document.createTextNode('재생');
   const playButton = el('button', { type: 'button', class: 'sv-ctl', 'aria-pressed': 'false' }, [playIcon, playLabel]);
@@ -53,23 +54,36 @@ export function createHud(root, handlers) {
   const namesButton = toggleButton({ iconName: 'i-label', label: '이름 보기', pressed: true, onChange: handlers.onNames });
   const journalButton = controlButton({ iconName: 'i-journal', label: '도감', onClick: handlers.onJournal });
   const controls = el('nav', { class: 'sv-controls', 'aria-label': '조작' },
-    [mapButton, prevButton, nextButton, landButton, playButton, speedGroup, sunButton, ringButton, namesButton, journalButton]);
+    [mapButton, prevButton, nextButton, landButton, ascendButton, playButton, speedGroup, sunButton, ringButton, namesButton, journalButton]);
+  // 착륙 결과 배너(docs/결정기록.md 2026-10-08): HUD 가운데 위쪽
+  const bannerIcon = icon('i-land');
+  const bannerText = el('span');
+  const banner = el('div', { class: 'sv-landing-banner', role: 'status', hidden: true }, [bannerIcon, bannerText]);
 
-  root.append(...corners, top, el('div', { class: 'sv-hud-rule' }), chipBar, modelNote, handle, controls);
+  root.append(...corners, top, el('div', { class: 'sv-hud-rule' }), chipBar, modelNote, handle, controls, banner);
 
   const SHOWN = {
     map: [playButton, speedGroup, sunButton, ringButton, namesButton, journalButton],
     focus: [mapButton, playButton, speedGroup, sunButton, ringButton, namesButton, journalButton],
-    planet: [mapButton, prevButton, nextButton, landButton, ringButton, namesButton, journalButton]
+    planet: [mapButton, prevButton, nextButton, landButton, ascendButton, ringButton, namesButton, journalButton]
   };
   let mode = 'map';
   let neighbors = { prev: null, next: null };
   let locked = false;
+  let landable = false;
+  let landing = null; // null | 'landing'(내려가는 중) | 'landed'(땅 위)
 
   function refreshDisabled() {
-    for (const b of [mapButton, playButton, ...speedButtons, sunButton, ringButton, namesButton, journalButton, handle]) b.disabled = locked;
-    prevButton.disabled = locked || !neighbors.prev;
-    nextButton.disabled = locked || !neighbors.next;
+    const off = locked || landing !== null;
+    for (const b of [mapButton, playButton, ...speedButtons, sunButton, ringButton, namesButton, journalButton, handle]) b.disabled = off;
+    prevButton.disabled = off || !neighbors.prev;
+    nextButton.disabled = off || !neighbors.next;
+    landButton.disabled = off || !landable;
+    // 땅 위에서는 '착륙하기' 자리가 '다시 올라가기'로 바뀐다.
+    if (mode === 'planet') {
+      landButton.hidden = landing === 'landed';
+      ascendButton.hidden = landing !== 'landed';
+    }
   }
 
   return {
@@ -106,6 +120,18 @@ export function createHud(root, handlers) {
       speedButtons.forEach((b, i) => setPressed(b, SPEEDS[i] === speed));
     },
     setSunlightBlocked(on) { setPressed(sunButton, on); },
+    // 지금 천체에 착륙할 수 있는지(태양이거나 미션이 잠그면 false)
+    setLandable(on) { landable = on; refreshDisabled(); },
+    setLanding(next) { landing = next; refreshDisabled(); },
+    showBanner(iconName, text) {
+      bannerIcon.querySelector('use').setAttribute('href', `#${iconName}`);
+      bannerText.textContent = text;
+      banner.hidden = false;
+      banner.classList.remove('sv-landing-banner--enter');
+      void banner.offsetWidth; // 다시 보일 때마다 등장 연출
+      banner.classList.add('sv-landing-banner--enter');
+    },
+    hideBanner() { banner.hidden = true; },
     setMembers({ found, count, total }) {
       for (const m of MEMBERS) {
         const on = found.includes(m.id);
