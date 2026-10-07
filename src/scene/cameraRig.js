@@ -11,10 +11,11 @@ export function easeInOut(x) {
   return x < 0.5 ? 4 * x * x * x : 1 - (-2 * x + 2) ** 3 / 2;
 }
 
-// 태양계 지도 전체 보기(S03처럼 태양이 왼쪽에 크게, 궤도가 오른쪽으로 펼쳐지게)
+// 태양계 지도 전체 보기: 태양을 가운데에 두고 해왕성 궤도까지 한눈에 보이게, 회전도 태양을 중심으로 한다
+// (S03의 '태양 왼쪽 가장자리' 구도와 다름, docs/결정기록.md 2026-10-07)
 export const HOME = {
-  position: new THREE.Vector3(60.5, 42.5, 152.5),
-  target: new THREE.Vector3(68, 0, 0),
+  position: new THREE.Vector3(0, 95, 215),
+  target: new THREE.Vector3(0, 0, 0),
   minDistance: 20,
   maxDistance: 420
 };
@@ -52,28 +53,29 @@ export function createCameraRig(camera, domElement) {
   }
 
   // getTarget(): 목표 천체의 지금 위치. radius: 천체 반지름(카메라 거리와 확대 제한을 정한다).
-  function flyTo({ getTarget, radius, distance, onArrive }) {
-    // 지금 보는 방향을 크게 바꾸지 않으면서 천체를 비스듬히 위에서 보도록
-    const dir = camera.position.clone().sub(controls.target).normalize();
-    dir.y = Math.max(dir.y, 0.25);
+  // instant: 비행 없이 바로 옮긴다(?view=planet으로 시작할 때).
+  // direction: 도착했을 때 천체에서 카메라 쪽 방향. 없으면 지금 보는 방향을 크게 바꾸지 않고 비스듬히 위에서 본다.
+  function flyTo({ getTarget, radius, distance, limits, direction, instant = false, onArrive }) {
+    const dir = direction ? direction.clone() : camera.position.clone().sub(controls.target).normalize();
+    if (!direction) dir.y = Math.max(dir.y, 0.25);
     const dist = distance ?? radius * 4.2;
     return start({
       getTarget, offset: dir.normalize().multiplyScalar(dist), follow: true,
-      limits: [radius * 1.6, dist * 4], onArrive
+      limits: limits ?? [radius * 1.6, dist * 4], duration: instant ? 0 : FLIGHT_SECONDS, onArrive
     });
   }
 
   function flyHome(onArrive) {
     return start({
       getTarget: () => HOME.target, offset: HOME.position.clone().sub(HOME.target), follow: false,
-      limits: [HOME.minDistance, HOME.maxDistance], onArrive
+      limits: [HOME.minDistance, HOME.maxDistance], duration: FLIGHT_SECONDS, onArrive
     });
   }
 
   function update(dt) {
     if (flight) {
       flight.elapsed += dt;
-      const k = easeInOut(Math.min(flight.elapsed / FLIGHT_SECONDS, 1));
+      const k = flight.duration > 0 ? easeInOut(Math.min(flight.elapsed / flight.duration, 1)) : 1;
       const target = flight.getTarget();
       controls.target.lerpVectors(flight.fromTarget, target, k);
       camera.position.lerpVectors(flight.fromPos, target.clone().add(flight.offset), k);

@@ -15,11 +15,12 @@ export function createLabels({ container, map, onPick }) {
     container.append(labels[id]);
   }
   let visible = true;
+  let hiddenId = null; // 행성 탐사 중인 천체는 목적지 칸에 이름이 있으므로 이름표를 숨긴다
 
   // 매 프레임: 천체 바로 아래(태양은 화면에 보이는 부분의 가운데)에 이름표를 둔다.
   function update(camera, rect) {
     for (const [id, label] of Object.entries(labels)) {
-      if (!visible) { label.hidden = true; continue; }
+      if (!visible || id === hiddenId) { label.hidden = true; continue; }
       const pos = map.worldPosition(id, camera.position);
       const c = screenCircle(camera, rect, pos, map.radiusOf(id));
       let x = c?.x;
@@ -41,6 +42,7 @@ export function createLabels({ container, map, onPick }) {
 
   return {
     update,
-    setVisible(on) { visible = on; }
+    setVisible(on) { visible = on; },
+    hide(id) { hiddenId = id; }
   };
 }

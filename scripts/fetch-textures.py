@@ -40,8 +40,12 @@ COMMONS = {
 }
 LOCAL = {
     "earth.jpg": MOONLAB / "earth_day.jpg",
+    "earth_night.jpg": MOONLAB / "earth_night.jpg",
+    "earth_clouds.jpg": MOONLAB / "earth_clouds.jpg",
     "moon.jpg": MOONLAB / "moon_color.jpg",
+    "moon_bump.jpg": MOONLAB / "moon_bump.jpg",
 }
+GRAY = {"earth_clouds.jpg", "moon_bump.jpg"}  # 한 채널(회색)만 쓰는 질감
 WIDTHS = {"1k": 1024, "2k": 2048, "4k": 4096}
 
 
@@ -94,7 +98,7 @@ def make(name, size):
         img.save(out, optimize=True)
     else:
         w = min(width, src.width)  # 원본보다 크게 늘리지 않는다(천왕성·해왕성은 2K가 최대).
-        img = src.convert("RGB").resize((w, w // 2), Image.LANCZOS)
+        img = src.convert("L" if name in GRAY else "RGB").resize((w, w // 2), Image.LANCZOS)
         img.save(out, quality=88, optimize=True, progressive=True)
     print(f"{out.relative_to(ROOT)}  {img.width}x{img.height}  {out.stat().st_size // 1024} KB")
 

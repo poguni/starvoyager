@@ -1,5 +1,9 @@
-// 조종석 HUD 뼈대(S03): 네 모서리 꺾쇠, 상단 계기판(현재 탐사 / 목적지 / 진행 개수), 구성원 칩,
-// 모형 안내, 도감 손잡이, 하단 조작 패널. 비행 중에는 목적지 칸이 "○○(으)로 이동 중"으로 바뀌고 하단 버튼이 잠긴다.
+// 조종석 HUD: 네 모서리 꺾쇠, 상단 계기판(현재 탐사 / 목적지 / 진행 개수), 구성원 칩, 모형 안내, 도감 손잡이, 하단 조작 패널.
+// 하단 조작은 상태에 따라 바뀐다.
+//   map   (S03): 재생 · 빠르기 · 태양 빛 가리기 · 고리 찾기 · 이름 보기 · 도감
+//   focus      : 위 + 맨 앞 '태양계 지도'(달·혜성·소행성을 따라가며 볼 때)
+//   planet(S04): 태양계 지도 · 이전 행성 · 다음 행성 · 착륙하기 · 고리 찾기 · 이름 보기 · 도감
+// 비행 중에는 목적지 칸이 "○○(으)로 이동 중"으로 바뀌고 하단 버튼이 잠긴다.
 import { el } from './components/dom.js';
 import { icon } from './components/icon.js';
 import { controlButton, toggleButton, setPressed } from './components/buttons.js';
@@ -31,7 +35,9 @@ export function createHud(root, handlers) {
 
   // ---- 하단 조작 패널 ----
   const mapButton = controlButton({ iconName: 'i-map', label: '태양계 지도', onClick: handlers.onMap });
-  mapButton.hidden = true;
+  const prevButton = controlButton({ iconName: 'i-prev', label: '이전 행성', onClick: handlers.onPrev });
+  const nextButton = controlButton({ iconName: 'i-next', label: '다음 행성', onClick: handlers.onNext });
+  const landButton = controlButton({ iconName: 'i-land', label: '착륙하기', disabled: true }); // 기능은 Phase 4
   const playIcon = icon('i-play');
   const playLabel = document.createTextNode('재생');
   const playButton = el('button', { type: 'button', class: 'sv-ctl', 'aria-pressed': 'false' }, [playIcon, playLabel]);
@@ -43,16 +49,28 @@ export function createHud(root, handlers) {
     el('div', { class: 'sv-seg' }, speedButtons)
   ]);
   const sunButton = toggleButton({ iconName: 'i-sun-off', label: '태양 빛 가리기', onChange: handlers.onSunlightBlock });
-  const ringButton = controlButton({ iconName: 'i-ring', label: '고리 찾기', disabled: true }); // 기능은 Phase 3
+  const ringButton = toggleButton({ iconName: 'i-ring', label: '고리 찾기', onChange: handlers.onLoupe });
   const namesButton = toggleButton({ iconName: 'i-label', label: '이름 보기', pressed: true, onChange: handlers.onNames });
   const journalButton = controlButton({ iconName: 'i-journal', label: '도감', onClick: handlers.onJournal });
   const controls = el('nav', { class: 'sv-controls', 'aria-label': '조작' },
-    [mapButton, playButton, speedGroup, sunButton, ringButton, namesButton, journalButton]);
+    [mapButton, prevButton, nextButton, landButton, playButton, speedGroup, sunButton, ringButton, namesButton, journalButton]);
 
   root.append(...corners, top, el('div', { class: 'sv-hud-rule' }), chipBar, modelNote, handle, controls);
 
-  // 비행 중 잠글 버튼들(고리 찾기는 이번 Phase 내내 잠겨 있다)
-  const lockable = [mapButton, playButton, ...speedButtons, sunButton, namesButton, journalButton, handle];
+  const SHOWN = {
+    map: [playButton, speedGroup, sunButton, ringButton, namesButton, journalButton],
+    focus: [mapButton, playButton, speedGroup, sunButton, ringButton, namesButton, journalButton],
+    planet: [mapButton, prevButton, nextButton, landButton, ringButton, namesButton, journalButton]
+  };
+  let mode = 'map';
+  let neighbors = { prev: null, next: null };
+  let locked = false;
+
+  function refreshDisabled() {
+    for (const b of [mapButton, playButton, ...speedButtons, sunButton, ringButton, namesButton, journalButton, handle]) b.disabled = locked;
+    prevButton.disabled = locked || !neighbors.prev;
+    nextButton.disabled = locked || !neighbors.next;
+  }
 
   return {
     setDestination(name) {
@@ -65,11 +83,19 @@ export function createHud(root, handlers) {
       destKey.textContent = '이동 중';
       destVal.textContent = `${withEuro(name)} 이동 중`;
     },
-    setLocked(locked) {
-      for (const b of lockable) b.disabled = locked;
+    setLocked(on) {
+      locked = on;
+      refreshDisabled();
     },
-    setFocused(focused) {
-      mapButton.hidden = !focused;
+    // mode: 'map' | 'focus' | 'planet'. planet일 때 neighbors({ prev, next })로 이전/다음 행성 버튼을 켜고 끈다.
+    setMode(next, nextNeighbors = { prev: null, next: null }) {
+      mode = next;
+      neighbors = nextNeighbors;
+      for (const child of controls.children) child.hidden = !SHOWN[mode].includes(child);
+      // 행성 탐사 화면(S04)에는 구성원 칩과 모형 안내가 없다.
+      chipBar.hidden = mode === 'planet';
+      modelNote.hidden = mode === 'planet';
+      refreshDisabled();
     },
     setPlaying(playing) {
       setPressed(playButton, playing);
@@ -79,6 +105,7 @@ export function createHud(root, handlers) {
     setSpeed(speed) {
       speedButtons.forEach((b, i) => setPressed(b, SPEEDS[i] === speed));
     },
+    setSunlightBlocked(on) { setPressed(sunButton, on); },
     setMembers({ found, count, total }) {
       for (const m of MEMBERS) {
         const on = found.includes(m.id);
@@ -88,6 +115,7 @@ export function createHud(root, handlers) {
         chip.replaceChildren(...(on ? [icon('i-check'), m.label] : [m.label]));
       }
       progressNum.textContent = `${count}/${total}`;
-    }
+    },
+    getMode: () => mode
   };
 }
