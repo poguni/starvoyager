@@ -228,6 +228,63 @@
 .sv-stage--cb .sv-present-who { left: 32px; top: 28px; }
 .sv-stage--cb .sv-present-close { right: 16px; top: 16px; width: 56px; height: 56px; }
 
+/* ---------- 크기 비교 실험실(Phase 6: S07) ---------- */
+.sv-controls--size { width: 900px; }
+.sv-size-labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.sv-size-labels[hidden], .sv-size-label[hidden], .sv-size-label small[hidden], .sv-notice[hidden], .sv-banner-ok[hidden] { display: none; }
+.sv-size-label {
+  position: absolute; left: 0; top: 0; text-align: center; white-space: nowrap;
+  font-size: var(--sv-fs-section); color: var(--sv-text); line-height: 1.3;
+}
+.sv-size-label small { display: block; font-family: var(--sv-font-num); font-size: var(--sv-fs-small); color: var(--sv-text-muted); }
+.sv-size-label--sun {
+  padding: var(--sv-gap-s) var(--sv-gap-m); border-radius: var(--sv-radius);
+  background: var(--sv-glass-strong); border: var(--sv-border) solid var(--sv-glass-line-strong);
+}
+
+/* 끌어다 놓기 판(S07). 나누어 담기는 같은 부품으로 만든 배치(docs/결정기록.md 2026-10-08) */
+.sv-ab {
+  left: var(--sv-hud-margin); right: var(--sv-hud-margin); top: 45.2%;
+  bottom: calc(32px + var(--sv-button-h) + 20px); background: var(--sv-glass-strong);
+}
+.sv-ab-head { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.sv-ab-q { font-size: var(--sv-fs-question); font-weight: 700; margin: 0; }
+.sv-ab-check { min-width: 200px; }
+.sv-ab-foot { margin-top: auto; display: flex; justify-content: space-between; align-items: center; gap: 20px; min-height: 100px; }
+.sv-ab .sv-slot { height: 136px; }
+.sv-ab .sv-card { height: 96px; touch-action: none; user-select: none; -webkit-user-select: none; position: relative; }
+.sv-ab .sv-tray { flex-wrap: wrap; min-height: 96px; flex: 1; }
+.sv-card-dot { background: var(--sv-accent); }
+.sv-card:disabled { cursor: default; }
+.sv-card.is-dragging { z-index: 10; cursor: grabbing; }
+.sv-card.is-selected { border: var(--sv-border-sel) solid var(--sv-accent); box-shadow: 0 0 0 4px var(--sv-accent-soft); }
+.sv-card.is-fixed { cursor: default; border-style: solid; opacity: 1; }
+.sv-ab-shake { animation: sv-ab-shake var(--sv-dur-shake) var(--sv-ease); }
+@keyframes sv-ab-shake {
+  20% { translate: calc(var(--sv-gap-s) * -1) 0; } 40% { translate: var(--sv-gap-s) 0; }
+  60% { translate: calc(var(--sv-gap-xs) * -1) 0; } 80% { translate: var(--sv-gap-xs) 0; }
+}
+.sv-notice--info { border-color: var(--sv-accent); background: var(--sv-accent-soft); }
+.sv-notice--info svg { color: var(--sv-accent); }
+.sv-ab-zones { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr auto 1fr; gap: 16px; }
+.sv-ab-box {
+  border-radius: var(--sv-radius); border: 2px dashed var(--sv-glass-line-strong);
+  padding: var(--sv-gap-s) var(--sv-gap-m) var(--sv-gap-m); display: flex; flex-direction: column; gap: var(--sv-gap-s);
+}
+.sv-ab-box.is-target { border-color: var(--sv-accent); background: var(--sv-accent-soft); }
+.sv-ab-box-title { font-size: var(--sv-fs-section); color: var(--sv-text-muted); text-align: center; }
+.sv-ab-box-cards { flex: 1; display: flex; flex-wrap: wrap; align-content: flex-start; justify-content: center; gap: var(--sv-gap-m); }
+.sv-ab-box-cards .sv-card { width: 140px; }
+.sv-ab-ref { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--sv-gap-s); padding: 0 var(--sv-gap-s); }
+.sv-ab-ref .sv-card { width: 168px; }
+.sv-stage--cb .sv-ab { top: 41%; bottom: calc(32px + var(--sv-button-h) + 12px); padding: 14px 18px; gap: 10px; }
+.sv-stage--cb .sv-ab .sv-slot { height: 92px; }
+.sv-stage--cb .sv-ab .sv-card { height: 64px; gap: 4px; }
+.sv-stage--cb .sv-ab .sv-card-dot { width: 20px; height: 20px; }
+.sv-stage--cb .sv-ab .sv-tray .sv-card, .sv-stage--cb .sv-ab-box-cards .sv-card, .sv-stage--cb .sv-ab-ref .sv-card { width: 120px; }
+.sv-stage--cb .sv-ab-foot { min-height: 64px; }
+.sv-stage--cb .sv-ab-check { min-width: 140px; }
+
 /* ?debug=fps */
 .sv-debug-fps {
   position: absolute; left: var(--sv-hud-margin); bottom: calc(var(--sv-button-h) + var(--sv-gap-xl));
@@ -237,5 +294,5 @@
 @media (prefers-reduced-motion: reduce) {
   .sv-discovery--enter, .sv-discovery--leave, .sv-landing-banner--enter { animation: none; }
   .sv-hud-shake .sv-corner, .sv-hud-shake .sv-hud-top { animation: none; }
-  .sv-hud-num--pop, .sv-jp-shake, .sv-stamp--enter, .sv-jp-fact--enter { animation: none; }
+  .sv-hud-num--pop, .sv-jp-shake, .sv-stamp--enter, .sv-jp-fact--enter, .sv-ab-shake { animation: none; }
 }

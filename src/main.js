@@ -14,6 +14,10 @@ import { createLabels } from './ui/labels.js';
 import { createHud } from './ui/hud.js';
 import { createJournalPanel } from './ui/journalPanel.js';
 import { createPresentView } from './ui/presentView.js';
+import { createSizeLabels } from './ui/sizeLabels.js';
+import { createArrangeBoard } from './ui/arrangeBoard.js';
+import { createDiscoveryCards } from './ui/components/discovery.js';
+import { createSizeLab } from './scene/sizeLab.js';
 import { createMemberProgress } from './model/memberProgress.js';
 import { bodyById, isExplorable, planetNeighbors, SURFACE, canLand } from './model/world.js';
 import { createLandingLog } from './model/landingLog.js';
@@ -40,7 +44,8 @@ if (params.get('debug') === 'ui') {
   // 개발 확인용 부품 견본(?debug=ui). 필요할 때만 불러온다.
   import('./debug/uiGallery.js').then(({ renderUiGallery }) => renderUiGallery(app));
 } else {
-  // ?view=map이 기본이다. ?view=planet은 행성 탐사 화면에서 시작한다. size·sky는 Phase 6·7에서 붙인다.
+  // ?view=map이 기본이다. ?view=planet은 행성 탐사 화면, ?view=size는 크기 비교 실험실에서 시작한다. sky는 Phase 7에서 붙인다.
+  // ?debug=arrange(&activity=classify): 크기 비교 실험실에서 끌어다 놓기 활동을 연다(미션 연결 전 확인용).
   startSolarMap();
 }
 
@@ -49,8 +54,8 @@ function startSolarMap() {
   const high = params.get('quality') === 'low' ? '2k' : '4k';
   // orbitPaused: 행성 탐사 중에는 공전을 멈추고 자전(spin)만 계속한다(docs/결정기록.md).
   // landingLocked: 미션이 착륙 버튼을 잠글 때(Phase 9A). landing: 착륙 연출 중인 정보
-  // target: 날아가는 중이면 도착할 천체. presenting: 발표 화면을 보는 중
-  const state = { t: 0, spin: 0, seconds: 0, playing: false, speed: 1, focus: null, target: null, orbitPaused: false, landingLocked: false, landing: null, presenting: false };
+  // target: 날아가는 중이면 도착할 천체. presenting: 발표 화면을 보는 중. size: 크기 비교 실험실에 있을 때의 상태
+  const state = { t: 0, spin: 0, seconds: 0, playing: false, speed: 1, focus: null, target: null, orbitPaused: false, landingLocked: false, landing: null, presenting: false, size: null, names: true };
 
   // ---- 3D ----
   const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -91,7 +96,7 @@ function startSolarMap() {
   let sunNotice = null;
 
   const hud = createHud(app, {
-    onMap: goHome,
+    onMap: () => (state.size ? exitSizeLab() : goHome()),
     onPrev: () => goTo(planetNeighbors(state.focus).prev),
     onNext: () => goTo(planetNeighbors(state.focus).next),
     onPlay(playing) { state.playing = playing; hud.setPlaying(playing); },
@@ -100,7 +105,9 @@ function startSolarMap() {
     onLoupe(on) { map.setLoupe(on); },
     onLand: startLanding,
     onAscend: liftOff,
-    onNames(on) { labels.setVisible(on); },
+    onNames(on) { state.names = on; labels.setVisible(on); sizeLabels?.setVisible(on); },
+    onRealSize: (on) => setRealSize(on),
+    onSunCompare: (on) => setSunCompare(on),
     onJournal() {
       if (journalPanel.isOpen()) { journalPanel.setOpen(false); return; }
       // 행성 탐사 화면에서는 그 천체의 카드, 그 밖에는 목차
@@ -292,6 +299,86 @@ function startSolarMap() {
     hud.setLocked(true);
   }
 
+  // ---- 크기 비교 실험실(S07, 기획서 5-3 ④) ----
+  const cards = createDiscoveryCards(app);
+  const sizeTextures = new Map(); // 실험실은 행성 8개를 한꺼번에 보므로 2K 질감을 쓴다
+  function loadSizeTexture(file, { color = true } = {}) {
+    if (!sizeTextures.has(file)) {
+      sizeTextures.set(file, loader.loadAsync(`${import.meta.env.BASE_URL}textures/2k/${file}`).then((tex) => {
+        if (color) tex.colorSpace = THREE.SRGBColorSpace;
+        tex.anisotropy = maxAniso;
+        return tex;
+      }));
+    }
+    return sizeTextures.get(file);
+  }
+  let sizeLab = null;
+  let sizeLabels = null;
+
+  // board: 'sort' | 'classify'이면 끌어다 놓기 활동을 함께 연다. 줄 세우기는 실제 크기 보기를 켠 채로 시작한다(9-4 문항 3-3).
+  function enterSizeLab({ board = null } = {}) {
+    sizeLab ??= createSizeLab({ load: loadSizeTexture, fx });
+    sizeLabels ??= createSizeLabels(app);
+    state.size = { real: false, sun: false, board: null };
+    setSunlightBlocked(false);
+    journalPanel.setOpen(false);
+    journalPanel.setHidden(true);
+    labelLayer.hidden = true;
+    hud.setMode('size');
+    hud.setDestination('크기 비교 실험실');
+    document.body.dataset.accent = 'default';
+    sizeLabels.setVisible(state.names);
+    if (board) {
+      state.size.board = createArrangeBoard(app, {
+        kind: board,
+        // 처음·최종 배치(미션 연결은 Phase 9A)
+        onDone: (record) => dispatchEvent(new CustomEvent('starvoyager:arrange-result', { detail: record }))
+      });
+    }
+    setRealSize(Boolean(board), { instant: true });
+    setSunCompare(false, { instant: true });
+    layoutSizeLab();
+  }
+
+  function exitSizeLab() {
+    state.size.board?.destroy();
+    state.size = null;
+    sizeLabels.setVisible(false);
+    labelLayer.hidden = false;
+    journalPanel.setHidden(false);
+    hud.setMode('map');
+    hud.setDestination('태양계 지도');
+    syncJournalLayout();
+  }
+
+  function setRealSize(on, opts) {
+    state.size.real = on;
+    if (!on && state.size.sun) setSunCompare(false); // 태양과 비교는 실제 크기에서만
+    sizeLab.setReal(on, opts);
+    hud.setRealSize(on);
+  }
+
+  function setSunCompare(on, opts) {
+    state.size.sun = on;
+    if (on) {
+      if (!state.size.real) setRealSize(true);
+      cards.show('sun-compare', '태양은 지구보다 훨씬, 훨씬 커요!');
+    }
+    sizeLab.setSunCompare(on, opts);
+    hud.setSunCompare(on);
+  }
+
+  // 행성 줄은 위 계기판 아래부터 끌어다 놓기 판(없으면 하단 조작 버튼) 위까지
+  function layoutSizeLab() {
+    const { clientWidth: w, clientHeight: h } = app;
+    const css = getComputedStyle(document.documentElement);
+    const margin = parseFloat(css.getPropertyValue('--sv-hud-margin'));
+    const top = cbQuery.matches ? 92 : 130;
+    const below = state.size.board ? state.size.board.element : app.querySelector('.sv-controls');
+    const bottom = below.getBoundingClientRect().top - app.getBoundingClientRect().top - (state.size.board ? 18 : 30);
+    sizeLab.resize(w, h, { left: margin, right: w - margin, top, bottom });
+  }
+
   // ---- 착륙(기획서 5-3 ③, motion.md '착륙') ----
   // 미션이 착륙 버튼을 잠그거나 풀 때 쓴다(Phase 9A에서 연결).
   function setLandingLocked(on) {
@@ -407,7 +494,7 @@ function startSolarMap() {
   let down = null;
   renderer.domElement.addEventListener('pointerdown', (e) => { down = { x: e.clientX, y: e.clientY, at: performance.now() }; });
   renderer.domElement.addEventListener('pointerup', (e) => {
-    if (!down || rig.isFlying() || state.landing || state.presenting) return;
+    if (!down || rig.isFlying() || state.landing || state.presenting || state.size) return;
     const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y);
     const quick = performance.now() - down.at < 600;
     down = null;
@@ -426,6 +513,7 @@ function startSolarMap() {
     landingView.camera.updateProjectionMatrix();
     setFrameTarget({ instant: true });
     camera.updateProjectionMatrix();
+    if (state.size) layoutSizeLab();
   }
   addEventListener('resize', resize);
   resize();
@@ -442,6 +530,10 @@ function startSolarMap() {
   if (params.get('view') === 'planet') {
     const start = params.get('planet') ?? 'earth';
     goTo(isExplorable(start) ? start : 'earth', { instant: true });
+  } else if (params.get('debug') === 'arrange') {
+    enterSizeLab({ board: params.get('activity') === 'classify' ? 'classify' : 'sort' });
+  } else if (params.get('view') === 'size') {
+    enterSizeLab();
   }
 
   // 펼쳐 둔 작성 중 카드의 시간을 더하고(착륙·발표 화면 제외) 5초마다 저장한다.
@@ -464,6 +556,7 @@ function startSolarMap() {
     state.seconds += dt;
     map.update(state.t, state.spin, state.seconds);
     const landingFrame = state.landing ? stepLanding(dt) : null;
+    if (state.size) sizeLab.update(dt, state.seconds);
     if (!state.landing) rig.update(dt);
     countCardTime(dt);
     // 화면 구도 이동은 비행과 비슷한 빠르기로 부드럽게 따라간다.
@@ -475,8 +568,11 @@ function startSolarMap() {
     camera.zoom = frame.zoom;
     camera.setViewOffset(w, h, frame.x, frame.y, w, h);
     if (landingFrame) renderer.render(landingFrame.getScene(), landingFrame.camera);
-    else renderer.render(map.scene, camera);
-    labels.update(camera, { width: w, height: h });
+    else if (state.size) {
+      renderer.render(sizeLab.scene, sizeLab.camera);
+      sizeLabels.update(sizeLab.items(), sizeLab.sunInfo(), { real: sizeLab.isReal() });
+    } else renderer.render(map.scene, camera);
+    if (!state.size) labels.update(camera, { width: w, height: h });
     fps?.tick(dt);
     requestAnimationFrame(tick);
   }

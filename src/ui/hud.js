@@ -3,6 +3,7 @@
 //   map   (S03): 재생 · 빠르기 · 태양 빛 가리기 · 고리 찾기 · 이름 보기 · 도감
 //   focus      : 위 + 맨 앞 '태양계 지도'(달·혜성·소행성을 따라가며 볼 때)
 //   planet(S04): 태양계 지도 · 이전 행성 · 다음 행성 · 착륙하기 · 고리 찾기 · 이름 보기 · 도감
+//   size  (S07): 실제 크기로 보기 · 태양과 비교하기 · 이름 보기 · 태양계 지도
 // 비행 중에는 목적지 칸이 "○○(으)로 이동 중"으로 바뀌고 하단 버튼이 잠긴다.
 import { el } from './components/dom.js';
 import { icon } from './components/icon.js';
@@ -55,8 +56,12 @@ export function createHud(root, handlers) {
   const ringButton = toggleButton({ iconName: 'i-ring', label: '고리 찾기', onChange: handlers.onLoupe });
   const namesButton = toggleButton({ iconName: 'i-label', label: '이름 보기', pressed: true, onChange: handlers.onNames });
   const journalButton = controlButton({ iconName: 'i-journal', label: '도감', onClick: handlers.onJournal });
+  // 크기 비교 실험실(S07)
+  const realButton = toggleButton({ iconName: 'i-scale', label: '실제 크기로 보기', onChange: handlers.onRealSize });
+  const sunCompareButton = toggleButton({ iconName: 'i-sun', label: '태양과 비교하기', onChange: handlers.onSunCompare });
+  const sizeMapButton = controlButton({ iconName: 'i-map', label: '태양계 지도', onClick: handlers.onMap });
   const controls = el('nav', { class: 'sv-controls', 'aria-label': '조작' },
-    [mapButton, prevButton, nextButton, landButton, ascendButton, playButton, speedGroup, sunButton, ringButton, namesButton, journalButton]);
+    [realButton, sunCompareButton, mapButton, prevButton, nextButton, landButton, ascendButton, playButton, speedGroup, sunButton, ringButton, namesButton, journalButton, sizeMapButton]);
   // 착륙 결과 배너(docs/결정기록.md 2026-10-08): HUD 가운데 위쪽
   const bannerIcon = icon('i-land');
   const bannerText = el('span');
@@ -67,7 +72,8 @@ export function createHud(root, handlers) {
   const SHOWN = {
     map: [playButton, speedGroup, sunButton, ringButton, namesButton, journalButton],
     focus: [mapButton, playButton, speedGroup, sunButton, ringButton, namesButton, journalButton],
-    planet: [mapButton, prevButton, nextButton, landButton, ascendButton, ringButton, namesButton, journalButton]
+    planet: [mapButton, prevButton, nextButton, landButton, ascendButton, ringButton, namesButton, journalButton],
+    size: [realButton, sunCompareButton, namesButton, sizeMapButton]
   };
   let mode = 'map';
   let neighbors = { prev: null, next: null };
@@ -95,7 +101,7 @@ export function createHud(root, handlers) {
 
   function refreshDisabled() {
     const off = locked || landing !== null;
-    for (const b of [mapButton, playButton, ...speedButtons, sunButton, ringButton, namesButton, journalButton, handle]) b.disabled = off;
+    for (const b of [mapButton, playButton, ...speedButtons, sunButton, ringButton, namesButton, journalButton, handle, realButton, sunCompareButton, sizeMapButton]) b.disabled = off;
     prevButton.disabled = off || !neighbors.prev;
     nextButton.disabled = off || !neighbors.next;
     landButton.disabled = off || !landable;
@@ -121,14 +127,18 @@ export function createHud(root, handlers) {
       locked = on;
       refreshDisabled();
     },
-    // mode: 'map' | 'focus' | 'planet'. planet일 때 neighbors({ prev, next })로 이전/다음 행성 버튼을 켜고 끈다.
+    // mode: 'map' | 'focus' | 'planet' | 'size'. planet일 때 neighbors({ prev, next })로 이전/다음 행성 버튼을 켜고 끈다.
     setMode(next, nextNeighbors = { prev: null, next: null }) {
       mode = next;
       neighbors = nextNeighbors;
       for (const child of controls.children) child.hidden = !SHOWN[mode].includes(child);
-      // 행성 탐사 화면(S04)에는 구성원 칩과 모형 안내가 없다.
-      chipBar.hidden = mode === 'planet';
-      modelNote.hidden = mode === 'planet';
+      // 행성 탐사 화면(S04)·크기 비교 실험실(S07)에는 구성원 칩과 모형 안내가 없다.
+      // 실험실에는 도감 손잡이가 없고, 진행 칸(S07 '문항 3/4')은 미션을 붙이는 Phase 9A에서 채운다.
+      chipBar.hidden = mode === 'planet' || mode === 'size';
+      modelNote.hidden = mode === 'planet' || mode === 'size';
+      handle.hidden = mode === 'size' || handle.hidden;
+      progressCell.classList.toggle('sv-hud-cell--empty', mode === 'size');
+      controls.classList.toggle('sv-controls--size', mode === 'size');
       refreshDisabled();
       refreshProgress();
     },
@@ -168,8 +178,10 @@ export function createHud(root, handlers) {
     // 도감이 펼쳐졌는지. bar: 크롬북에서 접힌 막대(S10b)가 손잡이 대신 보이는지
     setJournalOpen(open, bar = false) {
       setPressed(journalButton, open);
-      handle.hidden = open || bar;
+      handle.hidden = open || bar || mode === 'size';
     },
+    setRealSize(on) { setPressed(realButton, on); },
+    setSunCompare(on) { setPressed(sunCompareButton, on); },
     getMode: () => mode
   };
 }
