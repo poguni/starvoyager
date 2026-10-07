@@ -26,10 +26,37 @@
   background: var(--sv-glass); backdrop-filter: blur(var(--sv-glass-blur));
 }
 
-/* 준비 중 화면(Phase 1) */
-.sv-placeholder {
-  display: flex; align-items: center; justify-content: center;
-  font-family: var(--sv-font); font-size: var(--sv-fs-display); font-weight: 700; color: var(--sv-text-muted);
+/* ---------- 3D 무대와 겹침 층 ---------- */
+.sv-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+.sv-labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+/* 이름표는 누를 수 있는 버튼이다(누르면 그 천체로 날아감). 위치는 labels.js가 transform으로 정한다. */
+.sv-labels .sv-label { left: 0; top: 0; color: var(--sv-text); cursor: pointer; pointer-events: auto; }
+.sv-labels .sv-label[hidden] { display: none; }
+.sv-label--small { font-size: var(--sv-fs-small); }
+.sv-hud-cell--empty { visibility: hidden; }
+.sv-controls [hidden] { display: none; }
+/* 크롬북: 조작 버튼 높이(64px) 안에 누르는 크기 48px 빠르기 버튼을 넣기 위해 '빠르기' 글자를 숨긴다(aria-label은 남김). */
+.sv-stage--cb .sv-ctl-group-label { display: none; }
+
+/* ---------- 태양계 지도(S03): 모형 안내·구성원 칩 ---------- */
+.sv-model-note--map { left: var(--sv-hud-margin); top: var(--sv-panel-top); margin: 0; display: flex; align-items: center; gap: var(--sv-gap-s); }
+.sv-model-note--map svg { width: 20px; height: 20px; }
+.sv-members { position: absolute; right: calc(var(--sv-hud-margin) * 3); top: var(--sv-panel-top); display: flex; gap: var(--sv-gap-s); padding: 10px; }
+.sv-member {
+  display: inline-flex; align-items: center; gap: var(--sv-gap-s); padding: var(--sv-gap-s) 14px;
+  border-radius: var(--sv-radius-s); font-size: var(--sv-fs-section);
+  color: var(--sv-text-muted); border: 1px dashed var(--sv-glass-line-strong);
+}
+.sv-member svg { width: 20px; height: 20px; }
+.sv-member.is-found { background: var(--sv-accent-soft); color: var(--sv-text); border: 1px solid var(--sv-accent); }
+
+/* 태양 빛 가리기 안내: 켜져 있는 동안 발견 카드 자리에 머문다. */
+.sv-discovery--sticky { pointer-events: none; }
+
+/* ?debug=fps */
+.sv-debug-fps {
+  position: absolute; left: var(--sv-hud-margin); bottom: calc(var(--sv-button-h) + var(--sv-gap-xl));
+  font-family: var(--sv-font-num); font-size: var(--sv-fs-small); color: var(--sv-text-muted);
 }
 
 @media (prefers-reduced-motion: reduce) {
