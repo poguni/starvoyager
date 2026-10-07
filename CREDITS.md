@@ -38,6 +38,14 @@
 
 - 이 자료는 NASA가 특정 제품이나 서비스를 보증한다는 뜻이 아닙니다.
 
+## 별 목록 (퍼블릭 도메인)
+
+| 앱 파일 | 내용 | 원본 |
+|---|---|---|
+| `src/data/stars.json` | 4.5등급보다 밝은 별 905개(별자리 별 포함)의 별 번호·적경·적위·등급·색 지수 | Yale Bright Star Catalogue, 5th Revised Ed. (Hoffleit & Warren, 1991), CDS VizieR V/50. `scripts/fetch-stars.py`로 다시 만들 수 있음 |
+
+별자리 연결선(`src/data/constellations.js`)과 별자리 선화(`src/data/constellationArt.js`)는 이 앱을 위해 직접 정의·제작했다.
+
 ## 앱·소개 자료에 출처를 적을 때
 
 "행성 질감: Solar System Scope (CC BY 4.0) · 지구와 달 질감: NASA"

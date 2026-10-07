@@ -18,6 +18,14 @@ import { createSizeLabels } from './ui/sizeLabels.js';
 import { createArrangeBoard } from './ui/arrangeBoard.js';
 import { createDiscoveryCards } from './ui/components/discovery.js';
 import { createSizeLab } from './scene/sizeLab.js';
+import { createNorthSky } from './scene/northSky.js';
+import { createStarLinker } from './ui/starLinker.js';
+import { createStarLink } from './model/starLink.js';
+import { clampTime, TIME_DEFAULT } from './model/skyTime.js';
+import { CONSTELLATIONS } from './data/constellations.js';
+import { ART } from './data/constellationArt.js';
+import { SKY_DATE } from './data/skyDate.js';
+import starData from './data/stars.json';
 import { createMemberProgress } from './model/memberProgress.js';
 import { bodyById, isExplorable, planetNeighbors, SURFACE, canLand } from './model/world.js';
 import { createLandingLog } from './model/landingLog.js';
@@ -44,7 +52,8 @@ if (params.get('debug') === 'ui') {
   // 개발 확인용 부품 견본(?debug=ui). 필요할 때만 불러온다.
   import('./debug/uiGallery.js').then(({ renderUiGallery }) => renderUiGallery(app));
 } else {
-  // ?view=map이 기본이다. ?view=planet은 행성 탐사 화면, ?view=size는 크기 비교 실험실에서 시작한다. sky는 Phase 7에서 붙인다.
+  // ?view=map이 기본이다. ?view=planet은 행성 탐사 화면, ?view=size는 크기 비교 실험실,
+  // ?view=sky(&time=21)는 북쪽 밤하늘에서 시작한다.
   // ?debug=arrange(&activity=classify): 크기 비교 실험실에서 끌어다 놓기 활동을 연다(미션 연결 전 확인용).
   startSolarMap();
 }
@@ -55,7 +64,7 @@ function startSolarMap() {
   // orbitPaused: 행성 탐사 중에는 공전을 멈추고 자전(spin)만 계속한다(docs/결정기록.md).
   // landingLocked: 미션이 착륙 버튼을 잠글 때(Phase 9A). landing: 착륙 연출 중인 정보
   // target: 날아가는 중이면 도착할 천체. presenting: 발표 화면을 보는 중. size: 크기 비교 실험실에 있을 때의 상태
-  const state = { t: 0, spin: 0, seconds: 0, playing: false, speed: 1, focus: null, target: null, orbitPaused: false, landingLocked: false, landing: null, presenting: false, size: null, names: true };
+  const state = { t: 0, spin: 0, seconds: 0, playing: false, speed: 1, focus: null, target: null, orbitPaused: false, landingLocked: false, landing: null, presenting: false, size: null, sky: null, names: true };
 
   // ---- 3D ----
   const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -105,7 +114,11 @@ function startSolarMap() {
     onLoupe(on) { map.setLoupe(on); },
     onLand: startLanding,
     onAscend: liftOff,
-    onNames(on) { state.names = on; labels.setVisible(on); sizeLabels?.setVisible(on); },
+    onNames(on) { state.names = on; labels.setVisible(on); sizeLabels?.setVisible(on); starLinker?.setNamesVisible(on); },
+    onTime: (hour) => setSkyTime(hour),
+    onHint: () => starLinker.showHint(),
+    onUndo: () => { starLinker.undo(); hud.setUndoable(starLink.canUndo()); },
+    onCityLights(on) { northSky.setLights(on); hud.setCityLights(on); },
     onRealSize: (on) => setRealSize(on),
     onSunCompare: (on) => setSunCompare(on),
     onJournal() {
@@ -379,6 +392,41 @@ function startSolarMap() {
     sizeLab.resize(w, h, { left: margin, right: w - margin, top, bottom });
   }
 
+  // ---- 북쪽 밤하늘(S08, 기획서 5-3 ⑤) ----
+  let northSky = null;
+  let starLink = null;
+  let starLinker = null;
+
+  function enterSky({ hour = TIME_DEFAULT } = {}) {
+    const linkStars = new Set(CONSTELLATIONS.flatMap((c) => c.stars));
+    northSky ??= createNorthSky(app, { date: SKY_DATE, stars: starData, skip: linkStars });
+    if (!starLink) {
+      starLink = createStarLink(CONSTELLATIONS);
+      starLinker = createStarLinker(app, { sky: northSky, link: starLink, constellations: CONSTELLATIONS, art: ART, after: labelLayer });
+      // 이은 별자리 수(0/3). 미션의 탐색 조건(Phase 9A)도 이 구독을 쓴다.
+      starLink.subscribe((s) => { hud.setSkyCount(s); hud.setUndoable(starLink.canUndo()); });
+    }
+    state.sky = { hour };
+    setSunlightBlocked(false);
+    journalPanel.setOpen(false);
+    renderer.domElement.hidden = true;
+    labelLayer.hidden = true;
+    northSky.canvas.hidden = false;
+    starLinker.setVisible(true);
+    starLinker.setNamesVisible(state.names);
+    hud.setMode('sky');
+    hud.setDestination('북쪽 밤하늘');
+    document.body.dataset.accent = 'sky';
+    northSky.resize(app.clientWidth, app.clientHeight);
+    setSkyTime(hour);
+  }
+
+  function setSkyTime(hour) {
+    state.sky.hour = clampTime(hour);
+    northSky.setTime(state.sky.hour);
+    hud.setTime(state.sky.hour);
+  }
+
   // ---- 착륙(기획서 5-3 ③, motion.md '착륙') ----
   // 미션이 착륙 버튼을 잠그거나 풀 때 쓴다(Phase 9A에서 연결).
   function setLandingLocked(on) {
@@ -494,7 +542,7 @@ function startSolarMap() {
   let down = null;
   renderer.domElement.addEventListener('pointerdown', (e) => { down = { x: e.clientX, y: e.clientY, at: performance.now() }; });
   renderer.domElement.addEventListener('pointerup', (e) => {
-    if (!down || rig.isFlying() || state.landing || state.presenting || state.size) return;
+    if (!down || rig.isFlying() || state.landing || state.presenting || state.size || state.sky) return;
     const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y);
     const quick = performance.now() - down.at < 600;
     down = null;
@@ -514,6 +562,7 @@ function startSolarMap() {
     setFrameTarget({ instant: true });
     camera.updateProjectionMatrix();
     if (state.size) layoutSizeLab();
+    if (state.sky) northSky.resize(w, h);
   }
   addEventListener('resize', resize);
   resize();
@@ -534,6 +583,9 @@ function startSolarMap() {
     enterSizeLab({ board: params.get('activity') === 'classify' ? 'classify' : 'sort' });
   } else if (params.get('view') === 'size') {
     enterSizeLab();
+  } else if (params.get('view') === 'sky') {
+    const time = Number(params.get('time'));
+    enterSky({ hour: Number.isFinite(time) && params.has('time') ? time : TIME_DEFAULT });
   }
 
   // 펼쳐 둔 작성 중 카드의 시간을 더하고(착륙·발표 화면 제외) 5초마다 저장한다.
@@ -567,12 +619,15 @@ function startSolarMap() {
     const { clientWidth: w, clientHeight: h } = app;
     camera.zoom = frame.zoom;
     camera.setViewOffset(w, h, frame.x, frame.y, w, h);
-    if (landingFrame) renderer.render(landingFrame.getScene(), landingFrame.camera);
+    if (state.sky) {
+      northSky.update(dt, state.seconds);
+      starLinker.update();
+    } else if (landingFrame) renderer.render(landingFrame.getScene(), landingFrame.camera);
     else if (state.size) {
       renderer.render(sizeLab.scene, sizeLab.camera);
       sizeLabels.update(sizeLab.items(), sizeLab.sunInfo(), { real: sizeLab.isReal() });
     } else renderer.render(map.scene, camera);
-    if (!state.size) labels.update(camera, { width: w, height: h });
+    if (!state.size && !state.sky) labels.update(camera, { width: w, height: h });
     fps?.tick(dt);
     requestAnimationFrame(tick);
   }

@@ -285,6 +285,34 @@
 .sv-stage--cb .sv-ab-foot { min-height: 64px; }
 .sv-stage--cb .sv-ab-check { min-width: 140px; }
 
+/* ---------- 북쪽 밤하늘(Phase 7: S08) ---------- */
+.sv-canvas[hidden], .sv-sky-layer[hidden], .sv-star-hit[hidden], .sv-star-next[hidden], .sv-sky-label[hidden] { display: none; }
+.sv-controls--sky { width: auto; right: var(--sv-hud-margin); }
+.sv-controls--sky .sv-time { min-width: 0; }
+.sv-time-now { cursor: default; }
+.sv-sky-layer { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.sv-sky-lines { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.sv-sky-done line { stroke: var(--sv-accent); stroke-width: 3; stroke-linecap: round; }
+.sv-sky-guide line { stroke: var(--sv-text); stroke-opacity: 0.35; stroke-width: 2; stroke-dasharray: 4 10; stroke-linecap: round; }
+/* 선이 0.3초 동안 그어짐 */
+.sv-line--new { stroke-dasharray: 1; stroke-dashoffset: 1; animation: sv-draw 300ms var(--sv-ease) forwards; }
+@keyframes sv-draw { to { stroke-dashoffset: 0; } }
+/* 선화: 완성하면 1초 동안 은은하게 */
+.sv-sky-art { opacity: 0; transition: opacity 1s var(--sv-ease); }
+.sv-sky-art.is-shown { opacity: 1; }
+.sv-sky-art path { fill: none; stroke: var(--sv-accent); stroke-opacity: 0.4; stroke-width: 2; stroke-dasharray: 2 8; stroke-linecap: round; stroke-linejoin: round; }
+.sv-sky-stars .sv-star { left: 0; top: 0; box-shadow: 0 0 8px rgba(255,255,255,.8); transition: opacity var(--sv-dur-fast) linear; }
+.sv-sky-stars .sv-star--polaris { box-shadow: 0 0 14px #fff; }
+.sv-star--wrong { animation: sv-ab-shake var(--sv-dur-shake) var(--sv-ease); }
+.sv-sky-stars .sv-star-hit { left: 0; top: 0; padding: 0; border: none; background: transparent; cursor: pointer; pointer-events: auto; }
+.sv-sky-layer .sv-star-next { left: 0; top: 0; }
+/* 힌트: 다음 별이 1초 주기로 두 번 반짝임 */
+.sv-star-next--blink { animation: sv-blink 1s var(--sv-ease) 2; }
+@keyframes sv-blink { 0%, 100% { opacity: 0.15; } 50% { opacity: 1; } }
+.sv-sky-label { left: 0; top: 0; border-color: var(--sv-accent); }
+.sv-sky-labels .sv-compass { left: 0; top: 0; bottom: auto; }
+.sv-compass--n { color: var(--sv-accent); }
+
 /* ?debug=fps */
 .sv-debug-fps {
   position: absolute; left: var(--sv-hud-margin); bottom: calc(var(--sv-button-h) + var(--sv-gap-xl));
@@ -294,5 +322,7 @@
 @media (prefers-reduced-motion: reduce) {
   .sv-discovery--enter, .sv-discovery--leave, .sv-landing-banner--enter { animation: none; }
   .sv-hud-shake .sv-corner, .sv-hud-shake .sv-hud-top { animation: none; }
-  .sv-hud-num--pop, .sv-jp-shake, .sv-stamp--enter, .sv-jp-fact--enter, .sv-ab-shake { animation: none; }
+  .sv-hud-num--pop, .sv-jp-shake, .sv-stamp--enter, .sv-jp-fact--enter, .sv-ab-shake, .sv-star--wrong { animation: none; }
+  .sv-line--new { animation: none; stroke-dashoffset: 0; }
+  .sv-sky-art { transition: none; }
 }

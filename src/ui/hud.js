@@ -4,6 +4,7 @@
 //   focus      : 위 + 맨 앞 '태양계 지도'(달·혜성·소행성을 따라가며 볼 때)
 //   planet(S04): 태양계 지도 · 이전 행성 · 다음 행성 · 착륙하기 · 고리 찾기 · 이름 보기 · 도감
 //   size  (S07): 실제 크기로 보기 · 태양과 비교하기 · 이름 보기 · 태양계 지도
+//   sky   (S08): 시각 슬라이더 · 힌트 · 마지막 선 지우기 · 주변 불빛 · 이름 보기 · 도감
 // 비행 중에는 목적지 칸이 "○○(으)로 이동 중"으로 바뀌고 하단 버튼이 잠긴다.
 import { el } from './components/dom.js';
 import { icon } from './components/icon.js';
@@ -11,6 +12,7 @@ import { controlButton, toggleButton, setPressed } from './components/buttons.js
 import { panelHandle } from './components/panel.js';
 import { MEMBERS } from '../model/memberProgress.js';
 import { withEuro } from '../model/josa.js';
+import { TIME_MIN, TIME_MAX, TIME_STEP, TIME_DEFAULT, timeLabel } from '../model/skyTime.js';
 
 const SPEEDS = [0.5, 1, 2];
 
@@ -60,8 +62,19 @@ export function createHud(root, handlers) {
   const realButton = toggleButton({ iconName: 'i-scale', label: '실제 크기로 보기', onChange: handlers.onRealSize });
   const sunCompareButton = toggleButton({ iconName: 'i-sun', label: '태양과 비교하기', onChange: handlers.onSunCompare });
   const sizeMapButton = controlButton({ iconName: 'i-map', label: '태양계 지도', onClick: handlers.onMap });
+  // 북쪽 밤하늘(S08): 시각 슬라이더(저녁 6시 ~ 아침 6시)
+  const timeNow = el('label', { class: 'sv-time-now', for: 'sv-time-range' }, timeLabel(TIME_DEFAULT));
+  const timeRange = el('input', { id: 'sv-time-range', class: 'sv-range', type: 'range', min: TIME_MIN, max: TIME_MAX, step: TIME_STEP, value: TIME_DEFAULT });
+  timeRange.addEventListener('input', () => handlers.onTime(Number(timeRange.value)));
+  const timeGroup = el('div', { class: 'sv-glass sv-time' }, [
+    el('div', { class: 'sv-time-head' }, [timeNow, el('span', { class: 'sv-time-ends' }, '저녁 6시 ─ 밤 12시 ─ 아침 6시')]),
+    timeRange
+  ]);
+  const hintButton = controlButton({ iconName: 'i-hint', label: '힌트', onClick: handlers.onHint });
+  const undoButton = controlButton({ iconName: 'i-undo', label: '마지막 선 지우기', onClick: handlers.onUndo });
+  const cityButton = toggleButton({ iconName: 'i-city', label: '주변 불빛', onChange: handlers.onCityLights });
   const controls = el('nav', { class: 'sv-controls', 'aria-label': '조작' },
-    [realButton, sunCompareButton, mapButton, prevButton, nextButton, landButton, ascendButton, playButton, speedGroup, sunButton, ringButton, namesButton, journalButton, sizeMapButton]);
+    [timeGroup, hintButton, undoButton, cityButton, realButton, sunCompareButton, mapButton, prevButton, nextButton, landButton, ascendButton, playButton, speedGroup, sunButton, ringButton, namesButton, journalButton, sizeMapButton]);
   // 착륙 결과 배너(docs/결정기록.md 2026-10-08): HUD 가운데 위쪽
   const bannerIcon = icon('i-land');
   const bannerText = el('span');
@@ -73,7 +86,8 @@ export function createHud(root, handlers) {
     map: [playButton, speedGroup, sunButton, ringButton, namesButton, journalButton],
     focus: [mapButton, playButton, speedGroup, sunButton, ringButton, namesButton, journalButton],
     planet: [mapButton, prevButton, nextButton, landButton, ascendButton, ringButton, namesButton, journalButton],
-    size: [realButton, sunCompareButton, namesButton, sizeMapButton]
+    size: [realButton, sunCompareButton, namesButton, sizeMapButton],
+    sky: [timeGroup, hintButton, undoButton, cityButton, namesButton, journalButton]
   };
   let mode = 'map';
   let neighbors = { prev: null, next: null };
@@ -82,13 +96,15 @@ export function createHud(root, handlers) {
   let landing = null; // null | 'landing'(내려가는 중) | 'landed'(땅 위)
   let memberCount = { count: 0, total: 5 };
   let journalCount = { count: 0, total: 8 };
+  let skyCount = { count: 0, total: 3 };
+  let undoable = false;
   let shownCount = null;
 
   // 진행 칸을 지금 화면에 맞게 쓴다. 같은 칸의 숫자가 늘면 잠깐 커졌다 돌아온다(motion.md '도감').
   function refreshProgress() {
     const planet = mode === 'planet';
-    const { count, total } = planet ? journalCount : memberCount;
-    const key = planet ? '도감' : '구성원 찾기';
+    const { count, total } = planet ? journalCount : mode === 'sky' ? skyCount : memberCount;
+    const key = planet ? '도감' : mode === 'sky' ? '이은 별자리' : '구성원 찾기';
     if (shownCount && shownCount.key === key && count > shownCount.count) {
       progressNum.classList.remove('sv-hud-num--pop');
       void progressNum.offsetWidth;
@@ -101,7 +117,8 @@ export function createHud(root, handlers) {
 
   function refreshDisabled() {
     const off = locked || landing !== null;
-    for (const b of [mapButton, playButton, ...speedButtons, sunButton, ringButton, namesButton, journalButton, handle, realButton, sunCompareButton, sizeMapButton]) b.disabled = off;
+    for (const b of [mapButton, playButton, ...speedButtons, sunButton, ringButton, namesButton, journalButton, handle, realButton, sunCompareButton, sizeMapButton, timeRange, hintButton, cityButton]) b.disabled = off;
+    undoButton.disabled = off || !undoable;
     prevButton.disabled = off || !neighbors.prev;
     nextButton.disabled = off || !neighbors.next;
     landButton.disabled = off || !landable;
@@ -134,11 +151,13 @@ export function createHud(root, handlers) {
       for (const child of controls.children) child.hidden = !SHOWN[mode].includes(child);
       // 행성 탐사 화면(S04)·크기 비교 실험실(S07)에는 구성원 칩과 모형 안내가 없다.
       // 실험실에는 도감 손잡이가 없고, 진행 칸(S07 '문항 3/4')은 미션을 붙이는 Phase 9A에서 채운다.
-      chipBar.hidden = mode === 'planet' || mode === 'size';
-      modelNote.hidden = mode === 'planet' || mode === 'size';
-      handle.hidden = mode === 'size' || handle.hidden;
+      // 북쪽 밤하늘(S08)도 구성원 칩·모형 안내가 없다.
+      chipBar.hidden = mode === 'planet' || mode === 'size' || mode === 'sky';
+      modelNote.hidden = mode === 'planet' || mode === 'size' || mode === 'sky';
+      handle.hidden = mode === 'size' || mode === 'sky' || handle.hidden;
       progressCell.classList.toggle('sv-hud-cell--empty', mode === 'size');
       controls.classList.toggle('sv-controls--size', mode === 'size');
+      controls.classList.toggle('sv-controls--sky', mode === 'sky');
       refreshDisabled();
       refreshProgress();
     },
@@ -178,9 +197,19 @@ export function createHud(root, handlers) {
     // 도감이 펼쳐졌는지. bar: 크롬북에서 접힌 막대(S10b)가 손잡이 대신 보이는지
     setJournalOpen(open, bar = false) {
       setPressed(journalButton, open);
-      handle.hidden = open || bar || mode === 'size';
+      handle.hidden = open || bar || mode === 'size' || mode === 'sky';
     },
     setRealSize(on) { setPressed(realButton, on); },
+    // 시각 슬라이더 표시(표기 + 채워진 막대)
+    setTime(hour) {
+      timeRange.value = hour;
+      timeNow.textContent = timeLabel(hour);
+      timeRange.style.setProperty('--sv-fill', `${((hour - TIME_MIN) / (TIME_MAX - TIME_MIN)) * 100}%`);
+    },
+    setCityLights(on) { setPressed(cityButton, on); },
+    // 지울 선이 있을 때만 '마지막 선 지우기'를 누를 수 있다.
+    setUndoable(on) { undoable = on; refreshDisabled(); },
+    setSkyCount({ count, total }) { skyCount = { count, total }; refreshProgress(); },
     setSunCompare(on) { setPressed(sunCompareButton, on); },
     getMode: () => mode
   };
