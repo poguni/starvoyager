@@ -161,6 +161,10 @@
 /* 크롬북: 아래 패널(S10) */
 .sv-jp.sv-sheet { height: 47%; padding: 0 20px 14px; gap: 6px; border-top-width: 5px; }
 .sv-jp.sv-sheet .sv-journal-head { min-height: 40px; }
+.sv-jp-head-hints { display: none; }
+.sv-jp.sv-sheet .sv-jp-head-hints { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; margin: 0 var(--sv-gap-m); }
+.sv-jp.sv-sheet .sv-jp-head-hints .sv-hint { padding: 5px 12px; gap: 8px; align-items: center; font-size: var(--sv-fs-option); font-weight: 600; }
+.sv-jp.sv-sheet .sv-jp-head-hints .sv-hint svg { width: 20px; height: 20px; }
 .sv-jp.sv-sheet .sv-jp-toc { min-height: 40px; }
 .sv-jp.sv-sheet :is(.sv-jp-form, .sv-jp-done, .sv-jp-toc-grid) { display: grid; gap: 20px; min-height: 0; }
 .sv-jp.sv-sheet .sv-jp-form { grid-template-columns: 1.15fr 0.9fr 1.15fr; }
@@ -223,7 +227,9 @@
 .sv-present-close svg { width: 34px; height: 34px; }
 .sv-stage--cb .sv-present-card { padding: 20px 28px; gap: 14px; }
 .sv-stage--cb .sv-present-card .sv-journal-head { min-height: 100px; }
-.sv-stage--cb .sv-present-card .sv-stamp { width: 96px; height: 96px; }
+.sv-stage--cb .sv-present-card .sv-stamp { width: 112px; height: 112px; }
+.sv-stage--cb .sv-present-card .sv-stamp-big { font-size: var(--sv-fs-section); }
+.sv-stage--cb .sv-present-card .sv-stamp-small { font-size: calc(var(--sv-fs-small) * 0.8); }
 .sv-stage--cb .sv-present-card .sv-record-row { min-height: 54px; grid-template-columns: 130px 1fr; }
 .sv-stage--cb .sv-present-who { left: 32px; top: 28px; }
 .sv-stage--cb .sv-present-close { right: 16px; top: 16px; width: 56px; height: 56px; }

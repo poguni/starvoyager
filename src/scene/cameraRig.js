@@ -5,6 +5,9 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
 const FLIGHT_SECONDS = 2.5; // tokens.css --sv-dur-flight
+// '움직임 줄이기'를 켠 기기에서는 큰 이동을 1초로 줄인다(motion.md).
+const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+const flightSeconds = () => (reducedMotion.matches ? 1 : FLIGHT_SECONDS);
 
 // tokens.css --sv-ease: cubic-bezier(0.45, 0, 0.55, 1)에 가까운 곡선
 export function easeInOut(x) {
@@ -61,14 +64,14 @@ export function createCameraRig(camera, domElement) {
     const dist = distance ?? radius * 4.2;
     return start({
       getTarget, offset: dir.normalize().multiplyScalar(dist), follow: true,
-      limits: limits ?? [radius * 1.6, dist * 4], duration: instant ? 0 : FLIGHT_SECONDS, onArrive
+      limits: limits ?? [radius * 1.6, dist * 4], duration: instant ? 0 : flightSeconds(), onArrive
     });
   }
 
   function flyHome(onArrive) {
     return start({
       getTarget: () => HOME.target, offset: HOME.position.clone().sub(HOME.target), follow: false,
-      limits: [HOME.minDistance, HOME.maxDistance], duration: FLIGHT_SECONDS, onArrive
+      limits: [HOME.minDistance, HOME.maxDistance], duration: flightSeconds(), onArrive
     });
   }
 
