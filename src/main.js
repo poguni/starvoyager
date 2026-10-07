@@ -5,7 +5,6 @@ import * as THREE from 'three';
 import { installIconSprite } from './ui/components/icon.js';
 import { el } from './ui/components/dom.js';
 import { icon } from './ui/components/icon.js';
-import { createDiscoveryCards } from './ui/components/discovery.js';
 import { createSolarMap } from './scene/solarMap.js';
 import { createCameraRig } from './scene/cameraRig.js';
 import { createTextureManager } from './scene/textureManager.js';
@@ -13,10 +12,14 @@ import { createLandingScene } from './scene/landing.js';
 import { pickBody } from './scene/picking.js';
 import { createLabels } from './ui/labels.js';
 import { createHud } from './ui/hud.js';
+import { createJournalPanel } from './ui/journalPanel.js';
+import { createPresentView } from './ui/presentView.js';
 import { createMemberProgress } from './model/memberProgress.js';
 import { bodyById, isExplorable, planetNeighbors, SURFACE, canLand } from './model/world.js';
 import { createLandingLog } from './model/landingLog.js';
 import { landingPlan, stepAt } from './model/landingPlan.js';
+import { createJournal, PLANET_IDS } from './model/journal.js';
+import { loadJournal, saveJournal } from './model/journalStore.js';
 import { createFpsMeter } from './debug/fpsMeter.js';
 
 const params = new URLSearchParams(location.search);
@@ -25,7 +28,11 @@ installIconSprite();
 
 // 크롬북 크기(1440px 이하)에서는 components.css의 .sv-stage--cb 배치를 쓴다.
 const cbQuery = matchMedia('(max-width: 1440px)');
-const syncStageSize = () => app.classList.toggle('sv-stage--cb', cbQuery.matches);
+const stageSizeListeners = [];
+const syncStageSize = () => {
+  app.classList.toggle('sv-stage--cb', cbQuery.matches);
+  stageSizeListeners.forEach((fn) => fn(cbQuery.matches));
+};
 syncStageSize();
 cbQuery.addEventListener('change', syncStageSize);
 
@@ -42,7 +49,8 @@ function startSolarMap() {
   const high = params.get('quality') === 'low' ? '2k' : '4k';
   // orbitPaused: 행성 탐사 중에는 공전을 멈추고 자전(spin)만 계속한다(docs/결정기록.md).
   // landingLocked: 미션이 착륙 버튼을 잠글 때(Phase 9A). landing: 착륙 연출 중인 정보
-  const state = { t: 0, spin: 0, seconds: 0, playing: false, speed: 1, focus: null, orbitPaused: false, landingLocked: false, landing: null };
+  // target: 날아가는 중이면 도착할 천체. presenting: 발표 화면을 보는 중
+  const state = { t: 0, spin: 0, seconds: 0, playing: false, speed: 1, focus: null, target: null, orbitPaused: false, landingLocked: false, landing: null, presenting: false };
 
   // ---- 3D ----
   const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -68,12 +76,19 @@ function startSolarMap() {
   const fade = el('div', { class: 'sv-fade', 'aria-hidden': 'true' }); // 착륙 장면으로 바뀔 때 잠깐 어두워지는 막
   app.append(renderer.domElement, labelLayer, fade);
   const labels = createLabels({ container: labelLayer, map, onPick: goTo });
-  const cards = createDiscoveryCards(app);
-  const progress = createMemberProgress();
-  const landingLog = createLandingLog();
+  // 도감 진행 상태(기획서 10-5): 카드·태양 카드·찾은 구성원·착륙 시도를 브라우저에 저장해 두고 이어서 한다.
+  const saved = loadJournal();
+  const progress = createMemberProgress(Array.isArray(saved.members) ? saved.members : []);
+  const landingLog = createLandingLog(Array.isArray(saved.landed) ? saved.landed.filter((id) => PLANET_IDS.includes(id)) : []);
+  const journal = createJournal({
+    initial: saved,
+    hasLanded: landingLog.hasTried,
+    // 카드 한 장을 완성할 때마다 '도감' 탭 한 행(시트 전송 연결은 Phase 9B)
+    onComplete: (row) => dispatchEvent(new CustomEvent('starvoyager:journal-row', { detail: row }))
+  });
+  const persist = () => saveJournal({ ...journal.serialize(), members: progress.getState().found, landed: landingLog.list() });
   const landingView = createLandingScene();
   let sunNotice = null;
-  let notices = 0;
 
   const hud = createHud(app, {
     onMap: goHome,
@@ -86,11 +101,70 @@ function startSolarMap() {
     onLand: startLanding,
     onAscend: liftOff,
     onNames(on) { labels.setVisible(on); },
-    // 도감은 Phase 5에서 만든다.
-    onJournal() { cards.show(`journal-${notices++}`, '도감은 준비 중이에요'); }
+    onJournal() {
+      if (journalPanel.isOpen()) { journalPanel.setOpen(false); return; }
+      // 행성 탐사 화면에서는 그 천체의 카드, 그 밖에는 목차
+      if (hud.getMode() === 'planet') showCardOf(state.focus);
+      else journalPanel.showToc();
+      journalPanel.setOpen(true);
+    }
   });
   hud.setMode('map');
   progress.subscribe((s) => hud.setMembers(s));
+
+  const journalPanel = createJournalPanel(app, {
+    journal,
+    members: progress,
+    // 목차에서 행성 카드를 누르면 그 행성으로 날아가며 카드가 펼쳐진다.
+    onOpenPlanet(id) {
+      if (rig.isFlying() || state.landing) return;
+      journalPanel.showPlanet(id);
+      goTo(id);
+    },
+    canPresent: (id) => id === state.focus && !rig.isFlying(),
+    onPresent: startPresent,
+    onOpenChange: syncJournalLayout
+  });
+  const present = createPresentView(app, { journal, onClose: endPresent });
+  journal.subscribe(() => { hud.setJournalCount(journal.count(), journal.total); persist(); });
+  hud.setJournalCount(journal.count(), journal.total);
+  progress.subscribe(persist);
+  landingLog.subscribe(persist);
+  stageSizeListeners.push((cb) => { journalPanel.setCompact(cb); syncJournalLayout(); });
+  journalPanel.setCompact(cbQuery.matches);
+
+  function showCardOf(id) {
+    if (id === 'sun') journalPanel.showSun();
+    else if (isExplorable(id)) journalPanel.showPlanet(id);
+  }
+
+  // 도감 펼침에 따라 손잡이·막대와 3D 구도를 맞춘다.
+  function syncJournalLayout() {
+    const bar = cbQuery.matches && hud.getMode() === 'planet';
+    journalPanel.setBarAllowed(bar);
+    hud.setJournalOpen(journalPanel.isOpen(), bar && !journalPanel.isOpen());
+    setFrameTarget();
+  }
+
+  // ---- 발표 화면(S09) ----
+  function startPresent(id) {
+    if (id !== state.focus || rig.isFlying() || state.landing) return;
+    state.presenting = true;
+    app.classList.add('sv-presenting');
+    journalPanel.setHidden(true);
+    labelLayer.hidden = true;
+    present.show(id);
+    setFrameTarget();
+  }
+
+  function endPresent() {
+    state.presenting = false;
+    app.classList.remove('sv-presenting');
+    present.hide();
+    journalPanel.setHidden(false);
+    labelLayer.hidden = false;
+    setFrameTarget();
+  }
 
   function setSunlightBlocked(blocked) {
     map.setSunlight(!blocked);
@@ -100,11 +174,33 @@ function startSolarMap() {
     if (sunNotice) app.append(sunNotice);
   }
 
-  // 행성 탐사 화면에서는 S04처럼 행성을 화면 왼쪽~가운데(오른쪽 도감 자리를 비운 곳)에 둔다.
-  // 크롬북 크기(S10)에서는 도감이 아래에서 올라오므로 가운데에 둔다.
-  const frame = { x: 0, target: 0 };
+  // 화면 구도(카메라 view offset·zoom). 행성 탐사 화면에서 도감이 펼쳐져 있으면
+  //   전자칠판: S04처럼 행성을 화면 왼쪽~가운데(오른쪽 도감 자리를 비운 곳)에 둔다.
+  //   크롬북: S10처럼 아래 패널 위쪽 빈 곳에 조금 작게 둔다.
+  // 도감을 접으면 가운데, 발표 화면(S09)에서는 왼쪽 절반 가운데에 둔다.
+  const frame = { x: 0, y: 0, zoom: 1, tx: 0, ty: 0, tz: 1 };
+  function setFrameTarget({ instant = false } = {}) {
+    const w = app.clientWidth;
+    const h = app.clientHeight;
+    const planet = isExplorable(state.target);
+    let [x, y, z] = [0, 0, 1];
+    if (planet && state.presenting) {
+      // S09처럼 행성이 화면 높이의 절반쯤 되게(토성은 고리까지 보이게 더 작게)
+      x = w / 4;
+      z = state.target === 'saturn' ? 0.55 : 0.82;
+    }
+    else if (planet && journalPanel.isShown() && cbQuery.matches) {
+      // 위 계기판 아래부터 하단 조작 버튼 위까지의 가운데
+      const css = getComputedStyle(document.documentElement);
+      const bottom = h * 0.47 + parseFloat(css.getPropertyValue('--sv-button-h')) + 10;
+      const top = 80;
+      y = h / 2 - (top + h - bottom) / 2;
+      z = 0.62;
+    } else if (planet && journalPanel.isShown()) x = planetFrameOffset();
+    Object.assign(frame, { tx: x, ty: y, tz: z });
+    if (instant) Object.assign(frame, { x, y, zoom: z });
+  }
   function planetFrameOffset() {
-    if (cbQuery.matches) return 0;
     const css = getComputedStyle(document.documentElement);
     const margin = parseFloat(css.getPropertyValue('--sv-hud-margin'));
     const panel = parseFloat(css.getPropertyValue('--sv-panel-w'));
@@ -147,6 +243,9 @@ function startSolarMap() {
         state.focus = id;
         hud.setDestination(body.name);
         hud.setMode(explore ? 'planet' : 'focus', explore ? planetNeighbors(id) : undefined);
+        syncJournalLayout();
+        journalPanel.refresh(); // 도착해야 '발표하기'를 누를 수 있다
+        if (isSun) journal.markSunExplored();
         document.body.dataset.accent = explore ? body.accent : 'default';
         labels.hide(explore ? id : null);
         hud.setLandable(canLand(id) && !state.landingLocked);
@@ -157,9 +256,17 @@ function startSolarMap() {
     progress.find(body.kind);
     textures.want(texturesFor(id));
     if (explore && hud.getMode() !== 'planet') setSunlightBlocked(false); // 행성 탐사에는 태양 빛 가리기가 없다
+    // 도감: 태양계 지도에서 행성 탐사 화면에 들어가면 그 카드로 펼치고, 이전/다음 행성으로 옮길 때는 펼침 상태를 둔다.
+    state.target = id;
+    if (explore) {
+      showCardOf(id);
+      if (hud.getMode() !== 'planet') journalPanel.setOpen(true);
+    } else {
+      journalPanel.setOpen(false);
+      journalPanel.showToc();
+    }
     state.orbitPaused = explore;
-    frame.target = explore ? planetFrameOffset() : 0;
-    if (instant) frame.x = frame.target;
+    setFrameTarget({ instant });
     hud.setFlying(body.name);
     hud.setLocked(true);
   }
@@ -175,8 +282,11 @@ function startSolarMap() {
     });
     if (!started) return;
     state.focus = null;
+    state.target = null;
     state.orbitPaused = false;
-    frame.target = 0;
+    journalPanel.setOpen(false);
+    journalPanel.showToc();
+    setFrameTarget();
     textures.want([]);
     hud.setFlying('태양계 지도');
     hud.setLocked(true);
@@ -205,6 +315,7 @@ function startSolarMap() {
     };
     rig.controls.enabled = false;
     labelLayer.hidden = true;
+    journalPanel.setHidden(true); // 착륙 중에는 도감을 감췄다가 올라오면 다시 보인다
     app.classList.add('sv-hud-shake');
     hud.setLanding('landing');
   }
@@ -232,6 +343,7 @@ function startSolarMap() {
     app.classList.remove('sv-hud-shake');
     hud.hideBanner();
     hud.setLanding(null);
+    journalPanel.setHidden(false);
   }
 
   // 착륙 연출 한 프레임. 3D를 그릴 장면과 카메라를 돌려준다.
@@ -295,7 +407,7 @@ function startSolarMap() {
   let down = null;
   renderer.domElement.addEventListener('pointerdown', (e) => { down = { x: e.clientX, y: e.clientY, at: performance.now() }; });
   renderer.domElement.addEventListener('pointerup', (e) => {
-    if (!down || rig.isFlying() || state.landing) return;
+    if (!down || rig.isFlying() || state.landing || state.presenting) return;
     const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y);
     const quick = performance.now() - down.at < 600;
     down = null;
@@ -312,7 +424,7 @@ function startSolarMap() {
     camera.aspect = w / h;
     landingView.camera.aspect = w / h;
     landingView.camera.updateProjectionMatrix();
-    if (state.focus && isExplorable(state.focus)) frame.target = frame.x = planetFrameOffset();
+    setFrameTarget({ instant: true });
     camera.updateProjectionMatrix();
   }
   addEventListener('resize', resize);
@@ -332,6 +444,17 @@ function startSolarMap() {
     goTo(isExplorable(start) ? start : 'earth', { instant: true });
   }
 
+  // 펼쳐 둔 작성 중 카드의 시간을 더하고(착륙·발표 화면 제외) 5초마다 저장한다.
+  let unsaved = 0;
+  function countCardTime(dt) {
+    const id = journalPanel.activeCardId();
+    if (!id || state.landing || state.presenting || document.visibilityState !== 'visible') return;
+    journal.addTime(id, dt);
+    unsaved += dt;
+    if (unsaved >= 5) { unsaved = 0; persist(); }
+  }
+  addEventListener('pagehide', persist);
+
   let last = performance.now();
   function tick(now) {
     const dt = Math.min((now - last) / 1000, 0.1);
@@ -342,10 +465,15 @@ function startSolarMap() {
     map.update(state.t, state.spin, state.seconds);
     const landingFrame = state.landing ? stepLanding(dt) : null;
     if (!state.landing) rig.update(dt);
-    // 화면 구도 이동(행성을 왼쪽~가운데로)은 비행과 비슷한 빠르기로 부드럽게 따라간다.
-    frame.x += (frame.target - frame.x) * Math.min(1, dt * 2.4);
+    countCardTime(dt);
+    // 화면 구도 이동은 비행과 비슷한 빠르기로 부드럽게 따라간다.
+    const ease = Math.min(1, dt * 2.4);
+    frame.x += (frame.tx - frame.x) * ease;
+    frame.y += (frame.ty - frame.y) * ease;
+    frame.zoom += (frame.tz - frame.zoom) * ease;
     const { clientWidth: w, clientHeight: h } = app;
-    camera.setViewOffset(w, h, frame.x, 0, w, h);
+    camera.zoom = frame.zoom;
+    camera.setViewOffset(w, h, frame.x, frame.y, w, h);
     if (landingFrame) renderer.render(landingFrame.getScene(), landingFrame.camera);
     else renderer.render(map.scene, camera);
     labels.update(camera, { width: w, height: h });

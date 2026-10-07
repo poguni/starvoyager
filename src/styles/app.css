@@ -80,6 +80,154 @@
   0%, 100% { translate: 0 0; } 25% { translate: 1px -1px; } 50% { translate: -1px 1px; } 75% { translate: 1px 1px; }
 }
 
+/* ---------- 탐사 도감(Phase 5: S04·S05·S10·S10b) ---------- */
+.sv-panel-handle[hidden], .sv-jp-bar[hidden], .sv-present[hidden], .sv-jp-bar .sv-tag[hidden] { display: none; }
+.sv-hud-num--pop { display: inline-block; animation: sv-pop var(--sv-dur-shake) var(--sv-ease); }
+@keyframes sv-pop { 40% { transform: scale(1.3); } }
+
+/* 펼치기·접기: 전자칠판은 오른쪽에서, 크롬북은 아래에서 0.35초 미끄러져 들어온다(motion.md '도감'). */
+.sv-jp {
+  transition: transform var(--sv-dur-panel) var(--sv-ease), visibility 0s linear var(--sv-dur-panel);
+  visibility: hidden;
+}
+.sv-jp.is-open { transform: none; visibility: visible; transition: transform var(--sv-dur-panel) var(--sv-ease); }
+.sv-jp.sv-panel { transform: translateX(calc(100% + var(--sv-hud-margin) + var(--sv-gap-l))); }
+.sv-jp.sv-sheet { transform: translateY(calc(100% + var(--sv-gap-l))); }
+.sv-jp.is-open { transform: none; }
+.sv-jp .sv-sheet-grip { display: none; }
+.sv-jp.sv-sheet .sv-sheet-grip { display: block; }
+.sv-jp-body { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: auto; }
+.sv-jp-head-side { display: flex; align-items: center; gap: var(--sv-gap-s); }
+.sv-jp-toc {
+  display: inline-flex; align-items: center; gap: var(--sv-gap-xs); min-height: 48px; background: transparent; cursor: pointer;
+}
+.sv-jp-toc svg { width: 18px; height: 18px; }
+.sv-jp-muted { color: var(--sv-paper-soft); font-weight: 400; }
+.sv-option .sv-box svg { width: 16px; height: 16px; color: var(--sv-on-accent); }
+
+/* 작성 중(S04): 전자칠판은 위에서 아래로 한 줄, 크롬북은 3열(S10) */
+.sv-jp-form, .sv-jp-done, .sv-jp-toc-grid, .sv-jp-sun { flex: 1; display: flex; flex-direction: column; gap: var(--sv-gap-m); }
+.sv-jp-form { gap: var(--sv-gap-s); }
+.sv-jp-done, .sv-jp-sun { gap: var(--sv-gap-l); }
+.sv-jp-toc-grid { gap: var(--sv-gap-l); }
+.sv-jp-col { display: contents; }
+.sv-jp-submit { margin-top: auto; flex: none; }
+.sv-jp-field--ring .sv-options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+/* 틀린 칸: 0.4초 좌우로 작게 흔들림 */
+.sv-jp-shake { animation: sv-jp-shake var(--sv-dur-shake) var(--sv-ease); }
+@keyframes sv-jp-shake {
+  20% { translate: calc(var(--sv-gap-s) * -1) 0; } 40% { translate: var(--sv-gap-s) 0; }
+  60% { translate: calc(var(--sv-gap-xs) * -1) 0; } 80% { translate: var(--sv-gap-xs) 0; }
+}
+
+/* 완성 카드(S05) */
+.sv-jp-stamp-row { display: flex; align-items: center; gap: var(--sv-gap-l); }
+.sv-jp-fact { margin: 0; flex: 1; }
+.sv-jp-rap {
+  display: flex; flex-direction: column; gap: var(--sv-gap-s); padding: 16px 18px;
+  border-radius: var(--sv-radius); border: 1.5px dashed var(--sv-option-line); font-size: var(--sv-fs-option);
+}
+.sv-jp-actions { margin-top: auto; display: flex; gap: var(--sv-gap-m); }
+.sv-jp-actions > * { flex: 1; }
+.sv-jp-actions .sv-secondary svg { width: 26px; height: 26px; }
+.sv-jp-actions > .sv-primary { flex: 1.4; }
+.sv-jp-revealed {
+  flex: none; white-space: nowrap; font-size: var(--sv-fs-small); font-weight: 700; padding: 2px 10px; border-radius: var(--sv-radius-s);
+  border: 1.5px solid var(--sv-warn); background: var(--sv-warn-bg); color: var(--sv-warn-text);
+}
+/* 완성 도장: 0.3초 커졌다가 제자리에 '쿵'(살짝 기울어짐), 이어서 교과서 문장이 0.3초 페이드인 */
+.sv-stamp--enter { animation: sv-stamp-in 300ms var(--sv-ease) both; }
+@keyframes sv-stamp-in {
+  from { opacity: 0; transform: rotate(-12deg) scale(1.7); }
+  70% { opacity: 1; transform: rotate(-12deg) scale(0.94); }
+  to { transform: rotate(-12deg) scale(1); }
+}
+.sv-jp-fact--enter { animation: sv-fade-in 300ms var(--sv-ease) 300ms both; }
+@keyframes sv-fade-in { from { opacity: 0; } }
+
+/* 목차 */
+.sv-jp-members { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--sv-gap-s); }
+.sv-jp-member { cursor: default; justify-content: center; border-style: dashed; color: var(--sv-paper-muted); }
+.sv-jp-member svg { width: 22px; height: 22px; color: var(--sv-accent-strong); }
+.sv-jp-member.is-found { border: var(--sv-border-sel) solid var(--sv-accent); background: var(--sv-accent-soft); font-weight: 700; color: var(--sv-paper-text); }
+.sv-jp-card-btn .sv-tag { flex: none; padding: 2px 10px; }
+
+/* 태양 카드 */
+.sv-jp-sun-row { grid-template-columns: 1fr; }
+.sv-jp-sun > .sv-jp-fact { flex: none; }
+.sv-jp-sun-row svg { width: 26px; height: 26px; color: var(--sv-accent-strong); }
+
+/* 크롬북: 아래 패널(S10) */
+.sv-jp.sv-sheet { height: 47%; padding: 0 20px 14px; gap: 6px; border-top-width: 5px; }
+.sv-jp.sv-sheet .sv-journal-head { min-height: 40px; }
+.sv-jp.sv-sheet .sv-jp-toc { min-height: 40px; }
+.sv-jp.sv-sheet :is(.sv-jp-form, .sv-jp-done, .sv-jp-toc-grid) { display: grid; gap: 20px; min-height: 0; }
+.sv-jp.sv-sheet .sv-jp-form { grid-template-columns: 1.15fr 0.9fr 1.15fr; }
+.sv-jp.sv-sheet :is(.sv-jp-done, .sv-jp-toc-grid) { grid-template-columns: 1fr 1fr; }
+.sv-jp.sv-sheet .sv-jp-col { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+.sv-jp.sv-sheet .sv-options { gap: 6px; }
+.sv-jp.sv-sheet .sv-option { padding: 0 10px; gap: 8px; }
+.sv-jp.sv-sheet .sv-swatch { width: 20px; height: 20px; }
+.sv-jp.sv-sheet :is(.sv-box, .sv-check) { width: 18px; height: 18px; }
+.sv-jp.sv-sheet .sv-jp-field--ring .sv-options { grid-template-columns: 1fr; }
+.sv-jp.sv-sheet .sv-jp-members { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.sv-jp.sv-sheet .sv-record { gap: 6px; }
+.sv-jp.sv-sheet .sv-record-row { min-height: 48px; grid-template-columns: 110px 1fr; }
+.sv-jp.sv-sheet .sv-stamp { width: 104px; height: 104px; }
+.sv-jp.sv-sheet .sv-stamp-big { font-size: var(--sv-fs-title); }
+.sv-jp.sv-sheet .sv-stamp-small { font-size: 10px; }
+.sv-jp.sv-sheet .sv-fact { padding: 10px 14px; }
+.sv-jp.sv-sheet .sv-jp-rap { padding: 8px 14px; gap: 2px; }
+/* 하단 조작 버튼은 펼친 패널·접힌 막대 위에 붙는다(S10·S10b) */
+.sv-stage--cb .sv-controls { transition: bottom var(--sv-dur-panel) var(--sv-ease); }
+.sv-jp-sheet-open .sv-controls { bottom: calc(47% + 10px); }
+.sv-jp-bar-on .sv-controls { bottom: 80px; }
+/* 크롬북 접힌 막대(S10b) */
+.sv-jp-bar {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 64px; padding: 0 20px;
+  display: flex; align-items: center; gap: 14px; border-radius: 12px 12px 0 0;
+  border: none; border-top: 5px solid var(--sv-accent); box-shadow: 0 -12px 40px rgba(0,0,0,.5);
+  width: 100%; text-align: left; cursor: pointer; font-size: var(--sv-fs-body);
+}
+.sv-jp-bar svg { width: 24px; height: 24px; color: var(--sv-paper-muted); }
+.sv-jp-bar .sv-tag { margin-left: 6px; }
+.sv-jp-bar-open { margin-left: auto; display: flex; align-items: center; gap: 6px; color: var(--sv-paper-muted); font-size: var(--sv-fs-section); }
+.sv-jp-bar-open svg { transform: rotate(-90deg); }
+
+/* ---------- 발표 화면(S09) ---------- */
+.sv-presenting :is(.sv-corner, .sv-hud-top, .sv-hud-rule, .sv-controls, .sv-members, .sv-model-note, .sv-panel-handle, .sv-jp-bar, .sv-discovery) { display: none; }
+.sv-present { position: absolute; inset: 0; pointer-events: none; }
+.sv-present > * { pointer-events: auto; }
+.sv-present-who { position: absolute; left: 60px; top: 52px; margin: 0; font-size: var(--sv-fs-body); color: var(--sv-text-muted); }
+.sv-present-who b { color: var(--sv-text); font-size: var(--sv-fs-title); margin-left: 10px; }
+.sv-present-card {
+  position: absolute; left: 52%; right: 3.2%; top: 6.5%; bottom: 6.5%;
+  padding: 34px 44px; gap: 22px; display: flex; flex-direction: column;
+  border-radius: var(--sv-radius); box-shadow: var(--sv-shadow-panel); overflow: auto;
+}
+.sv-present-card .sv-journal-kicker { font-size: var(--sv-fs-body); }
+.sv-present-card .sv-journal-name { font-size: calc(var(--sv-fs-display) * 1.5); }
+.sv-present-card .sv-journal-head { min-height: 140px; }
+.sv-present-card .sv-stamp { width: 130px; height: 130px; flex: none; }
+.sv-present-card .sv-stamp-big { font-size: var(--sv-fs-title); }
+.sv-present-card .sv-record-row { min-height: 74px; font-size: calc(var(--sv-fs-body) * 1.25); grid-template-columns: 200px 1fr; }
+.sv-present-card .sv-record-row dt { font-size: var(--sv-fs-body); }
+.sv-present-card .sv-swatch { width: 34px; height: 34px; }
+.sv-present-card .sv-fact { margin: 0; font-size: calc(var(--sv-fs-body) * 1.25); }
+.sv-present-close {
+  position: absolute; right: 32px; top: 28px; width: 72px; height: 72px; border-radius: var(--sv-radius);
+  background: var(--sv-glass); border: 1px solid var(--sv-glass-line-strong); color: var(--sv-text);
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+}
+.sv-present-close svg { width: 34px; height: 34px; }
+.sv-stage--cb .sv-present-card { padding: 20px 28px; gap: 14px; }
+.sv-stage--cb .sv-present-card .sv-journal-head { min-height: 100px; }
+.sv-stage--cb .sv-present-card .sv-stamp { width: 96px; height: 96px; }
+.sv-stage--cb .sv-present-card .sv-record-row { min-height: 54px; grid-template-columns: 130px 1fr; }
+.sv-stage--cb .sv-present-who { left: 32px; top: 28px; }
+.sv-stage--cb .sv-present-close { right: 16px; top: 16px; width: 56px; height: 56px; }
+
 /* ?debug=fps */
 .sv-debug-fps {
   position: absolute; left: var(--sv-hud-margin); bottom: calc(var(--sv-button-h) + var(--sv-gap-xl));
@@ -89,4 +237,5 @@
 @media (prefers-reduced-motion: reduce) {
   .sv-discovery--enter, .sv-discovery--leave, .sv-landing-banner--enter { animation: none; }
   .sv-hud-shake .sv-corner, .sv-hud-shake .sv-hud-top { animation: none; }
+  .sv-hud-num--pop, .sv-jp-shake, .sv-stamp--enter, .sv-jp-fact--enter { animation: none; }
 }
