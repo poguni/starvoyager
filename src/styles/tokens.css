@@ -1,0 +1,176 @@
+/* =========================================================
+   별빛 탐사선 (Star Voyager) 디자인 토큰 — v1
+   방향: A. 차분한 관제실형 (2026-10-07 확정)
+   ---------------------------------------------------------
+   - 앱 코드에서는 이 변수만 쓴다. 색상값·크기를 코드에 직접 쓰지 않는다.
+   - 강조 색: 앱 최상위 요소의 data-accent 속성으로 바꾼다.
+       <body data-accent="mars">
+   - 글꼴 파일은 src/assets/fonts/에 있다(외부 CDN 없음). design/tokens.css에서
+     옮기며 @font-face 경로만 고쳤다(Pretendard는 하위 집합, scripts/subset-fonts.py).
+   ========================================================= */
+
+@font-face {
+  font-family: 'Pretendard';
+  src: url('../assets/fonts/PretendardVariable.subset.woff2') format('woff2-variations');
+  font-weight: 45 920;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  src: url('../assets/fonts/ibm-plex-mono-latin-500-normal.woff2') format('woff2');
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  src: url('../assets/fonts/ibm-plex-mono-latin-600-normal.woff2') format('woff2');
+  font-weight: 600;
+  font-display: swap;
+}
+
+:root {
+  /* ---------- 바탕(우주) ---------- */
+  --sv-space-900: #060A17;
+  --sv-space-800: #0B1230;
+  --sv-glass:        rgba(10, 16, 34, 0.58);   /* HUD 반투명 패널 */
+  --sv-glass-strong: rgba(10, 16, 34, 0.82);   /* 미션 패널처럼 글이 많은 반투명 패널 */
+  --sv-glass-line:   rgba(255, 255, 255, 0.16);
+  --sv-glass-line-strong: rgba(255, 255, 255, 0.28);
+  --sv-glass-hover:  rgba(255, 255, 255, 0.10);
+  --sv-glass-blur:   10px;
+  --sv-rule:         rgba(255, 255, 255, 0.12);  /* HUD 아래 가는 선 */
+
+  /* ---------- 글씨(어두운 바탕 위) ---------- */
+  --sv-text:       #E8ECF6;
+  --sv-text-muted: rgba(232, 236, 246, 0.72);
+  --sv-text-faint: rgba(232, 236, 246, 0.50);  /* 자리표시·장식용. 읽어야 하는 글에는 쓰지 않는다 */
+
+  /* ---------- 도감 종이(모눈 노트) ---------- */
+  --sv-paper:        #F4F2EC;
+  --sv-paper-grid:   rgba(70, 90, 140, 0.09);
+  --sv-paper-grid-size: 24px;
+  --sv-paper-text:   #1D2333;
+  --sv-paper-muted:  #4A5370;
+  --sv-paper-soft:   #6A7390;
+  --sv-option-bg:    rgba(255, 255, 255, 0.78);
+  --sv-option-line:  #B9C0D2;
+  --sv-stamp:        #B5401F;
+
+  /* ---------- 상태 색 ---------- */
+  --sv-ok:        #1F7A50;   /* 종이 위 '정답' 글씨·테두리 */
+  --sv-ok-bg:     #E3F5EC;
+  --sv-ok-bright: #5ED39B;   /* 어두운 바탕 위 정답 배너(글씨는 --sv-on-ok) */
+  --sv-on-ok:     #04170E;
+  --sv-warn:      #B76A06;   /* 오답 표시(빨강 대신 주황: 색약 배려) */
+  --sv-warn-bg:   #FFF1DC;
+  --sv-warn-text: #5A3A05;
+  --sv-warn-bright: #FFB547; /* 어두운 바탕 위 오답 표시 */
+
+  /* ---------- 글꼴 ---------- */
+  --sv-font:     'Pretendard', 'Noto Sans KR', system-ui, sans-serif;
+  --sv-font-num: 'IBM Plex Mono', ui-monospace, monospace;  /* 계기판 숫자·영문 코드 */
+
+  /* ---------- 글씨 크기: 전자칠판 1920×1080 ---------- */
+  --sv-fs-display:  38px;  /* 목적지·도감 행성 이름 */
+  --sv-fs-question: 30px;  /* 미션 질문 */
+  --sv-fs-title:    26px;  /* 패널 제목, 주요 버튼 */
+  --sv-fs-body:     24px;  /* 본문, 미션 보기, HUD 값 */
+  --sv-fs-control:  22px;  /* 하단 조작 버튼 글자 */
+  --sv-fs-option:   21px;  /* 도감 보기(두 줄까지) */
+  --sv-fs-section:  20px;  /* 도감 칸 제목, HUD 이름표 */
+  --sv-fs-small:    18px;  /* 보조 안내. 이보다 작게 쓰지 않는다 */
+  --sv-fs-hud-num:  30px;  /* HUD 숫자(5/8) */
+  --sv-lh-tight:    1.15;
+  --sv-lh-body:     1.5;
+
+  /* ---------- 크기·간격 ---------- */
+  --sv-touch-min:   48px;
+  --sv-option-h:    48px;   /* 도감 보기 한 칸 */
+  --sv-choice-h:    72px;   /* 미션 보기 한 칸 */
+  --sv-button-h:    104px;  /* 하단 조작 버튼(아이콘 + 글자) */
+  --sv-primary-h:   66px;
+  --sv-hud-h:       68px;
+  --sv-hud-margin:  40px;
+  --sv-icon:        30px;
+  --sv-gap-xs: 4px;
+  --sv-gap-s:  8px;
+  --sv-gap-m:  12px;
+  --sv-gap-l:  24px;
+  --sv-gap-xl: 40px;
+
+  /* ---------- 모양 (A 관제실형) ---------- */
+  --sv-radius:      6px;
+  --sv-radius-s:    4px;
+  --sv-border:      1px;
+  --sv-border-sel:  2.5px;   /* 선택된 보기 테두리 */
+  --sv-corner-size: 44px;    /* 화면 네 모서리 꺾쇠 */
+  --sv-corner-line: 3px;
+  --sv-shadow-panel: 0 18px 50px rgba(0, 0, 0, 0.45);
+
+  /* ---------- 패널 위치(전자칠판) ---------- */
+  --sv-panel-w:   644px;   /* 도감·미션 패널 폭 */
+  --sv-panel-top: 124px;
+  --sv-panel-bottom: 32px;
+
+  /* ---------- 움직임(자세한 내용은 motion.md) ---------- */
+  --sv-ease:       cubic-bezier(0.45, 0, 0.55, 1);
+  --sv-dur-fast:   200ms;
+  --sv-dur-panel:  350ms;
+  --sv-dur-accent: 600ms;
+  --sv-dur-shake:  400ms;
+  --sv-dur-flight: 2500ms;
+
+  /* ---------- 강조 색 기본값(태양계 지도·크기 비교) ---------- */
+  --sv-accent:        #8FA3FF;
+  --sv-on-accent:     #0B1020;
+  --sv-accent-soft:   rgba(143, 163, 255, 0.14);
+  --sv-accent-strong: #4F63D6;
+}
+
+/* =========================================================
+   강조 색 11개
+   --sv-accent        : 어두운 바탕 위 선·글씨, 버튼 바탕
+   --sv-on-accent     : 강조 색 바탕 위 글씨(대비 4.5:1 이상)
+   --sv-accent-soft   : 선택된 보기의 옅은 바탕
+   --sv-accent-strong : 밝은 종이 위 선·체크 표시(종이와 대비 4.5:1 이상)
+   ========================================================= */
+[data-accent="default"] { --sv-accent:#8FA3FF; --sv-on-accent:#0B1020; --sv-accent-soft:rgba(143,163,255,.14); --sv-accent-strong:#4F63D6; }
+[data-accent="sun"]     { --sv-accent:#FFB547; --sv-on-accent:#2A1600; --sv-accent-soft:rgba(255,181,71,.16);  --sv-accent-strong:#9A5A00; }
+[data-accent="mercury"] { --sv-accent:#A8A29E; --sv-on-accent:#16130F; --sv-accent-soft:rgba(168,162,158,.18); --sv-accent-strong:#5C5651; }
+[data-accent="venus"]   { --sv-accent:#E8C468; --sv-on-accent:#2A1F00; --sv-accent-soft:rgba(232,196,104,.18); --sv-accent-strong:#80600A; }
+[data-accent="earth"]   { --sv-accent:#4A90E2; --sv-on-accent:#061325; --sv-accent-soft:rgba(74,144,226,.15);  --sv-accent-strong:#1F5FAE; }
+[data-accent="mars"]    { --sv-accent:#E0603A; --sv-on-accent:#1B0B06; --sv-accent-soft:rgba(224,96,58,.13);   --sv-accent-strong:#B03E1D; }
+[data-accent="jupiter"] { --sv-accent:#D9A066; --sv-on-accent:#241406; --sv-accent-soft:rgba(217,160,102,.16); --sv-accent-strong:#85521C; }
+[data-accent="saturn"]  { --sv-accent:#E6CF8B; --sv-on-accent:#241B03; --sv-accent-soft:rgba(230,207,139,.20); --sv-accent-strong:#7A6014; }
+[data-accent="uranus"]  { --sv-accent:#6FD3D0; --sv-on-accent:#032423; --sv-accent-soft:rgba(111,211,208,.16); --sv-accent-strong:#1B7471; }
+[data-accent="neptune"] { --sv-accent:#3D6BE0; --sv-on-accent:#FFFFFF; --sv-accent-soft:rgba(61,107,224,.14);  --sv-accent-strong:#2A51B8; }
+[data-accent="sky"]     { --sv-accent:#7C8CF8; --sv-on-accent:#0B0F2E; --sv-accent-soft:rgba(124,140,248,.14); --sv-accent-strong:#4655C8; }
+/* 해왕성만 강조 색 위 글씨가 흰색이다(어두운 글씨는 대비 4.5:1 미달). */
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --sv-dur-panel: 0ms; --sv-dur-accent: 0ms; --sv-dur-shake: 0ms; }
+}
+
+/* ---------- 크롬북 1366×768 (화면 폭 1440px 이하) ---------- */
+@media (max-width: 1440px) {
+  :root {
+    --sv-fs-display:  28px;
+    --sv-fs-question: 22px;
+    --sv-fs-title:    20px;
+    --sv-fs-body:     17px;
+    --sv-fs-control:  15px;
+    --sv-fs-option:   16px;
+    --sv-fs-section:  16px;
+    --sv-fs-small:    14px;
+    --sv-fs-hud-num:  22px;
+    --sv-option-h:    48px;
+    --sv-choice-h:    56px;
+    --sv-button-h:    64px;
+    --sv-primary-h:   52px;
+    --sv-hud-h:       52px;
+    --sv-hud-margin:  20px;
+    --sv-icon:        24px;
+    --sv-corner-size: 28px;
+  }
+}

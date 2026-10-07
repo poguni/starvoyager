@@ -1,0 +1,37 @@
+/* =========================================================
+   앱에서만 쓰는 보충 규칙(design/components.css에 없는 것).
+   값은 tokens.css 변수만 쓴다.
+   ========================================================= */
+
+/* 시안의 무대는 1920×1080 고정이지만, 앱은 화면 전체를 쓴다. */
+.sv-stage { width: 100vw; height: 100vh; }
+
+/* 발견 카드: 하단 조작 패널 위, 화면 가운데에서 올라와 3초 머문다(motion.md '발견 카드'·'공통'). */
+.sv-discovery { bottom: calc(var(--sv-button-h) + var(--sv-gap-xl) * 2); }
+.sv-discovery--enter { animation: sv-rise-in var(--sv-dur-fast) var(--sv-ease) both; }
+.sv-discovery--leave { animation: sv-rise-out var(--sv-dur-fast) var(--sv-ease) both; }
+@keyframes sv-rise-in {
+  from { opacity: 0; transform: translate(-50%, var(--sv-gap-s)); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
+@keyframes sv-rise-out {
+  from { opacity: 1; transform: translate(-50%, 0); }
+  to   { opacity: 0; transform: translate(-50%, var(--sv-gap-s)); }
+}
+
+/* 확인 대화 상자 뒤 배경 */
+.sv-dialog-backdrop {
+  position: fixed; inset: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--sv-glass); backdrop-filter: blur(var(--sv-glass-blur));
+}
+
+/* 준비 중 화면(Phase 1) */
+.sv-placeholder {
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--sv-font); font-size: var(--sv-fs-display); font-weight: 700; color: var(--sv-text-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sv-discovery--enter, .sv-discovery--leave { animation: none; }
+}
