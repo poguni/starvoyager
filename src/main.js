@@ -98,6 +98,7 @@ function startSolarMap() {
     high,
     load: (level, file, color) => loader.loadAsync(`${import.meta.env.BASE_URL}textures/${level}/${file}`).then((tex) => {
       if (color) tex.colorSpace = THREE.SRGBColorSpace;
+      if (file === 'sun.jpg') tex.wrapS = THREE.RepeatWrapping; // 태양 셰이더가 질감을 옆으로 흘려 보낸다(materials.js)
       tex.anisotropy = maxAniso;
       return tex;
     }),
@@ -408,6 +409,7 @@ function startSolarMap() {
     if (!sizeTextures.has(file)) {
       sizeTextures.set(file, loader.loadAsync(`${import.meta.env.BASE_URL}textures/2k/${file}`).then((tex) => {
         if (color) tex.colorSpace = THREE.SRGBColorSpace;
+        if (file === 'sun.jpg') tex.wrapS = THREE.RepeatWrapping;
         tex.anisotropy = maxAniso;
         return tex;
       }));
@@ -558,6 +560,7 @@ function startSolarMap() {
 
   const SOLID_TEXT = '단단한 땅에 착륙했어요!';
   const GAS_TEXT = '내려앉을 땅이 없어요. 표면이 기체로 되어 있어요.';
+  const LOOK_TEXT = '화면을 좌우로 끌어 주변을 둘러봐요.';
   const LIFT_SECONDS = 2;
   const FADE_SECONDS = 0.4;
 
@@ -645,6 +648,7 @@ function startSolarMap() {
         L.phase = 'landed';
         hud.hideBanner();
         hud.setLanding('landed');
+        cards.show('look-around', LOOK_TEXT, 'i-hint'); // 처음 한 번만
       }
       const phase = step.name === 'banner' || step.name === 'done' ? 'landed' : step.name;
       landingView.update(phase, step.k, { cloudK, time: state.seconds });
@@ -833,12 +837,21 @@ function startSolarMap() {
 
   // 누르기와 끌기(회전)를 구분한다: 거의 움직이지 않고 손을 떼면 누르기.
   let down = null;
-  renderer.domElement.addEventListener('pointerdown', (e) => { down = { x: e.clientX, y: e.clientY, at: performance.now() }; });
+  renderer.domElement.addEventListener('pointerdown', (e) => { down = { x: e.clientX, y: e.clientY, at: performance.now(), lx: e.clientX, ly: e.clientY }; });
+  // 착륙해 땅에 내려앉은 뒤에는 끌어서 제자리에서 둘러본다(docs/결정기록.md).
+  renderer.domElement.addEventListener('pointermove', (e) => {
+    if (!down || state.landing?.phase !== 'landed') return;
+    landingView.lookAround(e.clientX - down.lx, e.clientY - down.ly);
+    down.lx = e.clientX;
+    down.ly = e.clientY;
+  });
+  renderer.domElement.addEventListener('pointercancel', () => { down = null; });
   renderer.domElement.addEventListener('pointerup', (e) => {
-    if (!down || rig.isFlying() || state.landing || state.presenting || state.size || state.sky || state.pickLocked) return;
-    const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y);
-    const quick = performance.now() - down.at < 600;
-    down = null;
+    const start = down;
+    down = null; // 손을 뗀 뒤 마우스를 움직여도 둘러보기가 되지 않게 늘 비운다
+    if (!start || rig.isFlying() || state.landing || state.presenting || state.size || state.sky || state.pickLocked) return;
+    const moved = Math.hypot(e.clientX - start.x, e.clientY - start.y);
+    const quick = performance.now() - start.at < 600;
     if (moved > 8 || !quick) return;
     const rect = renderer.domElement.getBoundingClientRect();
     // 화면 구도 이동(view offset)은 카메라 투영에 들어 있어 화면 좌표를 그대로 쓴다.

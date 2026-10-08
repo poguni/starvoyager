@@ -8,11 +8,11 @@ export function createDiscoveryCards(container) {
   const shown = new Set();
 
   return {
-    // id가 같은 카드는 다시 띄우지 않는다. 띄웠으면 true.
-    show(id, text) {
+    // id가 같은 카드는 다시 띄우지 않는다. 띄웠으면 true. iconName: 발견이 아닌 안내는 'i-hint'
+    show(id, text, iconName = 'i-star') {
       if (shown.has(id)) return false;
       shown.add(id);
-      const card = el('div', { class: 'sv-discovery sv-discovery--enter', role: 'status' }, [icon('i-star'), text]);
+      const card = el('div', { class: 'sv-discovery sv-discovery--enter', role: 'status' }, [icon(iconName), text]);
       container.append(card);
       setTimeout(() => {
         card.classList.add('sv-discovery--leave');

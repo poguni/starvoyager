@@ -19,6 +19,29 @@ const COLORS = {
 const SUNLIGHT = 3.2;
 const AMBIENT = 0.22; // 밤 쪽도 색이 조금 보이게(태양 빛 가리기를 켜면 0)
 
+// 혜성 핵: 감자처럼 길쭉하고 울퉁불퉁한 덩어리. 구의 각 점을 방향에 따라 정해진 혹들만큼 밀고 당긴다(늘 같은 모양).
+function potatoGeometry(radius) {
+  const geo = new THREE.SphereGeometry(1, 48, 32);
+  const bumps = [ // [방향, 세기, 뾰족함]
+    [[0.8, 0.3, 0.5], 0.22, 3], [[-0.6, 0.7, -0.2], 0.18, 4], [[0.1, -0.9, 0.4], -0.16, 5],
+    [[-0.3, -0.2, -0.9], 0.2, 3], [[0.5, 0.6, -0.6], -0.14, 6], [[-0.9, -0.3, 0.3], 0.15, 4],
+    [[0.2, 0.2, 0.95], -0.12, 8], [[0.6, -0.5, -0.3], 0.1, 10]
+  ].map(([d, a, p]) => [new THREE.Vector3(...d).normalize(), a, p]);
+  const pos = geo.attributes.position;
+  const v = new THREE.Vector3();
+  for (let i = 0; i < pos.count; i++) {
+    v.fromBufferAttribute(pos, i);
+    let r = 1;
+    for (const [d, a, p] of bumps) r += a * Math.max(0, v.dot(d)) ** p;
+    r += 0.025 * Math.sin(v.x * 11 + v.y * 7) * Math.sin(v.z * 9 - v.x * 5); // 잔 울퉁불퉁
+    v.multiplyScalar(r);
+    pos.setXYZ(i, v.x * 1.5, v.y, v.z * 0.8);
+  }
+  geo.computeVertexNormals();
+  geo.scale(radius / 1.3, radius / 1.3, radius / 1.3); // 가장 긴 쪽이 원래 지름보다 조금 크도록
+  return geo;
+}
+
 // 가운데가 밝고 바깥으로 갈수록 투명해지는 원(빛무리·혜성 머리용)
 function radialGlowTexture(stops) {
   const size = 256;
@@ -168,7 +191,7 @@ export function createSolarMap({ fx = true, textures, stars, pixelRatio = 1 }) {
 
   // ---- 혜성: 머리 + 태양 반대쪽으로 뻗는 꼬리 ----
   const comet = new THREE.Group();
-  const nucleus = new THREE.Mesh(new THREE.SphereGeometry(COMET.radius, 16, 12), new THREE.MeshStandardMaterial({ color: COLORS.cometNucleus, roughness: 1 }));
+  const nucleus = new THREE.Mesh(potatoGeometry(COMET.radius), new THREE.MeshStandardMaterial({ color: COLORS.cometNucleus, roughness: 1 }));
   const coma = new THREE.Sprite(new THREE.SpriteMaterial({
     map: radialGlowTexture([[0, 'rgba(235,245,255,0.9)'], [0.3, 'rgba(191,226,255,0.35)'], [1, 'rgba(191,226,255,0)']]),
     blending: THREE.AdditiveBlending, depthWrite: false
@@ -248,6 +271,7 @@ export function createSolarMap({ fx = true, textures, stars, pixelRatio = 1 }) {
 
     const cp = cometPosition(COMET, t);
     comet.position.set(cp.x, cp.y, cp.z);
+    nucleus.rotation.set(seconds * 0.11, seconds * 0.07, seconds * 0.05); // 천천히 굴러가듯 돈다
     // 꼬리는 태양 반대쪽, 태양에 가까울수록 길고 밝다.
     const r = comet.position.length();
     tail.lookAt(comet.position.clone().multiplyScalar(2)); // 태양 반대쪽을 향한다
