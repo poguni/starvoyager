@@ -20,7 +20,9 @@ const TEXT = {
 };
 
 // kind: 'sort' | 'classify'
-export function createArrangeBoard(root, { kind, onDone }) {
+// 미션 안에서 쓸 때(Phase 9A): wrongText(1차 오답 안내, 문항 3-3의 오답 힌트), onNext가 있으면 끝난 뒤
+// '확인' 자리가 nextLabel('다음 문항') 버튼으로 바뀐다.
+export function createArrangeBoard(root, { kind, onDone, wrongText = TEXT.wrong, onNext = null, nextLabel = '다음 문항' }) {
   const task = createArrangeTask(kind);
   const sort = kind === 'sort';
   // 남은 카드는 태양에서 가까운 순서로 둔다(정답 순서가 아니게)
@@ -64,9 +66,11 @@ export function createArrangeBoard(root, { kind, onDone }) {
 
   const check = primaryButton({ iconName: 'i-check', label: '확인', disabled: true, onClick: onCheck });
   check.classList.add('sv-ab-check');
+  const next = onNext && primaryButton({ label: [nextLabel, icon('i-next')], onClick: () => onNext() });
+  if (next) { next.classList.add('sv-ab-check'); next.hidden = true; }
   const notice = el('div', { class: 'sv-notice', role: 'status', hidden: true });
   const board = el('section', { class: 'sv-glass sv-board sv-ab', 'aria-label': sort ? '줄 세우기' : '나누어 담기' }, [
-    el('div', { class: 'sv-ab-head' }, [el('h2', { class: 'sv-ab-q' }, TEXT[kind]), check]),
+    el('div', { class: 'sv-ab-head' }, [el('h2', { class: 'sv-ab-q' }, TEXT[kind]), check, next]),
     ...field,
     el('div', { class: 'sv-ab-foot' }, [tray, notice])
   ]);
@@ -135,7 +139,7 @@ export function createArrangeBoard(root, { kind, onDone }) {
       const ids = sort ? res.wrong.map((i) => zones.slots[i]) : res.wrong;
       ids.forEach((id) => wrong.add(id));
       shake = true;
-      showNotice('wrong', TEXT.wrong);
+      showNotice('wrong', wrongText);
       render();
       return;
     }
@@ -144,6 +148,7 @@ export function createArrangeBoard(root, { kind, onDone }) {
     if (res.result === 'revealed') revealAnswer();
     else render();
     showNotice(res.result, TEXT[res.result]);
+    if (next) { check.hidden = true; next.hidden = false; }
     onDone?.(res.record);
   }
 

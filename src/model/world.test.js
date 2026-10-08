@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { BODIES, PLANETS, SUN, MOON, COMET, ASTEROID_BELT, SIZE_RATIO, bodyById, planetNeighbors, isExplorable } from './world.js';
 import { circularPosition, cometPosition, moonPosition, distance } from './orbit.js';
 import { createMemberProgress, MEMBERS } from './memberProgress.js';
-import { euro, withEuro } from './josa.js';
+import { euro, withEuro, withIeyo } from './josa.js';
 
 describe('천체 목록 (기획서 15장)', () => {
   it('행성은 태양에서 가까운 순서로 8개다', () => {
@@ -154,5 +154,12 @@ describe('조사 으로/로', () => {
     expect(withEuro('태양계 지도')).toBe('태양계 지도로');
     expect(withEuro('천왕성')).toBe('천왕성으로');
     expect(euro('혜성')).toBe('으로');
+  });
+
+  it("'이에요/예요'를 받침에 맞게 붙인다", () => {
+    expect(withIeyo('북극성')).toBe('북극성이에요');
+    expect(withIeyo('4개')).toBe('4개예요');
+    expect(withIeyo('작은곰자리')).toBe('작은곰자리예요');
+    expect(withIeyo('국자 / W 자')).toBe('국자 / W 자예요');
   });
 });

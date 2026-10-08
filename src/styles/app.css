@@ -332,3 +332,65 @@
   .sv-line--new { animation: none; stroke-dashoffset: 0; }
   .sv-sky-art { transition: none; }
 }
+
+/* ---------- 미션 패널(Phase 9A: S06·S06b) ---------- */
+/* 도감 패널 자리(오른쪽). 크롬북 크기에서도 오른쪽에 좁게 둔다(docs/결정기록.md 2026-10-08). */
+.sv-mp {
+  position: absolute; right: var(--sv-hud-margin); top: var(--sv-panel-top); bottom: var(--sv-panel-bottom);
+  width: var(--sv-panel-w); border-radius: var(--sv-radius); box-shadow: var(--sv-shadow-panel);
+  display: flex; flex-direction: column; overflow: hidden;
+  transform: translateX(calc(100% + var(--sv-hud-margin) + var(--sv-gap-l))); visibility: hidden;
+  transition: transform var(--sv-dur-panel) var(--sv-ease), visibility 0s linear var(--sv-dur-panel);
+}
+.sv-mp.is-open { transform: none; visibility: visible; transition: transform var(--sv-dur-panel) var(--sv-ease); }
+.sv-mp-body { flex: 1; min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: 18px; }
+.sv-mp-foot { flex: none; display: flex; flex-direction: column; }
+.sv-mp-foot:empty { display: none; }
+.sv-mp-foot .sv-primary { width: 100%; }
+.sv-mp-days { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.sv-mp-lead { color: var(--sv-text); }
+.sv-mp-done { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: var(--sv-gap-l); }
+.sv-mp-big { font-size: var(--sv-fs-question); font-weight: 700; }
+.sv-stage--cb { --sv-mp-w-cb: 460px; } /* 크롬북 미션 패널 폭 */
+.sv-stage--cb .sv-mp { width: var(--sv-mp-w-cb); padding: 16px 20px 18px; gap: 12px; }
+.sv-stage--cb .sv-mp-body { gap: 12px; }
+.sv-stage--cb .sv-mp :is(.sv-hint-dark, .sv-explain, .sv-reveal) { padding: 12px 14px; }
+.sv-stage--cb .sv-mp .sv-banner-ok { padding: 12px 18px; }
+
+/* 움직임(motion.md '미션') */
+.sv-mp-drop { animation: sv-mp-drop 0.3s var(--sv-ease); } /* 정답 배너: 위에서 내려옴 */
+@keyframes sv-mp-drop { from { opacity: 0; translate: 0 calc(var(--sv-gap-l) * -1); } }
+.sv-mp-shake { animation: sv-jp-shake var(--sv-dur-shake) var(--sv-ease); } /* 고른 보기만 작게 흔들림 */
+.sv-mp-unfold { animation: sv-mp-unfold 0.3s var(--sv-ease); transform-origin: top; } /* 힌트 상자가 펼쳐짐 */
+@keyframes sv-mp-unfold { from { opacity: 0; transform: scaleY(0.6); } }
+.sv-mp-fade { animation: sv-fade-in 0.5s var(--sv-ease); } /* 완성 문장 0.5초 페이드인 */
+
+/* 탐색 단계 안내 띠(왼쪽 위). 태양계 지도에서는 모형 안내 아래 */
+.sv-mp-strip {
+  position: absolute; left: var(--sv-hud-margin); top: var(--sv-panel-top); margin: 0;
+  display: flex; align-items: center; gap: var(--sv-gap-m); padding: 12px 20px;
+  border-left: 4px solid var(--sv-accent); font-size: var(--sv-fs-body); font-weight: 600;
+}
+.sv-mp-strip svg { flex: none; width: 24px; height: 24px; color: var(--sv-accent); }
+.sv-mp-strip[hidden] { display: none; }
+#app:is([data-mode="map"], [data-mode="focus"]) .sv-mp-strip { top: calc(var(--sv-panel-top) + 56px); }
+.sv-presenting .sv-mp-strip { display: none; }
+
+/* 시각 슬라이더 강조(문항 4-2 확인 단계) */
+.sv-time.is-cue { border: 2px solid var(--sv-accent); box-shadow: 0 0 0 4px var(--sv-accent-soft), 0 0 28px var(--sv-accent-soft); }
+.sv-ab-check[hidden] { display: none; }
+
+/* ?debug=missions: 결과 행(기획서 10-3 컬럼) */
+.sv-debug-missions {
+  position: absolute; left: var(--sv-hud-margin); top: calc(var(--sv-panel-top) + 120px); max-width: 52%; max-height: 50%; overflow: auto;
+  padding: var(--sv-gap-s); background: var(--sv-glass-strong); border: var(--sv-border) solid var(--sv-glass-line); border-radius: var(--sv-radius-s);
+  font-family: var(--sv-font-num); font-size: var(--sv-fs-small); color: var(--sv-text-muted); z-index: 5;
+}
+.sv-debug-missions table { border-collapse: collapse; }
+.sv-debug-missions :is(th, td) { padding: 2px 6px; border: var(--sv-border) solid var(--sv-glass-line); text-align: left; white-space: nowrap; }
+
+@media (prefers-reduced-motion: reduce) {
+  .sv-mp-drop, .sv-mp-shake, .sv-mp-unfold, .sv-mp-fade { animation: none; }
+}
+.sv-mp-on .sv-controls--sky { right: calc(var(--sv-hud-margin) + var(--sv-panel-w) + var(--sv-gap-l)); }
+.sv-stage--cb.sv-mp-on .sv-controls { right: calc(var(--sv-hud-margin) + var(--sv-mp-w-cb) + var(--sv-gap-l)); }

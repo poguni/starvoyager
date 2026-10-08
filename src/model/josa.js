@@ -11,3 +11,11 @@ export function euro(word) {
 export function withEuro(word) {
   return word + euro(word);
 }
+
+// '이에요/예요': 받침이 있으면 '이에요', 없으면 '예요'. 예: 북극성이에요, 4개예요
+export function withIeyo(word) {
+  const last = word.trim().at(-1);
+  const code = last ? last.charCodeAt(0) - 0xac00 : -1;
+  const jong = code >= 0 && code <= 11171 ? code % 28 : 0;
+  return word + (jong === 0 ? '예요' : '이에요');
+}

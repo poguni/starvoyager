@@ -1,224 +1,229 @@
-// 미션 진행 상태 기계(3D 장면과 분리, 테스트 가능). 달빛 관측소 엔진을 그대로 가져왔다.
-//   예측이 정답이면 바로 다음 문항으로 넘어간다(기획서 9-1).
-//   예측이 오답이면 ② 확인(조작 잠금 해제, 직접 관찰) → ③ 최종 답(2차 시도)을 거친다.
-// 미션 데이터는 인자(groups)로 받는다. 별빛 탐사선의 미션 데이터는 Phase 9A에서 만든다.
-// 아래 explore-quiz(충돌 구덩이 개수 게이트)·freeplay(자유 탐색)는 달빛 관측소 형식 그대로이며,
-// Phase 9A에서 '조건 이름과 필요한 개수' 게이트와 sort·classify·creative·survey 형식으로 확장한다.
-export function createMissionEngine(groups) {
-  let groupIndex = 0;
-  let itemIndex = 0;
-  let stage = 'idle'; // idle|explore|predict|confirm|summary|freeplay|interest|done
-  let craterCount = 0;
-  let orbitCount = 0;
-  let viewSwitchCount = 0;
-  let shownDiscoveries = new Set();
-  let pendingDiscoveries = [];
-  let pendingPredict = null; // { choiceIndex, correct } — submitPredict와 submitFinal 사이에만 존재
-  let itemStartedAt = 0;
-  let groupStartedAt = 0;
+// 미션 진행 상태 기계(3D 장면·DOM과 분리, 테스트 가능). 달빛 관측소 엔진을 별빛 탐사선에 맞게 넓혔다.
+//   탐사 하나(mission)는 단계(steps)를 차례로 지난다.
+//   intro(요일 도입, 점수 없음) · gate(탐색 조건) · quiz(보기 선택) · sort/classify(끌어다 놓기)
+//   · summary(한 줄 정리) · feel(보고 느끼기, 점수 없음) · creative(창작, 정답 없음) · survey(흥미 체크)
+//
+// 문항 하나의 흐름(기획서 9-1, 달빛 관측소와 같음):
+//   predict → 정답이면 확인 단계 없이 result('정답이에요!') → next()로 다음 단계
+//           → 오답이면 confirm(힌트, 조작 잠금 해제) → submitFinal → result(칭찬 또는 정답 공개)
+//
+// lastFeedback(달빛 관측소 리포트 6-2의 주의점): 방금 띄운 '정답이에요!' 배너가 화면에 그려지기 전에
+// 지워지면 안 된다. 그래서 배너는 result·summaryResult 단계에 머무는 동안 유지하고, 학생이 '다음 문항'을
+// 눌러 next()로 그 단계를 떠날 때만 지운다. 단계를 시작하는 함수(enter)는 lastFeedback을 건드리지 않는다.
+//
+// 결과 행은 기획서 10-3 '미션' 탭 컬럼과 이름·순서가 같다(submitQueue.buildPayload가 받는 모양).
+// 한 줄 정리는 새 행을 만들지 않고 그 탐사의 마지막 문항 행에 붙는다(달빛 관측소와 같음).
+
+export const ROW_KEYS = ['종류', '탐사', '문항', '처음예측', '예측정답여부', '최종답', '최종정답여부', '한줄정리', '한줄정리정답여부', '소요시간', '메모'];
+
+const ITEM_TYPES = new Set(['quiz', 'sort', 'classify']);
+
+// 한 줄 정리 문장의 [ ] 자리에 보기('태양 / 행성')를 차례로 넣는다.
+export function fillSentence(text, option) {
+  const words = option.split(' / ');
+  let i = 0;
+  return text.replace(/\[ \]/g, () => words[i++] ?? '');
+}
+
+// 탐색 조건 이름 → 화면 문구에 쓰는 단위는 데이터(missions.js)가 가진다.
+export const GATE_CONDITIONS = ['members', 'cards', 'constellations'];
+
+export function createMissionEngine(mission, { now = () => Date.now() } = {}) {
+  const steps = mission.steps;
+  const itemSteps = steps.filter((s) => ITEM_TYPES.has(s.type));
+  let stepIndex = -1;
+  let stage = 'idle'; // idle|intro|gate|predict|confirm|arrange|result|summary|summaryResult|feel|creative|survey|done
+  let pendingPredict = null; // { choiceIndex } — 오답 예측과 최종 답 사이에만 있다
   let lastFeedback = null;
+  let stepStartedAt = 0;
+  let gateOpened = false; // 학생이 탐색 조건을 막 채워서 질문이 열렸는지(화면이 잠깐 기다렸다 패널을 띄운다)
+  let felt = false;
+  const days = new Set();
+  const counts = Object.fromEntries(GATE_CONDITIONS.map((c) => [c, 0]));
+  let members = [];
   const results = [];
+  let heldRow = null; // 한 줄 정리를 기다리는 마지막 문항 행
   const listeners = new Set();
+  const rowListeners = new Set();
 
-  function currentGroup() { return groups[groupIndex] ?? null; }
-  function currentItem() { return currentGroup()?.items?.[itemIndex] ?? null; }
+  const step = () => steps[stepIndex] ?? null;
+  const emit = () => { const s = getState(); listeners.forEach((fn) => fn(s)); };
+  const seconds = () => Math.round((now() - stepStartedAt) / 1000);
+  const gateMet = (s) => counts[s.condition] >= s.count;
 
-  function emit() { listeners.forEach((fn) => fn(getState())); }
-
-  function beginItem() {
-    stage = 'predict';
-    pendingPredict = null;
-    itemStartedAt = Date.now();
+  function finalize(row) {
+    rowListeners.forEach((fn) => fn({ ...row }));
   }
 
-  function beginGroup(index) {
-    groupIndex = index;
-    itemIndex = 0;
-    groupStartedAt = Date.now();
-    const group = currentGroup();
-    if (!group) { stage = 'done'; return; }
-    if (group.type === 'explore-quiz') stage = 'explore';
-    else if (group.type === 'freeplay') stage = 'freeplay';
-    else if (group.type === 'survey') stage = 'interest';
-    else beginItem();
+  function enter(index, { byGate = false } = {}) {
+    stepIndex = index;
+    gateOpened = byGate;
+    pendingPredict = null;
+    stepStartedAt = now();
+    const s = step();
+    if (!s) { stage = 'done'; return; }
+    if (s.type === 'gate') {
+      if (gateMet(s)) { enter(index + 1); return; } // 이미 채운 조건(저장된 진행)은 건너뛴다
+      stage = 'gate';
+    } else if (s.type === 'quiz') stage = 'predict';
+    else if (s.type === 'sort' || s.type === 'classify') stage = 'arrange';
+    else stage = s.type; // intro | summary | feel | creative | survey
+    if (s.type === 'feel') felt = false;
+  }
+
+  function addRow(fields) {
+    const row = {
+      종류: '미션', 탐사: mission.id, 문항: null, 처음예측: null, 예측정답여부: null, 최종답: null, 최종정답여부: null,
+      한줄정리: null, 한줄정리정답여부: null, 소요시간: seconds(), 메모: null, ...fields
+    };
+    results.push(row);
+    return row;
+  }
+
+  function memoOf(item) {
+    if (item.memo !== 'members') return null;
+    const label = mission.memberLabels ?? {};
+    const found = members.map((id) => label[id] ?? id).join(', ');
+    return `구성원: ${found} / 요일 도입: ${days.size >= (mission.days?.length ?? 0) ? '완료' : '미완료'}`;
+  }
+
+  // 문항 하나를 결과 행으로 남기고 result 단계로. 다음 단계가 한 줄 정리면 그 행은 정리를 기다린다.
+  function finishItem(item, first, firstCorrect, final, finalCorrect, extra = {}) {
+    const row = addRow({ 문항: item.id, 처음예측: first, 예측정답여부: firstCorrect, 최종답: final, 최종정답여부: finalCorrect, 메모: memoOf(item) });
+    if (steps[stepIndex + 1]?.type === 'summary') heldRow = row;
+    else finalize(row);
+    lastFeedback = { stage: 'final', correct: finalCorrect, firstCorrect, message: item.explanation ?? null, correctText: item.options?.[item.answerIndex] ?? null, ...extra };
+    pendingPredict = null;
+    stage = 'result';
+    emit();
+  }
+
+  function submitPredict(choiceIndex) {
+    const item = step();
+    if (stage !== 'predict' || !item?.options?.[choiceIndex]) return;
+    if (choiceIndex === item.answerIndex) {
+      finishItem(item, item.options[choiceIndex], true, item.options[choiceIndex], true, { choiceIndex });
+      return;
+    }
+    pendingPredict = { choiceIndex };
+    lastFeedback = { stage: 'predict', correct: false, choiceIndex, message: item.hint ?? item.guide ?? null };
+    stage = 'confirm';
+    emit();
+  }
+
+  function submitFinal(choiceIndex) {
+    const item = step();
+    if (stage !== 'confirm' || !pendingPredict || !item?.options?.[choiceIndex]) return;
+    const first = item.options[pendingPredict.choiceIndex];
+    const correct = choiceIndex === item.answerIndex;
+    finishItem(item, first, false, item.options[choiceIndex], correct, { choiceIndex, firstChoiceIndex: pendingPredict.choiceIndex });
+  }
+
+  // 줄 세우기·나누어 담기: arrange.js(createArrangeTask)의 기록 { first, final, correct, attempts }을 받는다.
+  function submitArrange(record) {
+    const item = step();
+    if (stage !== 'arrange' || !record) return;
+    finishItem(item, record.first, record.attempts === 1 && record.correct, record.final, record.correct);
+  }
+
+  function submitSummary(choiceIndex) {
+    const s = step();
+    if (stage !== 'summary' || !s.options[choiceIndex]) return;
+    const correct = choiceIndex === s.answerIndex;
+    const chosen = fillSentence(s.text, s.options[choiceIndex]);
+    const answer = fillSentence(s.text, s.options[s.answerIndex]);
+    if (heldRow) {
+      heldRow.한줄정리 = chosen;
+      heldRow.한줄정리정답여부 = correct;
+      finalize(heldRow);
+      heldRow = null;
+    }
+    lastFeedback = { stage: 'summary', correct, chosen, answer, choiceIndex };
+    stage = 'summaryResult';
+    emit();
+  }
+
+  // 결과·한 줄 정리·보고 느끼기·요일 도입에서 '다음'
+  function next() {
+    if (stage === 'feel' && !felt) return;
+    if (!['result', 'summaryResult', 'feel', 'intro'].includes(stage)) return;
+    lastFeedback = null;
+    enter(stepIndex + 1);
+    emit();
+  }
+
+  // 탐색 조건(구성원 5개, 도감 카드 4장, 별자리 3개)을 공급하는 모듈이 개수를 알린다.
+  function report(condition, count, detail) {
+    if (!(condition in counts)) return;
+    counts[condition] = count;
+    if (condition === 'members' && Array.isArray(detail)) members = [...detail];
+    const s = step();
+    if (stage === 'gate' && s.condition === condition && gateMet(s)) enter(stepIndex + 1, { byGate: true });
+    emit();
+  }
+
+  function pressDay(id) {
+    const s = step();
+    if (stage !== 'intro' || !s.days.some((d) => d.id === id) || days.has(id)) return;
+    days.add(id);
+    emit();
+  }
+
+  function markFelt() {
+    if (stage !== 'feel' || felt) return;
+    felt = true;
+    emit();
+  }
+
+  function submitCreative({ text, memo = null }) {
+    const s = step();
+    if (stage !== 'creative' || !text) return;
+    finalize(addRow({ 문항: s.id, 최종답: text, 메모: memo }));
+    enter(stepIndex + 1);
+    emit();
+  }
+
+  // 흥미 체크: 문항마다 고른 보기 번호. 문항마다 한 행(흥미1~흥미5).
+  function submitSurvey(choiceIndexes) {
+    const s = step();
+    if (stage !== 'survey' || s.questions.some((q, i) => !q.options[choiceIndexes[i]])) return;
+    s.questions.forEach((q, i) => finalize(addRow({ 문항: q.id, 최종답: q.options[choiceIndexes[i]] })));
+    enter(stepIndex + 1);
+    emit();
   }
 
   function start() {
     results.length = 0;
-    craterCount = 0;
-    orbitCount = 0;
-    viewSwitchCount = 0;
-    shownDiscoveries = new Set();
-    pendingDiscoveries = [];
-    beginGroup(0);
+    heldRow = null;
+    lastFeedback = null;
+    days.clear();
+    enter(0);
     emit();
   }
 
-  // ---- 문항(예측 → 확인 → 최종 답) ----
-  function submitPredict(choiceIndex) {
-    const item = currentItem();
-    if (!item || stage !== 'predict') return;
-    const correct = choiceIndex === item.answerIndex;
-    if (correct) {
-      finishItem(item, { choiceIndex, correct: true }, choiceIndex, true);
-    } else {
-      pendingPredict = { choiceIndex, correct: false };
-      lastFeedback = { stage: 'predict', correct: false, message: item.hint ?? null };
-      stage = 'confirm';
-      emit();
-    }
-  }
-
-  function submitFinal(choiceIndex) {
-    const item = currentItem();
-    if (!item || stage !== 'confirm' || !pendingPredict) return;
-    const correct = choiceIndex === item.answerIndex;
-    finishItem(item, pendingPredict, choiceIndex, correct);
-  }
-
-  // 예측/최종 답이 정해진 문항 하나를 결과에 기록하고 다음 문항(또는 한 줄 정리)으로 넘어간다.
-  function finishItem(item, predict, finalChoiceIndex, finalCorrect) {
-    const seconds = Math.round((Date.now() - itemStartedAt) / 1000);
-    results.push({
-      문항: item.id,
-      처음예측: item.options[predict.choiceIndex],
-      예측정답여부: predict.correct,
-      최종답: item.options[finalChoiceIndex],
-      최종정답여부: finalCorrect,
-      한줄정리: null,
-      한줄정리정답여부: null,
-      소요시간: seconds,
-      메모: item.id === '4-2' ? craterCount : null
-    });
-
-    lastFeedback = { stage: 'final', correct: finalCorrect, message: item.explanation, correctText: item.options[item.answerIndex] };
-    pendingPredict = null;
-
-    const group = currentGroup();
-    if (itemIndex < group.items.length - 1) {
-      itemIndex++;
-      beginItem();
-    } else {
-      stage = 'summary';
-    }
-    emit();
-  }
-
-  function submitSummary(choiceIndex) {
-    const group = currentGroup();
-    if (!group || stage !== 'summary') return;
-    const correct = choiceIndex === group.summary.answerIndex;
-    const last = results[results.length - 1];
-    last.한줄정리 = group.summary.options[choiceIndex];
-    last.한줄정리정답여부 = correct;
-    lastFeedback = { stage: 'summary', correct, message: null };
-    beginGroup(groupIndex + 1);
-    // 미션 5(자유 탐색)·흥미 체크는 문항 형식이 아니므로, 앞 미션의 한 줄 정리 배너를 그대로 띄우지 않는다.
-    const nextType = currentGroup()?.type;
-    if (nextType === 'freeplay' || nextType === 'survey') lastFeedback = null;
-    emit();
-  }
-
-  // ---- 미션 4: 표면 탐험(충돌 구덩이 3개를 찾아야 질문이 열린다) ----
-  function reportCraterCount(count) {
-    craterCount = count;
-    const group = currentGroup();
-    if (stage === 'explore' && group?.type === 'explore-quiz' && craterCount >= group.unlockCraterCount) {
-      beginItem();
-    }
-    emit();
-  }
-
-  // ---- 미션 5: 우주 탐험(자유 탐색, 발견 카드) ----
-  function bumpDiscovery(trigger) {
-    const group = currentGroup();
-    if (!group || group.type !== 'freeplay') return;
-    const card = group.discoveries.find((d) => d.trigger === trigger);
-    if (card && !shownDiscoveries.has(card.id)) {
-      shownDiscoveries.add(card.id);
-      pendingDiscoveries.push(card.text);
-    }
-    emit();
-  }
-
-  function reportOrbitComplete() {
-    if (currentGroup()?.type !== 'freeplay') return;
-    orbitCount++;
-    bumpDiscovery('orbit');
-  }
-
-  function reportViewSwitch() {
-    if (currentGroup()?.type !== 'freeplay') return;
-    viewSwitchCount++;
-    bumpDiscovery('viewSwitch');
-  }
-
-  function reportMoonZoom() {
-    bumpDiscovery('zoom');
-  }
-
-  function freeplayReady() {
-    return stage === 'freeplay' && orbitCount >= 1 && viewSwitchCount >= 1;
-  }
-
-  // UI가 새로 뜬 발견 카드 문구를 가져가면서 비운다.
-  function drainDiscoveries() {
-    const list = pendingDiscoveries;
-    pendingDiscoveries = [];
-    return list;
-  }
-
-  function completeExploration() {
-    if (!freeplayReady()) return;
-    const seconds = Math.round((Date.now() - groupStartedAt) / 1000);
-    results.push({
-      문항: '5', 처음예측: null, 예측정답여부: null, 최종답: null, 최종정답여부: null,
-      한줄정리: null, 한줄정리정답여부: null, 소요시간: seconds, 메모: '탐험 완료'
-    });
-    beginGroup(groupIndex + 1);
-    emit();
-  }
-
-  // ---- 마무리. 흥미 체크 ----
-  function submitInterest({ feelingIndex, wantIndex }) {
-    const group = currentGroup();
-    if (!group || stage !== 'interest') return;
-    const seconds = Math.round((Date.now() - groupStartedAt) / 1000);
-    results.push({
-      문항: '흥미', 처음예측: null, 예측정답여부: null,
-      최종답: `${group.feelingOptions[feelingIndex]} · ${group.wantOptions[wantIndex]}`,
-      최종정답여부: null, 한줄정리: null, 한줄정리정답여부: null,
-      소요시간: seconds, 메모: null
-    });
-    stage = 'done';
-    lastFeedback = { stage: 'done', correct: true, message: null };
-    emit();
+  function itemPosition() {
+    // 지금(또는 방금 끝낸) 문항이 몇 번째인지. 문항 앞 단계에서는 0.
+    let n = 0;
+    for (let i = 0; i <= stepIndex && i < steps.length; i++) if (ITEM_TYPES.has(steps[i].type)) n++;
+    return n;
   }
 
   function getState() {
     return {
-      groupIndex, itemIndex, stage,
-      craterCount, orbitCount, viewSwitchCount,
-      lastFeedback,
-      results: results.slice(),
+      missionId: mission.id, stepIndex, stage, step: step(),
+      itemNumber: itemPosition(), itemTotal: itemSteps.length,
+      counts: { ...counts }, days: [...days], felt, gateOpened,
+      lastFeedback: lastFeedback && { ...lastFeedback },
+      results: results.map((r) => ({ ...r })),
       done: stage === 'done'
     };
   }
 
   return {
-    start,
-    submitPredict,
-    submitFinal,
-    submitSummary,
-    reportCraterCount,
-    reportOrbitComplete,
-    reportViewSwitch,
-    reportMoonZoom,
-    freeplayReady,
-    completeExploration,
-    submitInterest,
-    drainDiscoveries,
-    getState,
-    onChange(fn) { listeners.add(fn); return () => listeners.delete(fn); }
+    start, submitPredict, submitFinal, submitArrange, submitSummary, next,
+    report, pressDay, markFelt, submitCreative, submitSurvey, getState,
+    onChange(fn) { listeners.add(fn); return () => listeners.delete(fn); },
+    // 시트로 보낼 수 있게 완성된 결과 행(한 줄 정리가 붙은 뒤)
+    onRow(fn) { rowListeners.add(fn); return () => rowListeners.delete(fn); }
   };
 }
