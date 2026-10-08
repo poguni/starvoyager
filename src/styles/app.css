@@ -496,3 +496,23 @@
 .sv-demo .sv-mp .sv-choice { font-size: calc(var(--sv-fs-body) * 1.2); }
 .sv-demo .sv-mp :is(.sv-hint-dark, .sv-explain, .sv-reveal, .sv-guide) { font-size: calc(var(--sv-fs-body) * 1.15); }
 .sv-demo .sv-mp .sv-sentence { font-size: calc(var(--sv-fs-title) * 1.2); }
+
+/* 혜성·소행성 소개 카드(시안 없음, 유리 패널). 왼쪽 위 모형 안내 아래 */
+.sv-body-info {
+  position: absolute; left: var(--sv-hud-margin); top: calc(var(--sv-panel-top) + var(--sv-gap-xl) + var(--sv-gap-m));
+  width: 620px; padding: var(--sv-gap-m) var(--sv-gap-l) var(--sv-gap-l); box-shadow: var(--sv-shadow-panel);
+  border-left: 4px solid var(--sv-accent);
+}
+.sv-body-info[hidden] { display: none; }
+.sv-body-info-head { display: flex; align-items: center; gap: var(--sv-gap-s); }
+.sv-body-info-head > svg { width: 26px; height: 26px; color: var(--sv-accent); flex: none; }
+.sv-body-info-title { margin: 0; flex: 1; font-size: var(--sv-fs-title); line-height: var(--sv-lh-tight); }
+.sv-body-info-close {
+  width: var(--sv-touch-min); height: var(--sv-touch-min); flex: none; border-radius: var(--sv-radius-s);
+  background: none; border: var(--sv-border) solid var(--sv-glass-line); color: var(--sv-text-muted);
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+}
+.sv-body-info-close svg { width: 22px; height: 22px; }
+.sv-body-info-lines { margin: var(--sv-gap-s) 0 0; padding-left: 1.1em; display: grid; gap: var(--sv-gap-xs); font-size: var(--sv-fs-body); line-height: var(--sv-lh-body); color: var(--sv-text); word-break: keep-all; }
+.sv-stage--cb .sv-body-info { width: 420px; padding: var(--sv-gap-s) var(--sv-gap-m) var(--sv-gap-m); }
+.sv-presenting .sv-body-info { display: none; }
