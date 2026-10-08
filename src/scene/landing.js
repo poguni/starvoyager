@@ -125,6 +125,10 @@ export function createLandingScene() {
   const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 3000);
   let scene = null;
   let state = null; // 지금 착륙 중인 행성의 장면 정보
+  // 땅에 내려앉은 뒤 제자리에서 둘러보기: 좌우(yaw)는 한 바퀴 내내, 위아래(pitch)는 조금만
+  const look = { yaw: 0, pitch: 0 };
+  const PITCH_MAX = THREE.MathUtils.degToRad(15);
+  const dir = new THREE.Vector3();
 
   function disposeScene() {
     scene?.traverse((o) => {
@@ -180,12 +184,15 @@ export function createLandingScene() {
     const ground = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, map: detailTexture(), roughness: 1, metalness: 0 }));
     s.add(ground);
 
-    // 흩어진 돌
+    // 흩어진 돌: 둘러봐도 비어 보이지 않게 착륙 지점 둘레 전체에(바로 발밑은 비움)
+    const ROCKS = 640;
     const rockGeo = new THREE.DodecahedronGeometry(1, 0);
-    const rocks = new THREE.InstancedMesh(rockGeo, new THREE.MeshStandardMaterial({ color: tint.clone().multiplyScalar(0.8), roughness: 1, flatShading: true }), 420);
+    const rocks = new THREE.InstancedMesh(rockGeo, new THREE.MeshStandardMaterial({ color: tint.clone().multiplyScalar(0.8), roughness: 1, flatShading: true }), ROCKS);
     const m = new THREE.Matrix4(); const q = new THREE.Quaternion(); const e = new THREE.Euler();
-    for (let i = 0; i < 420; i++) {
-      const x = (hash(i, 7) - 0.5) * 300; const z = (hash(i, 8) - 0.5) * 300 - 60;
+    for (let i = 0; i < ROCKS; i++) {
+      let x = (hash(i, 7) - 0.5) * 320; let z = (hash(i, 8) - 0.5) * 320;
+      const d = Math.hypot(x, z);
+      if (d < 14) { x *= 14 / Math.max(d, 0.1); z *= 14 / Math.max(d, 0.1); }
       const sc = 0.15 + hash(i, 9) ** 3 * 1.8;
       q.setFromEuler(e.set(hash(i, 10) * 6, hash(i, 11) * 6, hash(i, 12) * 6));
       m.compose(new THREE.Vector3(x, height(x, z) + sc * 0.3, z), q, new THREE.Vector3(sc, sc * 0.7, sc));
@@ -241,6 +248,15 @@ export function createLandingScene() {
     state = surface === 'solid' ? buildSolid(id, image) : buildGas(id);
     scene = state.scene;
     camera.position.copy(state.start);
+    look.yaw = 0;
+    look.pitch = 0;
+  }
+
+  // 끌어서 둘러보기(단단한 땅에 내려앉은 뒤에만). dx, dy: 화면에서 끈 거리(px)
+  function lookAround(dx, dy) {
+    if (state?.kind !== 'solid') return;
+    look.yaw += dx * 0.005;
+    look.pitch = THREE.MathUtils.clamp(look.pitch + dy * 0.003, -PITCH_MAX, PITCH_MAX);
   }
 
   // phase: 'descend' | 'hold' | 'ascend' | 'landed' | 'lift', k: 그 단계 진행(0~1), cloudK: 금성 구름 안에 있는 정도(0~1)
@@ -255,8 +271,13 @@ export function createLandingScene() {
     camera.position.lerpVectors(start, end, p);
 
     if (state.kind === 'solid') {
-      // 내려가며 점점 앞(지평선)을 바라본다
-      camera.lookAt(0, end.y - 2 - (1 - p) * 120, -80 - p * 60);
+      // 내려가며 점점 앞(지평선)을 바라본다. 내려앉은 뒤에는 둘러본 만큼 돌려 보고, 올라갈 때는 먼저 정면으로 돌아온다.
+      const turn = phase === 'landed' ? 1 : phase === 'lift' ? Math.max(0, 1 - k * 3) : 0;
+      dir.set(0, -2 - (1 - p) * 120 - (camera.position.y - end.y), -80 - p * 60 - camera.position.z);
+      dir.applyAxisAngle(THREE.Object3D.DEFAULT_UP, look.yaw * turn);
+      dir.y += Math.hypot(dir.x, dir.z) * Math.tan(look.pitch * turn);
+      camera.lookAt(camera.position.clone().add(dir));
+      if (phase === 'lift' && turn === 0) { look.yaw = 0; look.pitch = 0; }
       if (state.cloud) {
         const f = scene.fog;
         f.color.copy(state.cloud.base).lerp(state.cloud.color, cloudK);
@@ -279,6 +300,7 @@ export function createLandingScene() {
     camera,
     build,
     update,
+    lookAround,
     getScene: () => scene,
     dispose() { disposeScene(); state = null; }
   };

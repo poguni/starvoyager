@@ -32,8 +32,9 @@ export function createSunMaterial(map) {
       varying vec3 vView;
       void main() {
         vec2 wobble = vec2(sin(vUv.y * 60.0 + time * 0.7), cos(vUv.x * 80.0 - time * 0.5)) * 0.0025;
-        vec3 a = texture2D(map, vUv + wobble + vec2(time * 0.0015, 0.0)).rgb;
-        vec3 b = texture2D(map, vUv - wobble * 1.6 + vec2(-time * 0.001, 0.0)).rgb;
+        // 옆으로 흐르는 만큼은 한 바퀴마다 되돌린다(질감은 가로로 반복, main.js의 sun.jpg wrapS).
+        vec3 a = texture2D(map, vUv + wobble + vec2(fract(time * 0.0015), 0.0)).rgb;
+        vec3 b = texture2D(map, vUv - wobble * 1.6 + vec2(-fract(time * 0.001), 0.0)).rgb;
         vec3 c = mix(a, b, 0.35 + 0.15 * sin(time * 0.3));
         float mu = max(dot(normalize(vNormal), normalize(vView)), 0.0);
         c *= 0.55 + 0.6 * pow(mu, 0.45);

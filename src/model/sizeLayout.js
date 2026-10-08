@@ -11,6 +11,11 @@ const EQUAL_FILL = 0.62; // 같은 크기일 때 줄 높이에서 행성이 차�
 
 const lerp = (a, b, t) => a + (b - a) * t;
 
+// 이름 자리 최소 폭: 폭이 좁으면(크롬북에서 미션 패널 옆 + 태양과 비교) 줄여서 행성 몫을 남긴다.
+// 줄이지 않으면 이름 자리 8개만으로 폭이 넘쳐 행성 크기가 0이 된다.
+// 이름 자리 8개와 최소 간격이 폭의 80%를 넘지 않을 만큼만 줄이고, 폭의 절반 몫(한 칸 W/16)보다는 작게 하지 않는다.
+const labelFor = (W, labelW) => Math.min(labelW, Math.max(W * 0.5, W * 0.8 - 4 * (ORDER.length - 1)) / ORDER.length);
+
 // 폭이 좁으면(크롬북에서 태양과 비교할 때 등) 행성 사이 간격을 줄여 행성 몫(폭의 약 45%)을 남긴다.
 const gapFor = (W, labelW, gap) => Math.max(4, Math.min(gap, (W * 0.55 - ORDER.length * labelW) / (ORDER.length - 1)));
 
@@ -43,23 +48,26 @@ function equalRadius(W, H, labelW, labelH, gap) {
 export function sizeLayout({ region, real, sun = 0, labelW = 84, labelH = 64, gap: maxGap = 44 }) {
   const W = region.right - region.left;
   const H = region.bottom - region.top;
-  const g = gapFor(W, labelW, maxGap);
-  const rEq = equalRadius(W, H, labelW, labelH, g);
-  const sReal = realScale(W, H, labelW, labelH, g);
+  const lw = labelFor(W, labelW);
+  const g = gapFor(W, lw, maxGap);
+  const rEq = equalRadius(W, H, lw, labelH, g);
+  const sReal = realScale(W, H, lw, labelH, g);
   const arc = W * SUN_ARC;
   const sunW = W - arc - g * 2;
-  const gSun = gapFor(sunW, labelW, maxGap);
-  const sSun = realScale(sunW, H, labelW, labelH, gSun);
+  const lwSun = labelFor(sunW, labelW);
+  const gSun = gapFor(sunW, lwSun, maxGap);
+  const sSun = realScale(sunW, H, lwSun, labelH, gSun);
   const gap = lerp(g, gSun, sun);
+  const label = lerp(lw, lwSun, sun);
   const s = lerp(sReal, sSun, sun);
   const radii = ORDER.map((id) => lerp(rEq, SIZE_RATIO[id] * s, real));
 
   const left = region.left + (arc + g * 2) * sun;
-  const total = rowWidth(radii, labelW, gap);
+  const total = rowWidth(radii, label, gap);
   const cy = region.top + (H - labelH) / 2;
   let x = left + (region.right - left - total) / 2;
   const items = ORDER.map((id, i) => {
-    const w = Math.max(id === 'saturn' ? radii[i] * SATURN_RING : radii[i] * 2, labelW);
+    const w = Math.max(id === 'saturn' ? radii[i] * SATURN_RING : radii[i] * 2, label);
     const item = { id, r: radii[i], x: x + w / 2, y: cy };
     x += w + gap;
     return item;
@@ -68,5 +76,5 @@ export function sizeLayout({ region, real, sun = 0, labelW = 84, labelH = 64, ga
   // 태양: 실제 비율(지구의 109배) 그대로. 왼쪽 밖에서 들어와 가장자리만 보인다.
   const R = SIZE_RATIO.sun * sSun;
   const sunX = lerp(region.left - R - g * 4, region.left + arc - R, sun);
-  return { items, sun: { r: R, x: sunX, y: cy, edge: sunX + R }, earthRadius: s, equalRadius: rEq };
+  return { items, sun: { r: R, x: sunX, y: cy, edge: sunX + R }, earthRadius: s, equalRadius: rEq, labelWidth: label };
 }

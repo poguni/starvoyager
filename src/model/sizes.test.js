@@ -82,6 +82,34 @@ describe('행성 줄 배치', () => {
   });
 });
 
+describe('좁은 폭에서 태양과 비교', () => {
+  // 크롬북 1366×768에서 오른쪽에 미션 패널이 있을 때(행성 줄 영역 폭 약 840px). 예전에는 행성·태양 크기가 0이 되었다.
+  const narrow = { left: 20, right: 862, top: 92, bottom: 642 };
+
+  it('행성과 태양이 사라지지 않고, 크기 비율과 순서는 그대로다', () => {
+    const l = sizeLayout({ region: narrow, real: 1, sun: 1 });
+    const p = Object.fromEntries(l.items.map((it) => [it.id, it]));
+    expect(p.mercury.r * 2).toBeGreaterThan(1.5);
+    expect(p.jupiter.r * 2).toBeGreaterThan(60);
+    expect(p.jupiter.r / p.earth.r).toBeCloseTo(11.2, 5);
+    expect(l.sun.r / l.earthRadius).toBeCloseTo(109, 5);
+    expect(l.sun.edge).toBeGreaterThan(narrow.left);
+  });
+
+  it('줄이 영역 안에 들어가고, 이름 자리는 서로 겹치지 않는다', () => {
+    for (const region of [narrow, { left: 20, right: 520, top: 92, bottom: 642 }]) {
+      const l = sizeLayout({ region, real: 1, sun: 1 });
+      expect(l.labelWidth).toBeGreaterThan(0);
+      const last = l.items.at(-1);
+      expect(last.x + Math.max(last.r, l.labelWidth / 2)).toBeLessThanOrEqual(region.right + 1);
+      expect(l.items[0].x - l.labelWidth / 2).toBeGreaterThan(l.sun.edge);
+      for (let i = 1; i < l.items.length; i++) {
+        expect(l.items[i].x - l.items[i - 1].x).toBeGreaterThanOrEqual(l.labelWidth - 0.01);
+      }
+    }
+  });
+});
+
 describe('줄 세우기 판정', () => {
   it('정답 순서면 맞고, 틀린 자리 번호를 알려 준다', () => {
     expect(judgeOrder(SIZE_ORDER)).toEqual({ correct: true, wrong: [] });
