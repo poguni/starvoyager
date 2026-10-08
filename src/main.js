@@ -88,6 +88,8 @@ function startSolarMap() {
   const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setPixelRatio(Math.min(devicePixelRatio, low ? 1.5 : 2));
   renderer.domElement.className = 'sv-canvas';
+  // three.js가 넣는 인라인 display:block을 지워 hidden 속성(.sv-canvas[hidden])이 듣게 한다. 밤하늘에서 3D를 숨길 때 필요.
+  renderer.domElement.style.display = '';
   // 우주 배경은 토큰의 가장 짙은 남색(시안 S03~S09의 배경 톤, 실제 우주처럼 아주 어둡게).
   // 블룸을 거칠 때도 같은 색이 되도록 지우기 색이 아닌 장면 배경으로 준다.
   const spaceColor = new THREE.Color(getComputedStyle(document.documentElement).getPropertyValue('--sv-space-900').trim());
