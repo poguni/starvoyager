@@ -123,6 +123,48 @@ describe('flushQueue', () => {
     await mod.flushQueue();
     expect(mod.queueSize()).toBe(0);
   });
+
+  it('다시 보내는 중에 또 불러도 같은 행을 두 번 보내지 않는다', async () => {
+    const { mod } = await freshModule();
+    fetch.mockRejectedValue(new Error('network down'));
+    await mod.trySubmit(student, row);
+    await mod.trySubmit(student, row);
+    fetch.mockClear();
+    fetch.mockResolvedValue({ text: async () => JSON.stringify({ ok: true }) });
+    await Promise.all([mod.flushQueue(), mod.flushQueue(), mod.flushQueue()]);
+    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(mod.queueSize()).toBe(0);
+  });
+
+  it('다시 보내는 동안 새로 실패한 행은 대기열에 남는다', async () => {
+    const { mod } = await freshModule();
+    fetch.mockRejectedValue(new Error('network down'));
+    await mod.trySubmit(student, row);
+    let release;
+    fetch.mockImplementationOnce(() => new Promise((r) => { release = () => r({ text: async () => JSON.stringify({ ok: true }) }); }));
+    const flushing = mod.flushQueue();
+    fetch.mockRejectedValueOnce(new Error('network down'));
+    const later = mod.trySubmit(student, { ...row, 문항: '1-2' }); // 보내는 도중 들어온 행 → 차례를 기다렸다가 실패 → 대기열
+    await new Promise((r) => setTimeout(r, 0)); // 다시 보내기가 첫 행을 보내기 시작할 때까지
+    release();
+    await Promise.all([flushing, later]);
+    expect(mod.queueSize()).toBe(1);
+  });
+
+  it('여러 행을 한꺼번에 보내도 한 번에 하나씩 차례로 보낸다', async () => {
+    const { mod } = await freshModule();
+    let open = 0;
+    let most = 0;
+    fetch.mockImplementation(async () => {
+      open++; most = Math.max(most, open);
+      await new Promise((r) => setTimeout(r, 5));
+      open--;
+      return { text: async () => JSON.stringify({ ok: true }) };
+    });
+    await Promise.all([1, 2, 3].map(() => mod.trySubmit(student, row)));
+    expect(most).toBe(1);
+    expect(fetch).toHaveBeenCalledTimes(3);
+  });
 });
 
 describe('대기열 지속', () => {

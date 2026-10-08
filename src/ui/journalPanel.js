@@ -175,10 +175,12 @@ export function createJournalPanel(app, { journal, members, onOpenPlanet, onPres
       el('div', { class: 'sv-jp-col' }, [recordList(journal, id)]),
       el('div', { class: 'sv-jp-col' }, [
         el('div', { class: 'sv-jp-stamp-row' }, [stampEl(stampNumber(card.order, journal.total), { enter }), fact]),
-        // 행성 랩 자리(S05). 랩 만들기는 Phase 9B
+        // 행성 랩 자리(S05). 탐사 2 창작 C-1에서 만든 랩이 있으면 그 네 줄
         el('div', { class: 'sv-jp-rap' }, [
-          el('span', { class: 'sv-section-title' }, '행성 랩'),
-          el('span', { class: 'sv-jp-muted' }, '탐사 2를 마치면 이 카드로 랩을 만들 수 있어요.')
+          el('span', { class: 'sv-section-title' }, card.rap ? '내가 만든 행성 랩' : '행성 랩'),
+          ...(card.rap
+            ? card.rap.map((t) => el('span', { class: 'sv-jp-rap-line' }, t))
+            : [el('span', { class: 'sv-jp-muted' }, '탐사 2를 마치면 이 카드로 랩을 만들 수 있어요.')])
         ]),
         el('div', { class: 'sv-jp-actions' }, [secondaryButton({ iconName: 'i-prev', label: '도감 목차', onClick: showToc }), present])
       ])

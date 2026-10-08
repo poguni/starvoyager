@@ -255,7 +255,10 @@ describe('보고 느끼기 · 창작 · 흥미 체크', () => {
     const engine = createMissionEngine(fixture());
     toFeel(engine);
     engine.markFelt(); engine.next();
-    engine.submitCreative({ text: '내 이름은 화성.', memo: '화성' });
+    engine.submitCreative({ text: '내 이름은 화성.', memo: '화성', detail: { planet: 'mars' } });
+    expect(engine.getState()).toMatchObject({ stage: 'creativeResult', lastFeedback: { text: '내 이름은 화성.', detail: { planet: 'mars' } } });
+    expect(engine.getState().resumeIndex).toBe(engine.getState().stepIndex + 1); // 창작 행은 이미 보냄
+    engine.next();
     engine.submitSurvey([0, 1]);
     const s = engine.getState();
     expect(s.results.slice(-3)).toMatchObject([
@@ -287,5 +290,39 @@ describe('결과 행(기획서 10-3)', () => {
     engine.next();
     engine.report('cards', 2);
     expect(engine.getState().itemNumber).toBe(1);
+  });
+});
+
+describe('이어서 하기(기획서 10-5)', () => {
+  it('resumeIndex는 아직 행을 보내지 않은 첫 단계, start({ from })은 그 단계부터', () => {
+    const engine = createMissionEngine(fixture());
+    const rows = [];
+    engine.onRow((r) => rows.push(r));
+    toFirstItem(engine);
+    const first = engine.getState().stepIndex;
+    expect(engine.getState().resumeIndex).toBe(first); // 문항을 푸는 중
+    engine.submitPredict(1); // 정답 → 행을 보냄
+    expect(engine.getState().resumeIndex).toBe(first + 1);
+
+    const again = createMissionEngine(fixture());
+    again.start({ from: first + 1 });
+    expect(again.getState().stepIndex).toBe(first + 1);
+  });
+
+  it('한 줄 정리를 기다리는 문항은 그 문항부터 다시 한다', () => {
+    const engine = createMissionEngine(fixture());
+    toFirstItem(engine);
+    engine.submitPredict(1); engine.next(); // 1번째 문항 끝
+    const item = engine.getState().stepIndex;
+    engine.submitPredict(0); // 한 줄 정리 앞 문항 → 행을 붙잡아 둠
+    expect(engine.getState().resumeIndex).toBe(item);
+    engine.next();
+    expect(engine.getState()).toMatchObject({ stage: 'summary', resumeIndex: item });
+  });
+
+  it('요일 도입 기록을 이어받는다', () => {
+    const engine = createMissionEngine(fixture());
+    engine.start({ from: 0, pressedDays: ['mon'] });
+    expect(engine.getState().days).toEqual(['mon']);
   });
 });

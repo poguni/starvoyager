@@ -32,7 +32,7 @@ export function createMissionEngine(mission, { now = () => Date.now() } = {}) {
   const steps = mission.steps;
   const itemSteps = steps.filter((s) => ITEM_TYPES.has(s.type));
   let stepIndex = -1;
-  let stage = 'idle'; // idle|intro|gate|predict|confirm|arrange|result|summary|summaryResult|feel|creative|survey|done
+  let stage = 'idle'; // idle|intro|gate|predict|confirm|arrange|result|summary|summaryResult|feel|creative|creativeResult|survey|done
   let pendingPredict = null; // { choiceIndex } — 오답 예측과 최종 답 사이에만 있다
   let lastFeedback = null;
   let stepStartedAt = 0;
@@ -43,6 +43,7 @@ export function createMissionEngine(mission, { now = () => Date.now() } = {}) {
   let members = [];
   const results = [];
   let heldRow = null; // 한 줄 정리를 기다리는 마지막 문항 행
+  let heldIndex = -1; // 그 문항의 단계 번호
   const listeners = new Set();
   const rowListeners = new Set();
 
@@ -90,7 +91,7 @@ export function createMissionEngine(mission, { now = () => Date.now() } = {}) {
   // 문항 하나를 결과 행으로 남기고 result 단계로. 다음 단계가 한 줄 정리면 그 행은 정리를 기다린다.
   function finishItem(item, first, firstCorrect, final, finalCorrect, extra = {}) {
     const row = addRow({ 문항: item.id, 처음예측: first, 예측정답여부: firstCorrect, 최종답: final, 최종정답여부: finalCorrect, 메모: memoOf(item) });
-    if (steps[stepIndex + 1]?.type === 'summary') heldRow = row;
+    if (steps[stepIndex + 1]?.type === 'summary') { heldRow = row; heldIndex = stepIndex; }
     else finalize(row);
     lastFeedback = { stage: 'final', correct: finalCorrect, firstCorrect, message: item.explanation ?? null, correctText: item.options?.[item.answerIndex] ?? null, ...extra };
     pendingPredict = null;
@@ -137,16 +138,17 @@ export function createMissionEngine(mission, { now = () => Date.now() } = {}) {
       heldRow.한줄정리정답여부 = correct;
       finalize(heldRow);
       heldRow = null;
+      heldIndex = -1;
     }
     lastFeedback = { stage: 'summary', correct, chosen, answer, choiceIndex };
     stage = 'summaryResult';
     emit();
   }
 
-  // 결과·한 줄 정리·보고 느끼기·요일 도입에서 '다음'
+  // 결과·한 줄 정리·창작 완성·보고 느끼기·요일 도입에서 '다음'
   function next() {
     if (stage === 'feel' && !felt) return;
-    if (!['result', 'summaryResult', 'feel', 'intro'].includes(stage)) return;
+    if (!['result', 'summaryResult', 'creativeResult', 'feel', 'intro'].includes(stage)) return;
     lastFeedback = null;
     enter(stepIndex + 1);
     emit();
@@ -175,11 +177,14 @@ export function createMissionEngine(mission, { now = () => Date.now() } = {}) {
     emit();
   }
 
-  function submitCreative({ text, memo = null }) {
+  // 창작: 완성 문장(최종 답)과 고른 행성·별자리(메모). 정답 없음. 완성 문장을 크게 보여 주는 creativeResult를 거친다.
+  // detail: 화면이 다시 쓰는 값(랩 네 줄, 별자리 id 등)
+  function submitCreative({ text, memo = null, detail = null }) {
     const s = step();
     if (stage !== 'creative' || !text) return;
     finalize(addRow({ 문항: s.id, 최종답: text, 메모: memo }));
-    enter(stepIndex + 1);
+    lastFeedback = { stage: 'creative', text, memo, detail };
+    stage = 'creativeResult';
     emit();
   }
 
@@ -192,13 +197,25 @@ export function createMissionEngine(mission, { now = () => Date.now() } = {}) {
     emit();
   }
 
-  function start() {
+  // from: 이어서 할 단계 번호(기획서 10-5, getState().resumeIndex를 저장해 둔 값). pressedDays: 저장해 둔 요일 도입 기록
+  function start({ from = 0, pressedDays = [] } = {}) {
     results.length = 0;
     heldRow = null;
+    heldIndex = -1;
     lastFeedback = null;
     days.clear();
-    enter(0);
+    pressedDays.forEach((d) => days.add(d));
+    enter(Math.max(0, Math.min(from, steps.length)));
     emit();
+  }
+
+  // 다음 차시에 이어서 할 단계: 아직 결과 행을 보내지 않은 첫 단계.
+  // 한 줄 정리를 기다리는 문항 행은 보내지 않았으므로 그 문항부터 다시 한다.
+  function resumeIndex() {
+    if (stage === 'done') return steps.length;
+    if (heldRow) return heldIndex;
+    if (stage === 'result' || stage === 'summaryResult' || stage === 'creativeResult') return stepIndex + 1;
+    return stepIndex;
   }
 
   function itemPosition() {
@@ -215,7 +232,8 @@ export function createMissionEngine(mission, { now = () => Date.now() } = {}) {
       counts: { ...counts }, days: [...days], felt, gateOpened,
       lastFeedback: lastFeedback && { ...lastFeedback },
       results: results.map((r) => ({ ...r })),
-      done: stage === 'done'
+      done: stage === 'done',
+      resumeIndex: resumeIndex()
     };
   }
 

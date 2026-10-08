@@ -23,7 +23,9 @@ export function createHud(root, handlers) {
   // '현재 탐사' 칸(MISSION 0N 탐사 N · 제목). 미션을 하지 않을 때는 자리만 둔다.
   const missionCode = el('span', { class: 'sv-hud-code' });
   const missionTitle = el('span', { class: 'sv-hud-val' });
-  const missionCell = el('div', { class: 'sv-glass sv-hud-cell sv-hud-cell--empty' }, [missionCode, missionTitle]);
+  // 탐사 도중 '탐사 선택'(진행을 저장하고 탐사 선택 화면으로, docs/결정기록.md 2026-10-08)
+  const exitButton = el('button', { type: 'button', class: 'sv-ghost sv-hud-exit', hidden: true, onclick: () => handlers.onMissionSelect?.() }, [icon('i-prev'), '탐사 선택']);
+  const missionCell = el('div', { class: 'sv-glass sv-hud-cell sv-hud-cell--empty' }, [missionCode, missionTitle, exitButton]);
   const destKey = el('span', { class: 'sv-hud-key' }, '목적지');
   const destVal = el('span', { class: 'sv-hud-val' }, '태양계 지도');
   const destCell = el('div', { class: 'sv-glass sv-hud-cell sv-hud-dest', role: 'status' }, [destKey, destVal]);
@@ -136,6 +138,7 @@ export function createHud(root, handlers) {
     const off = locked || landing !== null;
     for (const b of [mapButton, playButton, ...speedButtons, sunButton, ringButton, namesButton, journalButton, handle, realButton, sunCompareButton, sizeMapButton, timeRange, hintButton, cityButton]) b.disabled = off;
     undoButton.disabled = off || !undoable;
+    exitButton.disabled = off; // 비행·착륙 중에는 나가지 않는다
     prevButton.disabled = off || !neighbors.prev;
     nextButton.disabled = off || !neighbors.next;
     landButton.disabled = off || !landable;
@@ -246,6 +249,7 @@ export function createHud(root, handlers) {
       missionCell.classList.toggle('sv-hud-cell--empty', !mission);
       missionCode.textContent = mission?.code ?? '';
       missionTitle.textContent = mission?.title ?? '';
+      exitButton.hidden = !mission;
     },
     // 미션이 장면을 맞출 때 켜고 끄는 버튼 표시도 함께 맞춘다.
     setNames(on) { setPressed(namesButton, on); refreshDisabled(); },

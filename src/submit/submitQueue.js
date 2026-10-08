@@ -82,36 +82,53 @@ async function post(payload) {
   return JSON.parse(text); // 형식이 다르면(예: 로그인 화면 HTML) 여기서 예외가 나고 실패로 처리된다.
 }
 
-// 결과 한 행을 바로 보내 본다. 성공하면 true, 실패하면 대기열에 넣고 false를 돌려준다.
-export async function trySubmit(student, row) {
+// 한 기기에서는 한 번에 한 행씩 차례로 보낸다. 여러 행을 한꺼번에 보내면 웹앱의 잠금(LockService)에서 기다리다
+// 응답 단계가 실패(404)하는 일이 잦았다(실제 시트 점검, docs/결정기록.md 2026-10-08).
+let line = Promise.resolve();
+function inOrder(task) {
+  const run = line.then(task);
+  line = run.catch(() => {});
+  return run;
+}
+
+// 결과 한 행을 보내 본다. 성공하면 true, 실패하면 대기열에 넣고 false를 돌려준다.
+export function trySubmit(student, row) {
   const payload = buildPayload(student, row);
-  try {
-    const data = await post(payload);
-    if (data.ok) return true;
-  } catch {
-    // 네트워크 오류 등 — 아래에서 대기열에 넣는다.
-  }
-  memoryQueue = [...memoryQueue, payload];
-  writeQueue(memoryQueue);
-  notify();
-  return false;
+  return inOrder(async () => {
+    try {
+      const data = await post(payload);
+      if (data.ok) return true;
+    } catch {
+      // 네트워크 오류 등 — 아래에서 대기열에 넣는다.
+    }
+    memoryQueue = [...memoryQueue, payload];
+    writeQueue(memoryQueue);
+    notify();
+    return false;
+  });
 }
 
 // 대기열에 남은 항목을 다시 보낸다. 성공한 항목만 대기열에서 지운다.
-export async function flushQueue() {
-  if (memoryQueue.length === 0) return;
-  const remaining = [];
-  for (const payload of memoryQueue) {
-    try {
-      const data = await post(payload);
-      if (!data.ok) remaining.push(payload);
-    } catch {
-      remaining.push(payload);
+// 다시 보내는 중에 또 부르면(온라인 복귀·탐사 선택 화면·'다시 보내기'가 겹칠 때) 같은 행을 두 번 보내지 않도록 기다린다.
+// 보내는 동안 새로 대기열에 들어온 행은 그대로 남긴다.
+let flushing = null;
+export function flushQueue() {
+  flushing ??= inOrder(async () => {
+    const batch = memoryQueue;
+    const remaining = [];
+    for (const payload of batch) {
+      try {
+        const data = await post(payload);
+        if (!data.ok) remaining.push(payload);
+      } catch {
+        remaining.push(payload);
+      }
     }
-  }
-  memoryQueue = remaining;
-  writeQueue(memoryQueue);
-  notify();
+    memoryQueue = [...remaining, ...memoryQueue.slice(batch.length)];
+    writeQueue(memoryQueue);
+    notify();
+  }).finally(() => { flushing = null; });
+  return flushing;
 }
 
 export function queueSize() { return memoryQueue.length; }

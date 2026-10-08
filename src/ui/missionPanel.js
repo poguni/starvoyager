@@ -7,6 +7,8 @@ import { icon } from './components/icon.js';
 import { primaryButton } from './components/buttons.js';
 import { fillSentence } from '../missions/engine.js';
 import { withIeyo } from '../model/josa.js';
+import { RAP_LINES, rapNameLine } from '../data/rapLines.js';
+import { bodyById } from '../model/world.js';
 
 const CONFIRM_TEXT = '직접 관찰한 뒤 답을 다시 골라요.'; // S06
 const CUE_ICON = {
@@ -17,7 +19,8 @@ const CUE_ICON = {
 // 정답 공개 상자 머리말(S06b B "정답은 4개예요"). '…요'로 끝나는 보기는 조사를 붙이지 않는다.
 const revealKey = (text) => (text.endsWith('요') ? `정답: ${text}` : `정답은 ${withIeyo(text)}`);
 
-export function createMissionPanel(app, { onPredict, onFinal, onSummary, onNext, onDay, onExit }) {
+// donePlanets(): 완성한 행성 카드 id 목록(행성 랩을 고를 수 있는 행성)
+export function createMissionPanel(app, { onPredict, onFinal, onSummary, onNext, onDay, onExit, onCreative, onSurvey, donePlanets = () => [] }) {
   const progressText = el('span');
   const dots = el('span', { class: 'sv-dots', 'aria-hidden': 'true' });
   const body = el('div', { class: 'sv-mp-body' });
@@ -32,6 +35,9 @@ export function createMissionPanel(app, { onPredict, onFinal, onSummary, onNext,
   let open = false;
   let hidden = false;
   let summaryPick = null; // 한 줄 정리에서 고른 보기(문장 완성하기 전)
+  // 창작: target 고른 행성·별자리 id, picks 줄(빈칸)마다 고른 보기 번호, active 지금 고르는 줄
+  let creative = { target: null, picks: [], active: 0, total: 0 };
+  let surveyPicks = [];
   let lastKey = null;
 
   function setOpen(on) {
@@ -85,7 +91,7 @@ export function createMissionPanel(app, { onPredict, onFinal, onSummary, onNext,
     const key = `${state.stepIndex}:${stage}`;
     const fresh = key !== lastKey; // 단계가 바뀐 첫 그리기(등장 연출은 이때만)
     lastKey = key;
-    if (fresh) summaryPick = null;
+    if (fresh) { summaryPick = null; creative = { target: null, picks: [], active: 0, total: 0 }; surveyPicks = []; }
     const n = mission.id;
     body.replaceChildren();
     foot.replaceChildren();
@@ -95,9 +101,12 @@ export function createMissionPanel(app, { onPredict, onFinal, onSummary, onNext,
     if (stage === 'summary' || stage === 'summaryResult') progressText.textContent = `탐사 ${n} · 한 줄 정리`;
     else if (stage === 'intro') progressText.textContent = `탐사 ${n} · ${step.title}`;
     else if (stage === 'feel') progressText.textContent = `탐사 ${n} · 보고 느끼기`;
+    else if (stage === 'creative' || stage === 'creativeResult') progressText.textContent = `탐사 ${n} · ${step.title}`;
+    else if (stage === 'survey') progressText.textContent = `탐사 ${n} · 마무리`;
     else if (stage === 'done') progressText.textContent = `탐사 ${n}`;
     else progressText.textContent = `탐사 ${n} · 문항 ${state.itemNumber}/${state.itemTotal}`;
-    progressDots(stage === 'done' || stage.startsWith('summary') || stage === 'feel' ? state.itemTotal : state.itemNumber, state.itemTotal);
+    const after = ['done', 'summary', 'summaryResult', 'feel', 'creative', 'creativeResult', 'survey'].includes(stage);
+    progressDots(after ? state.itemTotal : state.itemNumber, state.itemTotal);
 
     if (stage === 'intro') {
       body.append(
@@ -178,10 +187,133 @@ export function createMissionPanel(app, { onPredict, onFinal, onSummary, onNext,
       return;
     }
 
+    if (stage === 'creative') {
+      if (step.kind === 'rap') renderRap(state, mission);
+      else renderNaming(state, mission, step);
+      return;
+    }
+
+    if (stage === 'creativeResult') {
+      // 완성한 랩·문장을 크게(한 줄 정리 완성과 같은 0.5초 페이드인)
+      const lines = fb.detail?.lines ?? [fb.text];
+      body.append(el('div', { class: `sv-mp-done${fresh ? ' sv-mp-fade' : ''}` }, [
+        el('span', { class: 'sv-mp-kicker' }, [icon('i-star'), step.kind === 'rap' ? '내가 만든 행성 랩' : `새 이름을 붙인 ${fb.memo}`]),
+        el('div', { class: 'sv-mp-lines' }, lines.map((t) => el('p', { class: 'sv-sentence sv-mp-big' }, t)))
+      ]));
+      foot.append(primaryButton({ label: ['다음', icon('i-next')], onClick: onNext }));
+      return;
+    }
+
+    if (stage === 'survey') {
+      for (const [qi, q] of step.questions.entries()) {
+        body.append(
+          el('h2', { class: step.questions.length > 1 ? 'sv-question sv-mp-q2' : 'sv-question' }, q.text),
+          el('div', { class: 'sv-choices' }, q.options.map((text, i) => {
+            const b = choiceButton(text, i, { pressed: surveyPicks[qi] === i, onPick: (index) => { surveyPicks[qi] = index; render(state, mission); } });
+            if (q.emoji) b.querySelector('.sv-choice-key').replaceWith(el('span', { class: 'sv-choice-key sv-mp-emoji', 'aria-hidden': 'true' }, q.emoji[i]));
+            return b;
+          }))
+        );
+      }
+      const ready = step.questions.every((_, i) => surveyPicks[i] !== undefined);
+      foot.append(primaryButton({ label: ['다음', icon('i-next')], disabled: !ready, onClick: () => onSurvey([...surveyPicks]) }));
+      return;
+    }
+
     if (stage === 'done') {
       body.append(el('div', { class: `sv-banner-ok${fresh ? ' sv-mp-drop' : ''}`, role: 'status' }, [icon('i-check'), `탐사 ${n}${'을를을를'[n - 1]} 마쳤어요!`]));
       foot.append(primaryButton({ label: '탐사 끝내기', onClick: onExit }));
     }
+  }
+
+  // 창작 고르기 화면 공통: 처음에는 고를 대상(행성·별자리), 고른 뒤에는 미리 보기 + 지금 줄(빈칸)의 보기
+  function pickTarget(question, targets, state, mission) {
+    body.append(
+      el('h2', { class: 'sv-question' }, question),
+      el('div', { class: 'sv-choices' }, targets.map((t, i) => choiceButton(t.name, i, {
+        onPick: () => { creative = { target: t.id, picks: [], active: 0, total: 0 }; render(state, mission); }
+      })))
+    );
+  }
+
+  function againButton(label, state, mission) {
+    const b = el('button', { type: 'button', class: 'sv-ghost sv-mp-again' }, [icon('i-prev'), label]);
+    b.addEventListener('click', () => { creative = { target: null, picks: [], active: 0, total: 0 }; render(state, mission); });
+    return b;
+  }
+
+  // 지금 줄(빈칸)의 보기. 고르면 아직 고르지 않은 다음 줄로 옮겨 간다.
+  function lineChoices(options, state, mission, { grid = false } = {}) {
+    return el('div', { class: grid ? 'sv-choices sv-mp-grid' : 'sv-choices' }, options.map((text, i) => choiceButton(text, i, {
+      pressed: creative.picks[creative.active] === i,
+      onPick: (index) => {
+        creative.picks[creative.active] = index;
+        const empty = Array.from({ length: creative.total }, (_, k) => k).find((k) => creative.picks[k] === undefined);
+        if (empty !== undefined) creative.active = empty;
+        render(state, mission);
+      }
+    })));
+  }
+
+  // 미리 보기 줄: 누르면 그 줄을 다시 고른다.
+  function previewLine(content, k, state, mission) {
+    const b = el('button', { type: 'button', class: 'sv-mp-line', 'aria-pressed': k === creative.active ? 'true' : 'false' }, content);
+    b.addEventListener('click', () => { creative.active = k; render(state, mission); });
+    return b;
+  }
+
+  // C-1 행성 랩(9-3): 완성한 카드 하나 → 2~4줄
+  function renderRap(state, mission) {
+    if (!creative.target) {
+      pickTarget('완성한 행성 카드를 하나 골라요.', donePlanets().map((id) => ({ id, name: bodyById(id).name })), state, mission);
+      return;
+    }
+    const id = creative.target;
+    const name = bodyById(id).name;
+    const lines = RAP_LINES[id];
+    creative.total = lines.length;
+    const chosen = lines.map((opts, k) => (creative.picks[k] === undefined ? null : opts[creative.picks[k]]));
+    body.append(
+      el('div', { class: 'sv-mp-rap' }, [
+        el('div', { class: 'sv-mp-rap-head' }, [el('span', { class: 'sv-mp-kicker' }, [icon('i-star'), `${name} 랩`]), againButton('다른 행성', state, mission)]),
+        el('p', { class: 'sv-mp-line is-fixed' }, rapNameLine(name)),
+        ...chosen.map((t, k) => previewLine(t ?? el('span', { class: 'sv-blank' }, `${k + 2}줄`), k, state, mission))
+      ]),
+      el('span', { class: 'sv-mp-sub' }, `${creative.active + 2}줄을 골라요`),
+      lineChoices(lines[creative.active], state, mission)
+    );
+    foot.append(primaryButton({
+      label: '랩 완성하기', disabled: !chosen.every(Boolean),
+      onClick: () => {
+        const all = [rapNameLine(name), ...chosen];
+        onCreative({ text: all.join(' '), memo: name, detail: { planet: id, lines: all } });
+      }
+    }));
+  }
+
+  // C-2 새 별자리 이름(9-5): 이어 그린 별자리 하나 → 빈칸 두 개
+  function renderNaming(state, mission, step) {
+    if (!creative.target) {
+      pickTarget('이어 그린 별자리를 하나 골라요.', step.constellations, state, mission);
+      return;
+    }
+    const target = step.constellations.find((c) => c.id === creative.target);
+    creative.total = step.blanks.length;
+    const words = step.blanks.map((b, k) => (creative.picks[k] === undefined ? null : b.options[creative.picks[k]]));
+    body.append(
+      el('div', { class: 'sv-mp-rap' }, [
+        el('div', { class: 'sv-mp-rap-head' }, [el('span', { class: 'sv-mp-kicker' }, [icon('i-star'), target.name]), againButton('다른 별자리', state, mission)]),
+        ...step.blanks.map((b, k) => previewLine(sentence(b.text, words[k]), k, state, mission))
+      ]),
+      lineChoices(step.blanks[creative.active].options, state, mission, { grid: true })
+    );
+    foot.append(primaryButton({
+      label: '이름 붙이기', disabled: !words.every(Boolean),
+      onClick: () => {
+        const lines = step.blanks.map((b, k) => fillSentence(b.text, words[k]));
+        onCreative({ text: lines.join(' '), memo: target.name, detail: { constellation: target.id, lines } });
+      }
+    }));
   }
 
   return {
