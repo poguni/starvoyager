@@ -178,7 +178,7 @@ function startSolarMap() {
     state.names = on;
     hud.setNames(on);
     labels.setVisible(on);
-    sizeLabels?.setVisible(on);
+    sizeLabels?.setVisible(on && Boolean(state.size)); // 크기 비교 실험실 이름표는 실험실 안에서만
     starLinker?.setNamesVisible(on);
   }
 
