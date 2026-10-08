@@ -17,6 +17,7 @@ import { createPresentView } from './ui/presentView.js';
 import { createSizeLabels } from './ui/sizeLabels.js';
 import { createArrangeBoard } from './ui/arrangeBoard.js';
 import { createDiscoveryCards } from './ui/components/discovery.js';
+import { createBodyInfo } from './ui/bodyInfo.js';
 import { createSizeLab } from './scene/sizeLab.js';
 import { createBloom } from './scene/bloom.js';
 import { createNorthSky } from './scene/northSky.js';
@@ -359,9 +360,11 @@ function startSolarMap() {
         labels.hide(explore ? id : null);
         hud.setLandable(canLand(id) && !state.landingLocked);
         hud.setLocked(false);
+        bodyInfo.show(id);
       }
     });
     if (!started) return;
+    bodyInfo.hide();
     progress.find(body.kind);
     textures.want(texturesFor(id));
     if (explore && hud.getMode() !== 'planet') setSunlightBlocked(false); // 행성 탐사에는 태양 빛 가리기가 없다
@@ -392,6 +395,7 @@ function startSolarMap() {
       hud.setLocked(false);
     });
     if (!started) return;
+    bodyInfo.hide();
     state.focus = null;
     state.target = null;
     state.orbitPaused = false;
@@ -406,6 +410,7 @@ function startSolarMap() {
 
   // ---- 크기 비교 실험실(S07, 기획서 5-3 ④) ----
   const cards = createDiscoveryCards(app);
+  const bodyInfo = createBodyInfo(app); // 혜성·소행성 소개(docs/결정기록.md)
   const sizeTextures = new Map(); // 실험실은 행성 8개를 한꺼번에 보므로 2K 질감을 쓴다
   function loadSizeTexture(file, { color = true } = {}) {
     if (!sizeTextures.has(file)) {
@@ -427,6 +432,7 @@ function startSolarMap() {
     sizeLab.scene.background = spaceColor;
     sizeLabels ??= createSizeLabels(app);
     state.size = { real: false, sun: false, board: null };
+    bodyInfo.hide();
     setSunlightBlocked(false);
     journalPanel.setOpen(false);
     journalPanel.setHidden(true);
@@ -519,6 +525,7 @@ function startSolarMap() {
       starLink.subscribe((s) => { hud.setSkyCount(s); hud.setUndoable(starLink.canUndo()); engine?.report('constellations', s.count); });
     }
     state.sky = { hour };
+    bodyInfo.hide();
     setSunlightBlocked(false);
     journalPanel.setOpen(false);
     renderer.domElement.hidden = true;
@@ -908,11 +915,13 @@ function startSolarMap() {
       afterRegister();
     }
   });
+  let sceneEntry = false; // 뒤로 가기용 방문 기록 한 칸을 넣어 두었는지(아래 pushSceneEntry)
   const select = createMissionSelect(screen, {
     missions: MISSIONS,
     onPick(id) {
       select.hide();
       screen.hidden = true;
+      pushSceneEntry();
       startMission(id);
     },
     onSwitch() {
@@ -930,6 +939,9 @@ function startSolarMap() {
 
   // 탐사 선택 화면: 뒤의 장면은 태양계 지도로 돌려 두고 그리지 않는다.
   function showSelect() {
+    // 화면 버튼으로 나왔으면 넣어 둔 방문 기록 한 칸도 되돌려, 다음 뒤로 가기가 앱 밖으로 나가게 한다.
+    if (sceneEntry) { sceneEntry = false; history.back(); }
+    bodyInfo.hide();
     if (state.presenting) endPresent();
     if (state.sky) exitSky();
     if (state.size) exitSizeLab();
@@ -945,10 +957,26 @@ function startSolarMap() {
   const urlMission = missionById(Number(params.get('mission')));
   const urlScene = urlMission || params.has('view') || params.get('debug') === 'arrange';
   function afterRegister() {
-    if (urlMission) { screen.hidden = true; startMission(urlMission.id); }
-    else if (urlScene) screen.hidden = true;
+    if (urlMission) { screen.hidden = true; pushSceneEntry(); startMission(urlMission.id); }
+    else if (urlScene) { screen.hidden = true; pushSceneEntry(); }
     else showSelect();
   }
+
+  // 브라우저 뒤로 가기(docs/결정기록.md): 장면에 들어갈 때 방문 기록에 한 칸(주소는 그대로)을 넣어 두고,
+  // 뒤로 가면 '탐사 선택' 버튼과 같이 진행을 저장하고 탐사 선택 화면으로 간다. 비행·착륙 연출(내려가기·올라가기) 중에는 그 자리에 머문다.
+  function pushSceneEntry() {
+    if (sceneEntry) return;
+    history.pushState({ sv: 'scene' }, '');
+    sceneEntry = true;
+  }
+  addEventListener('popstate', () => {
+    if (!sceneEntry) return;
+    if (state.landing?.phase === 'landed') endLanding(); // 땅에 내려앉아 둘러보는 중이면 착륙을 끝내고 나간다
+    if (rig.isFlying() || state.landing) { history.pushState({ sv: 'scene' }, ''); return; }
+    sceneEntry = false;
+    if (mission) leaveMission();
+    else showSelect();
+  });
   if (!demo && !student) { screen.hidden = false; gate.show(); }
   else afterRegister();
 
