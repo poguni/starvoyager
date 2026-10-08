@@ -4,16 +4,16 @@ const STORAGE_KEY = 'starvoyager:student';
 
 export function validateStudentInfo({ grade, cls, number, name }) {
   const g = Number(grade);
-  if (!Number.isInteger(g) || g < 1 || g > 6) return { ok: false, field: 'grade', error: '학년은 1~6 숫자로 써 주세요.' };
+  if (!Number.isInteger(g) || g < 1 || g > 6) return { ok: false, field: 'grade', error: '학년은 1~6 숫자로 적어 주세요.' };
 
   const c = Number(cls);
-  if (!Number.isInteger(c) || c < 1 || c > 20) return { ok: false, field: 'cls', error: '반은 1~20 숫자로 써 주세요.' };
+  if (!Number.isInteger(c) || c < 1 || c > 20) return { ok: false, field: 'cls', error: '반은 1~20 숫자로 적어 주세요.' };
 
   const n = Number(number);
-  if (!Number.isInteger(n) || n < 1 || n > 40) return { ok: false, field: 'number', error: '번호는 1~40 숫자로 써 주세요.' };
+  if (!Number.isInteger(n) || n < 1 || n > 40) return { ok: false, field: 'number', error: '번호는 1~40 숫자로 적어 주세요.' };
 
   const trimmedName = typeof name === 'string' ? name.trim() : '';
-  if (trimmedName.length < 1 || trimmedName.length > 10) return { ok: false, field: 'name', error: '이름은 1~10글자로 써 주세요.' };
+  if (trimmedName.length < 1 || trimmedName.length > 10) return { ok: false, field: 'name', error: '이름은 1~10글자로 적어 주세요.' };
 
   return { ok: true, value: { grade: g, cls: c, number: n, name: trimmedName } };
 }

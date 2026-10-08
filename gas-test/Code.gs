@@ -102,16 +102,16 @@ function validate_(d) {
 // 학년·반·번호·이름. src/student/studentInfo.js의 validateStudentInfo와 같은 규칙이어야 한다.
 function validateStudent_(d) {
   var grade = intInRange_(d.grade, 1, 6);
-  if (grade === null) return fail_('학년은 1~6 숫자로 써 주세요.');
+  if (grade === null) return fail_('학년은 1~6 숫자로 적어 주세요.');
 
   var cls = intInRange_(d.class, 1, 20);
-  if (cls === null) return fail_('반은 1~20 숫자로 써 주세요.');
+  if (cls === null) return fail_('반은 1~20 숫자로 적어 주세요.');
 
   var num = intInRange_(d.number, 1, 40);
-  if (num === null) return fail_('번호는 1~40 숫자로 써 주세요.');
+  if (num === null) return fail_('번호는 1~40 숫자로 적어 주세요.');
 
   var name = typeof d.name === 'string' ? d.name.trim() : '';
-  if (name.length < 1 || name.length > 10) return fail_('이름은 1~10글자로 써 주세요.');
+  if (name.length < 1 || name.length > 10) return fail_('이름은 1~10글자로 적어 주세요.');
 
   return { ok: true, value: { grade: grade, cls: cls, num: num, name: name } };
 }
