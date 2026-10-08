@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>별빛 탐사선 (Star Voyager) 개발 보고서 v2</title>
+<style>
+  :root { --sidebar-w: 260px; --accent: #4F46E5; --text: #1f2430; --muted: #6b7280; --bg: #ffffff; --panel: #f7f7fb; --border: #e5e7eb; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, "Segoe UI", "Noto Sans KR", sans-serif; color: var(--text); background: var(--bg); }
+  .layout { display: flex; min-height: 100vh; }
+  nav.sidebar { position: sticky; top: 0; align-self: flex-start; width: var(--sidebar-w); flex-shrink: 0; height: 100vh; overflow-y: auto; padding: 24px 16px; background: var(--panel); border-right: 1px solid var(--border); }
+  nav.sidebar h1 { font-size: 15px; margin: 0 0 4px; }
+  nav.sidebar .meta { font-size: 12px; color: var(--muted); margin-bottom: 16px; }
+  nav.sidebar a { display: block; padding: 7px 10px; margin: 2px 0; font-size: 13.5px; color: var(--text); text-decoration: none; border-radius: 8px; }
+  nav.sidebar a:hover { background: #eceafd; }
+  nav.sidebar a.active { background: var(--accent); color: #fff; }
+  main { flex: 1; min-width: 0; padding: 40px 48px; max-width: 860px; }
+  main section { margin-bottom: 48px; scroll-margin-top: 24px; }
+  main h2 { font-size: 22px; border-bottom: 2px solid var(--border); padding-bottom: 8px; }
+  main h3 { font-size: 17px; color: var(--accent); }
+  main table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+  main th, main td { border: 1px solid var(--border); padding: 8px 10px; font-size: 14px; text-align: left; }
+  main code { background: #f1f1f5; padding: 1px 5px; border-radius: 4px; font-size: 0.9em; }
+  main pre { background: #1f2430; color: #eee; padding: 14px; border-radius: 8px; overflow-x: auto; }
+  main pre code { background: none; padding: 0; color: inherit; }
+  .doctitle { font-size: 26px; margin: 0 0 8px; }
+  .docmeta { color: var(--muted); font-size: 14px; padding-left: 18px; margin-bottom: 32px; }
+  @media (max-width: 800px) {
+    .layout { flex-direction: column; }
+    nav.sidebar { position: relative; width: 100%; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+  <nav class="sidebar" id="sidebar">
+    <h1>별빛 탐사선 (Star Voyager)</h1>
+    <div class="meta">개발 보고서 v2 · 2026-10-09</div>
+    <a href="#sec-1">1. 개요</a>
+    <a href="#sec-2">2. 목표 및 배경</a>
+    <a href="#sec-3">3. 주요 기능</a>
+    <a href="#sec-4">4. 기술 스택 및 아키텍처</a>
+    <a href="#sec-5">5. 개발 과정 (타임라인)</a>
+    <a href="#sec-6">6. 주요 의사결정과 이유</a>
+    <a href="#sec-7">7. 문제 해결 기록</a>
+    <a href="#sec-8">8. 보안/성능 고려사항</a>
+    <a href="#sec-9">9. 테스트 및 검증</a>
+    <a href="#sec-10">10. 배포</a>
+    <a href="#sec-11">11. 알려진 한계</a>
+    <a href="#sec-12">12. 향후 개선 아이디어 / 업데이트 계획</a>
+    <a href="#sec-13">13. 이전 버전(v1) 이후 변경 사항</a>
+  </nav>
+  <main id="content">
+    <h1 class="doctitle">별빛 탐사선 (Star Voyager) 개발 보고서 (v2)</h1>
+    <ul class="docmeta"><li>작성일: 2026-10-09</li><li>버전: v2</li><li>이전 버전: v1 (docs/Development_Report_v1.md)</li><li>저장소: <a href="https://github.com/poguni/starvoyager">https://github.com/poguni/starvoyager</a> · 배포: <a href="https://poguni.github.io/starvoyager/">https://poguni.github.io/starvoyager/</a></li></ul>
+<section id="sec-1"><h2>1. 개요</h2>
+<table><thead><tr><th>항목</th><th>내용</th></tr></thead><tbody><tr><td>앱 이름</td><td>별빛 탐사선 (Star Voyager)</td></tr><tr><td>한 줄 소개</td><td>초등 4학년 과학 '밤하늘 관찰 — 태양계의 구성원'(교과서 22~29쪽)을 직접 탐사하며 배우는 3D 우주 탐사 웹 앱</td></tr><tr><td>대상 사용자</td><td>초등 4학년 학생(크롬북으로 개별 탐사), 담당 교사(전자칠판 시연·발표, 구글 시트로 결과 확인)</td></tr><tr><td>수업 운영</td><td>3~4차시 주교재. 탐사 1~4, 탐사마다 활동 약 25분 목표</td></tr><tr><td>개발 기간</td><td>2026-10-07 ~ 2026-10-09 (Phase 1~10, 배포 후 수정 포함)</td></tr><tr><td>참고 앱</td><td>달빛 관측소(<code>../MoonLab</code>) — 같은 구조·규칙, 미션 엔진·제출 대기열·학생 정보·FPS 측정기·QR 스크립트를 가져와 넓힘</td></tr></tbody></table>
+</section>
+<section id="sec-2"><h2>2. 목표 및 배경</h2>
+<p>교과서는 천체 관측 앱·검색 활동으로 태양계와 별자리를 다루지만, 학생이 행성의 크기·표면·고리, 별의 움직임을 <strong>직접 보고 조작하며</strong> 이해하기는 어렵다. 별빛 탐사선은 이를 하나의 '탐사' 경험으로 묶는다.</p>
+<ul><li><strong>핵심 가치:</strong> 실제 사진 질감으로 만든 3D 태양계와 실제 별 자료로 그린 밤하늘에서, '예측 → 확인 → 최종 답 → 한 줄 정리' 미션으로 교과서 개념을 스스로 확인한다.</li><li><strong>교실 운영:</strong> 교사가 전자칠판으로 시연(<code>?mode=demo</code>) → 학생이 크롬북으로 개별 탐사 → 전자칠판에서 학생 도감 발표. 결과는 교사의 구글 시트에 자동으로 쌓인다.</li><li><strong>품질 원칙:</strong> 전자칠판에서 실감 나는 3D를 우선하되, 행성이 9개라 가까이 간 천체만 고해상도 질감을 불러오는 구조로 처음부터 설계했다.</li></ul>
+</section>
+<section id="sec-3"><h2>3. 주요 기능</h2>
+<table><thead><tr><th>탐사</th><th>내용</th><th>주요 장면·기능</th></tr></thead><tbody><tr><td>탐사 1</td><td>태양계 구성원과 태양</td><td>태양계 지도(태양·행성 8개·달·혜성·소행성 띠), 구성원 찾기, 태양 빛 가리기, 공전 재생, 요일 카드</td></tr><tr><td>탐사 2</td><td>행성 탐사와 도감</td><td>행성 가까이 보기(1K→4K 질감), 고리 찾기 돋보기, 착륙(단단한 땅/기체)과 착륙 뒤 둘러보기, 탐사 도감 8장, 발표 화면, 행성 랩 만들기(C-1)</td></tr><tr><td>탐사 3</td><td>크기 비교 실험실</td><td>실제 크기 비율, 줄 세우기, 나누어 담기, 태양과 비교</td></tr><tr><td>탐사 4</td><td>북쪽 밤하늘 별자리</td><td>서울 북쪽 하늘(실제 별), 시각 슬라이더, 별 잇기 3개(북두칠성·카시오페이아자리·작은곰자리), 주변 불빛, 새 별자리 이름(C-2)</td></tr></tbody></table>
+<p>공통 기능:</p>
+<ul><li>탐사 대원 등록(S01) → 탐사 선택(S02, 순서 잠금 없음) → 탐사별 진행 저장·이어서 하기</li><li>흥미 체크(흥미1~5), 결과 행을 구글 시트 '미션'·'도감' 두 탭으로 전송, 인터넷이 끊기면 대기열에 두었다가 다시 보내기</li><li>혜성·소행성 소개 카드, 브라우저 뒤로 가기 → 탐사 선택 화면</li><li>시연 모드(<code>?mode=demo</code>): 등록·전송·기기 저장 없음, 큰 글씨, 이름 라벨 숨김</li><li>URL 파라미터로 시작 장면 고정(<code>?mission</code>, <code>?view</code>, <code>?planet</code>, <code>?time</code> 등), 차시별 QR</li></ul>
+</section>
+<section id="sec-4"><h2>4. 기술 스택 및 아키텍처</h2>
+<table><thead><tr><th>구성 요소</th><th>사용</th><th>선택 이유</th></tr></thead><tbody><tr><td>빌드</td><td>Vite 8 (<code>base: '/starvoyager/'</code>)</td><td>달빛 관측소 파이프라인 재사용, GitHub Pages 프로젝트 경로</td></tr><tr><td>언어</td><td>순수 JavaScript(ESM)</td><td>프레임워크 없이 유지보수, 달빛 관측소와 같은 구조</td></tr><tr><td>3D</td><td>three ^0.186 (OrbitControls, EffectComposer + UnrealBloomPass)</td><td>질감·조명·후처리</td></tr><tr><td>북쪽 밤하늘</td><td>2D Canvas, 입체 사영</td><td>가로 시야 100°가 넘어 원근 3D는 가장자리 별자리가 늘어남, 크롬북 부담도 적음</td></tr><tr><td>테스트</td><td>Vitest 5</td><td>판정·계산 순수 모듈 검사(15개 파일, 255개)</td></tr><tr><td>결과 저장</td><td>Google Apps Script 웹앱 → 구글 시트 두 탭</td><td>교사 계정 시트로 바로, 대시보드 없이 시트에서 확인</td></tr><tr><td>배포</td><td>GitHub Actions → GitHub Pages (Node 22)</td><td>push하면 테스트 → 빌드 → 배포</td></tr><tr><td>글꼴</td><td>Pretendard(한글 2,350자 하위 집합), IBM Plex Mono</td><td>외부 CDN 없이, 약 2MB → 510KB</td></tr><tr><td>자료</td><td>Solar System Scope 질감(CC BY 4.0), NASA 질감, 예일 밝은 별 목록</td><td>실사 품질, 저작권 정리</td></tr></tbody></table>
+<h3>4-1. 폴더 구조</h3>
+<pre><code>src/
+├─ main.js         장면·UI·미션·제출을 잇는 진입점
+├─ data/           별·별자리·도감 정답·랩 조각·고정 날짜·혜성/소행성 소개
+├─ model/          순수 계산(궤도, 크기 비교, 별 위치, 별 잇기, 도감, 진행 저장 …)
+├─ missions/       engine.js(미션 상태 기계), missions.js(탐사 1~4 문항)
+├─ scene/          태양계 지도·카메라·질감 단계·재질·고리·블룸·착륙·크기 비교·밤하늘
+├─ ui/             HUD·이름표·도감·발표·미션 패널·끌어다 놓기·등록·탐사 선택·소개 카드
+├─ student/        학생 정보 검증·저장
+├─ submit/         시트 제출·대기열
+├─ styles/         tokens.css(디자인 토큰), components.css, app.css
+└─ debug/          FPS 측정기, 부품 견본</code></pre>
+<h3>4-2. 화면 층</h3>
+<pre><code>#app
+ ├─ 3D 캔버스         태양계 지도·행성 탐사·착륙·크기 비교(한 renderer를 장면들이 나눠 씀)
+ ├─ 밤하늘 층          2D 캔버스 + 별 누르기 칸 + 별자리 문장
+ ├─ HUD               네 모서리 꺾쇠, 상단 계기판, 하단 조작 버튼
+ ├─ 이름표 · 소개 카드
+ ├─ 오른쪽 패널        도감(종이) / 미션(어두운 유리). 크롬북 크기에서 도감은 아래 패널
+ ├─ 줄 세우기 판 · 발표 화면
+ └─ 등록·탐사 선택 화면(보이는 동안 3D를 그리지 않음)</code></pre>
+<h3>4-3. 핵심 구조</h3>
+<ul><li><strong>계산과 화면 분리:</strong> 판정·계산은 DOM·Three.js 없이 <code>model/</code>, <code>missions/</code>, <code>data/</code>의 순수 모듈로 만들고 Vitest로 검사한다. <code>scene/</code>은 그리기만, <code>ui/</code>는 DOM만 만들고 <code>main.js</code>가 잇는다.</li><li><strong>질감 단계 불러오기:</strong> 처음에는 모든 천체가 1K. 가까이 간 천체와 그 이전·다음 천체만 4K(<code>?quality=low</code>면 2K)로 바꾸고, 멀어지면 30초 뒤 1K로 되돌려 메모리에서 해제한다.</li><li><strong>미션 엔진:</strong> 탐사를 단계 목록으로 보고 상태 기계로 진행한다.</li></ul>
+<pre><code>intro / gate(찾은 개수 조건) → quiz: predict → (오답) confirm → result
+→ sort·classify: arrange → result → summary → summaryResult → feel
+→ creative → creativeResult → survey → done</code></pre>
+<ul><li><strong>저장:</strong> localStorage 네 키(학생 정보, 도감, 탐사 진행, 제출 대기열). 시연 모드는 아무것도 저장·전송하지 않는다.</li><li><strong>제출:</strong> 한 기기에서 한 행씩 차례로 보내고, 실패하면 대기열에 두어 온라인 복귀·탐사 선택 화면 열기·'다시 보내기'에서 다시 보낸다.</li></ul>
+</section>
+<section id="sec-5"><h2>5. 개발 과정 (타임라인)</h2>
+<table><thead><tr><th>날짜</th><th>Phase</th><th>내용</th></tr></thead><tbody><tr><td>10-07</td><td>1</td><td>달빛 관측소 뼈대 이식, 시트 '미션'·'도감' 탭 분기, 디자인 토큰·글꼴·기본 부품</td></tr><tr><td>10-07</td><td>2</td><td>태양계 지도: 태양·행성 8개·달·궤도·혜성·소행성 띠, 공전 재생, 태양 빛 가리기, 구성원 칩</td></tr><tr><td>10-07</td><td>3</td><td>행성 탐사: 1K → 4K 질감 교체, 토성 질감 고리 + 희미한 고리 3개, 고리 찾기 돋보기</td></tr><tr><td>10-08</td><td>4</td><td>착륙 체험: 단단한 땅 4개 착륙(지형·돌·하늘색), 기체 4개는 구름층 통과 뒤 실패</td></tr><tr><td>10-08</td><td>5</td><td>탐사 도감: 구성원 쪽·태양 카드·행성 카드 8장, 판정·고치기·정답 공개, 도장, 발표 화면</td></tr><tr><td>10-08</td><td>6</td><td>크기 비교 실험실: 정사영 카메라로 실제 비율, 태양과 비교, 줄 세우기·나누어 담기</td></tr><tr><td>10-08</td><td>7</td><td>북쪽 밤하늘: 서울·3월 12일 고정, 항성시 계산, 시각 슬라이더, 별 잇기, 주변 불빛</td></tr><tr><td>10-08</td><td>8</td><td>시안 대조 다듬기, 블룸·대기광·실제 별 배경, <code>?quality=low</code></td></tr><tr><td>10-08</td><td>9A</td><td>미션 엔진 확장(sort·classify·summary·탐색 게이트), 탐사 1~4 문항, 미션 패널</td></tr><tr><td>10-08</td><td>9B</td><td>등록·탐사 선택, 진행 저장·이어서 하기, 창작 C-1·C-2, 흥미 체크, 실제 시트 전송, 시연 모드</td></tr><tr><td>10-08</td><td>10</td><td>배포 워크플로 점검(Node 22), 차시별 QR, README·TEST·개발 리포트 v1</td></tr><tr><td>10-08~09</td><td>배포 후</td><td>GitHub Actions 배포 확인 → 교사 사용 피드백 반영(태양 줄무늬, 혜성 모양, 착륙 둘러보기, 크기 비교, 장면 전환 버그, 뒤로 가기, 혜성·소행성 소개, 문구 다듬기)</td></tr></tbody></table>
+</section>
+<section id="sec-6"><h2>6. 주요 의사결정과 이유</h2>
+<p>전체 77건은 <code>docs/결정기록.md</code>, 겉모습은 <code>design/README.md</code>의 '디자인과 다르게 정한 것' 표에 있다. 중요한 것만 묶었다.</p>
+<table><thead><tr><th>결정</th><th>이유</th></tr></thead><tbody><tr><td>북쪽 밤하늘은 3D가 아닌 2D 입체 사영</td><td>두 별자리를 한 화면에 담으면 원근 3D 가장자리 모양이 늘어나고, 크롬북 부담이 큼</td></tr><tr><td>밤하늘 날짜는 3월 12일로 고정</td><td>저녁 6시~아침 6시 내내 북두칠성·카시오페이아자리의 모든 별이 지평선 위(9월 7일 후보는 새벽에 알카이드가 짐)</td></tr><tr><td>크기 비교는 정사영 카메라</td><td>원근 왜곡 없이 화면 속 크기가 15장 비율과 정확히 같게</td></tr><tr><td>태양계 지도 표시 크기는 모형이지만 크기 순서는 실제와 같게</td><td>지도에서 순서가 뒤집혀 보이면 탐사 3에서 오개념</td></tr><tr><td>이전/다음 행성은 행성 8개만 돎</td><td>문항 1-4 확인 방법에서 태양까지 9개로 세지 않도록</td></tr><tr><td>예측 단계에서 확인 도구·이름 보기 잠금</td><td>'미션이 허용한 조작만'을 구체화, 답이 미리 드러나지 않게</td></tr><tr><td>힌트가 없는 문항은 새 힌트를 만들지 않고 '확인 방법'을 해요체로</td><td>학생용 문구를 임의로 만들지 않는다는 원칙</td></tr><tr><td>흥미 체크 값은 흥미1~5</td><td>기획서 허용 목록(1~4)과 탐사 4 문항 수(2개)가 맞지 않았음</td></tr><tr><td>제출은 한 행씩 차례로</td><td>동시에 보내면 Apps Script가 응답 단계에서 404를 자주 돌려줌</td></tr><tr><td>웹앱 주소는 Secrets가 아닌 Variables</td><td><code>VITE_</code> 값은 빌드된 JS에 그대로 들어가 원래 비밀이 아님. 보호는 <code>Code.gs</code> 입력값 검증이 함</td></tr><tr><td>시연 모드는 기기 저장도 안 함</td><td>교사 기기에서 학생 기록과 섞이지 않게</td></tr><tr><td>혜성·소행성 소개에 '태양 주위를 돌아요'를 쓰지 않음</td><td>문항 1-2('태양의 주위를 도는 천체' = 행성)와 헷갈리지 않게</td></tr><tr><td>뒤로 가기는 방문 기록 한 칸(주소 그대로)으로 처리</td><td>한 페이지 앱이라 방문 기록이 하나뿐이어서 탭이 닫혔음</td></tr></tbody></table>
+</section>
+<section id="sec-7"><h2>7. 문제 해결 기록</h2>
+<table><thead><tr><th>문제</th><th>원인</th><th>해결</th></tr></thead><tbody><tr><td>동시에 다시 보내면 같은 행이 두 번 감, 보내는 중 실패한 행이 사라짐</td><td>다시 보내기가 겹쳐 실행되고, 대기열을 통째로 덮어씀</td><td>다시 보내기 겹침 방지, 보내는 동안 새로 쌓인 행은 남김(테스트 추가)</td></tr><tr><td>여러 행을 한꺼번에 보내면 절반쯤 404</td><td>Apps Script 응답 단계 문제</td><td>한 기기에서 한 행씩 차례로 전송</td></tr><tr><td>시연 모드에 '다른 친구가 사용해요' 버튼이 보임</td><td>버튼 스타일의 <code>display</code>가 <code>hidden</code> 속성을 덮음</td><td><code>[hidden]</code> 규칙 추가</td></tr><tr><td>태양 절반에 줄무늬</td><td>일렁임 효과가 질감을 옆으로 흘리는데 가로 반복 설정이 없어, 시간이 지날수록 끝 한 줄이 늘어남</td><td>태양 질감 가로 반복, 흐름 값 <code>fract</code></td></tr><tr><td>크롬북에서 '태양과 비교하기' 때 행성·태양이 사라짐</td><td>미션 패널 옆 폭(약 840px)에 이름 자리 84px × 8이 넘쳐 크기 계산이 0</td><td>폭이 좁을 때만 이름 자리를 필요한 만큼 줄임(테스트 2개)</td></tr><tr><td>착륙 뒤 손을 떼도 마우스만 움직이면 시점이 돎</td><td>누르기 상태를 손을 뗄 때 비우지 않음</td><td>손을 떼면 늘 비움</td></tr><tr><td>탐사 3 뒤 탐사 4에서 밤하늘 위에 행성 줄이 보임</td><td>three.js가 3D 캔버스에 인라인 <code>display:block</code>을 넣어 <code>hidden</code>이 듣지 않음</td><td>캔버스를 만든 뒤 인라인 display 제거</td></tr><tr><td>탐사 3 뒤 밤하늘에서 '이름 보기'에 행성 이름이 함께 보임</td><td>'이름 보기'가 크기 비교 이름표도 늘 함께 켬</td><td>실험실 안에서만 켬</td></tr><tr><td>탐사 중 뒤로 가기에 탭이 닫힘</td><td>한 페이지 앱이라 방문 기록에 앱 항목이 하나뿐</td><td>장면에 들어갈 때 방문 기록 한 칸, 뒤로 가기 → 탐사 선택</td></tr><tr><td>실제 시트 점검 스크립트의 요청이 모두 실패</td><td>앞 Playwright 스크립트의 <code>page.route</code> 차단이 남아 있었음</td><td><code>unrouteAll</code></td></tr></tbody></table>
+</section>
+<section id="sec-8"><h2>8. 보안/성능 고려사항</h2>
+<p><strong>보안·개인정보</strong></p>
+<ul><li>학생 이름은 시트로 보내는 요청 본문에만 들어가고, 콘솔·오류 메시지·디버그 패널에는 남기지 않는다(Phase마다 콘솔에 이름 0줄 확인).</li><li>웹앱 주소는 <code>.env</code>(git 제외)와 저장소 Variables로만 넣는다. 시트 쪽 <code>Code.gs</code>가 학년 1~6·반 1~20·번호 1~40·이름 1~10글자, 문항 ID·행성 이름 허용 목록으로 검증하고 <code>LockService</code>로 동시 쓰기를 직렬화한다.</li><li>앱 본체는 외부 CDN을 쓰지 않는다. 인터넷은 결과 제출 때만 쓴다.</li></ul>
+<p><strong>성능</strong></p>
+<ul><li>질감 단계 불러오기(지도 1K, 가까이 간 천체만 4K), 화면 배율 제한(기본 2, low 1.5), 블룸은 <code>?fx=off</code>·<code>?quality=low</code>에서 끔</li><li>행성 탐사·발표 화면에서는 다른 천체·궤도선을 감추고, 등록·탐사 선택 화면에서는 3D를 그리지 않음</li><li>번들: JS 767KB(gzip 214KB) 중 three.js 약 596KB, 앱 코드 약 171KB. Vite 500KB 경고는 고치지 않고 선택지만 정리(v1 10-4)</li><li><code>?debug=fps</code>로 장면별 FPS 측정, 측정표는 <code>TEST.md</code></li></ul>
+</section>
+<section id="sec-9"><h2>9. 테스트 및 검증</h2>
+<pre><code>npm test  →  Test Files 15 passed, Tests 255 passed</code></pre>
+<table><thead><tr><th>파일</th><th>대상</th><th>개수</th></tr></thead><tbody><tr><td><code>gas-test/Code.test.js</code></td><td>시트 스크립트 검증·탭 분기, 앱과 같은 검증 문구</td><td>22</td></tr><tr><td><code>src/missions/engine.test.js</code></td><td>미션 상태 기계, 이어서 하기</td><td>22</td></tr><tr><td><code>src/missions/missions.test.js</code></td><td>탐사 1~4 문항이 기획서와 같은지, 랩 조각·교과서 용어</td><td>50</td></tr><tr><td><code>src/data/bodyInfo.test.js</code></td><td>혜성·소행성 소개 문장(해요체, 교과서 용어, 1-2와 겹치지 않음)</td><td>3</td></tr><tr><td><code>src/model/astro.test.js</code></td><td>항성시·별 고도/방위·입체 사영</td><td>13</td></tr><tr><td><code>src/model/journal.test.js</code></td><td>도감 판정·고치기·정답 공개·도장·랩</td><td>20</td></tr><tr><td><code>src/model/landing.test.js</code></td><td>착륙 시간표·기록</td><td>9</td></tr><tr><td><code>src/model/missionProgress.test.js</code></td><td>탐사 진행 저장</td><td>6</td></tr><tr><td><code>src/model/sizes.test.js</code></td><td>크기 비율·순서·배치(좁은 폭 포함)·끌어다 놓기 판정</td><td>18</td></tr><tr><td><code>src/model/starLink.test.js</code></td><td>별 잇기</td><td>11</td></tr><tr><td><code>src/model/world.test.js</code></td><td>천체 목록·궤도·구성원 찾기·이전/다음 행성</td><td>21</td></tr><tr><td><code>src/scene/textureManager.test.js</code></td><td>질감 단계</td><td>6</td></tr><tr><td><code>src/student/studentInfo.test.js</code></td><td>학생 정보 범위·오류 칸</td><td>6</td></tr><tr><td><code>src/styles/contrast.test.js</code></td><td>강조 색 위 글씨 대비</td><td>36</td></tr><tr><td><code>src/submit/submitQueue.test.js</code></td><td>payload 매핑, 재전송, 중복 방지, 차례 전송, 지속성</td><td>12</td></tr></tbody></table>
+<p>화면은 Phase마다 Playwright로 1920×1080(전자칠판)·1366×768(크롬북) 스크린샷을 찍어 시안과 나란히 비교했다(<code>docs/design-check/phase*/</code>). 배포 후 수정은 사용자가 알려 준 상황을 그대로 재현한 뒤 고치고, 고친 뒤 같은 순서로 다시 확인했다. 실제 시트 전송(미션 24행·도감 8행), 인터넷 끊김 뒤 재전송, 시연 모드 전송 0건도 확인했다.</p>
+</section>
+<section id="sec-10"><h2>10. 배포</h2>
+<pre><code>git push (main) → GitHub Actions: npm ci → npm test → npm run build(VITE_WEBAPP_URL 주입) → Pages 배포</code></pre>
+<ul><li>배포 주소: <a href="https://poguni.github.io/starvoyager/">https://poguni.github.io/starvoyager/</a> (Actions 초록 체크 확인, 2026-10-08)</li><li>최초 설정: Settings → Pages → Source를 GitHub Actions로, Settings → Secrets and variables → Actions → Variables에 <code>VITE_WEBAPP_URL</code></li><li>QR: <code>npm run qr:all</code> → <code>qr/starvoyager-qr.png</code>(기본 주소) + <code>qr/mission-1~4.png</code>(<code>?mission=1~4</code>)</li><li>상세 가이드는 v1 8장과 <code>README.md</code></li></ul>
+</section>
+<section id="sec-11"><h2>11. 알려진 한계</h2>
+<ul><li><strong>기기 간 이어 하기 없음:</strong> 진행 상태는 그 기기의 브라우저에만 있다. 차시마다 크롬북이 바뀌면 이어지지 않는다(기획서 16장 3번).</li><li><strong>시트 중복 행 가능성:</strong> Apps Script가 이미 적은 행에 404를 돌려주면 다시 보낼 때 같은 행이 한 번 더 쌓일 수 있다(재제출 허용과 같은 취급).</li><li><strong>실제 크기 비율의 한계:</strong> 태양과 비교할 때 수성~화성은 화면에서 점처럼 작다(실제 비율이라 의도된 모습).</li><li><strong>착륙 장면은 연출:</strong> 땅은 행성 질감 색으로 코드로 그린 것이라 실제 탐사 사진과 다르다.</li><li><strong>밤하늘 날짜 고정:</strong> 실제 수업하는 날의 하늘과 별자리 위치가 다를 수 있다.</li><li><strong>번들 크기 경고:</strong> 그대로 둠.</li></ul>
+</section>
+<section id="sec-12"><h2>12. 향후 개선 아이디어 / 업데이트 계획</h2>
+<h3>다음에 하면 좋을 것</h3>
+<ul><li><strong>실기 테스트 결과 반영(Phase 11 후보):</strong> <code>TEST.md</code>의 전자칠판·크롬북 FPS, 탐사별 시간(목표 25분), 학생 시범 사용 결과로 ⓐ 크롬북 <code>?quality=low</code> 기본값, ⓑ 문구 조정, ⓒ 탐사 시간 조정을 정한다. 특히 탐사 2(도감 4장 + 문항 3개 + 랩)가 가장 길 것으로 예상된다.</li><li><strong>교사 확인 대기:</strong> 실제 시트 행·필드 대조, <code>docs/창작문구_검토.md</code>의 행성 랩·새 별자리 이름 보기 검토(기획서 16장 2번), 성취기준 원문 기입(16장 1번).</li><li><strong>화성 랩 보기 "온몸이 붉게 빛나지.":</strong> 기획서 예시 그대로지만 탐사 4의 "행성은 스스로 빛을 내지 않아요"와 부딪혀 보일 수 있어, 교사 검토 때 함께 보면 좋다.</li></ul>
+<h3>여유 있으면</h3>
+<ul><li><strong>저사양 자동 판단:</strong> 화면 크기·<code>devicePixelRatio</code>·첫 몇 초 FPS로 <code>quality=low</code>를 자동으로 켜고, 학생이 직접 끄고 켤 수 있는 설정 버튼</li><li><strong>첫 로딩 줄이기:</strong> three.js를 별도 청크로 나눠 캐시 재사용, 크기 비교·착륙·밤하늘·후처리 동적 불러오기, 처음 화면에 필요한 질감만 먼저</li><li><strong>달 소개 카드:</strong> 혜성·소행성처럼 달에 도착했을 때도 짧은 소개(위성이라는 점은 탐사 1 문항 1-3과 겹치지 않게 조심)</li><li><strong>기체 행성 착륙 둘러보기:</strong> 구름층 안에서도 잠깐 둘러볼 수 있게</li></ul>
+<h3>아이디어 수준</h3>
+<ul><li><strong>기기 간 이어 하기:</strong> 학생 정보로 시트에서 진행 상태 불러오기(시트 읽기 기능, 보안 검토 필요, 기획서 2차 범위)</li><li><strong>교사용 요약 보기:</strong> 시트 결과를 학급별로 모아 보는 간단한 화면(현재는 시트에서 직접 확인)</li><li><strong>계절별 별자리·다른 방향 하늘:</strong> 남쪽 하늘, 여름·겨울 별자리(기획서 13장 '나중에')</li><li><strong>달빛 관측소와 통합 실행 화면:</strong> 두 앱을 한 시작 화면에서 고르기</li></ul>
+</section>
+<section id="sec-13"><h2>13. 이전 버전(v1) 이후 변경 사항</h2>
+<p>v1(Phase 10 문서 작성 시점, 2026-10-08) 이후 배포를 마치고 교사 사용 피드백을 반영했다.</p>
+<p><strong>배포</strong></p>
+<ul><li>GitHub Pages 배포 완료, Actions 초록 체크 확인</li></ul>
+<p><strong>고친 문제</strong></p>
+<ul><li>태양 절반에 줄무늬가 생기던 문제(질감 가로 반복)</li><li>크롬북 크기 + 미션 패널에서 '태양과 비교하기' 때 행성·태양이 사라지던 문제(이름 자리 폭 조정, 테스트 2개)</li><li>탐사 3 뒤 탐사 4에서 밤하늘 위에 행성 줄이 남던 문제(three.js 캔버스 인라인 display 제거)</li><li>탐사 3 뒤 밤하늘에서 '이름 보기'에 행성 이름이 함께 보이던 문제</li><li>탐사 중 브라우저 뒤로 가기에 탭이 닫히던 문제 → 탐사 선택 화면으로</li></ul>
+<p><strong>새로 넣은 것</strong></p>
+<ul><li>혜성 핵을 감자처럼 길쭉하고 울퉁불퉁한 덩어리로, 천천히 회전</li><li>단단한 땅 행성 착륙 뒤 끌어서 제자리 둘러보기(좌우 360°, 위아래 ±15°), 첫 착륙 때 안내 한 번</li><li>혜성·소행성 도착 시 소개 카드(<code>src/data/bodyInfo.js</code>, 테스트 3개)</li></ul>
+<p><strong>문구</strong></p>
+<ul><li>목성 랩 "멋진 줄무늬가 있지.", 토성 랩 "은은하고 연한 갈색이지."</li><li>등록 오류 문구 '써 주세요' → '적어 주세요'(앱·<code>Code.gs</code>)</li></ul>
+<p><strong>숫자</strong></p>
+<ul><li>테스트 250 → 255개(14 → 15개 파일), 결정 기록 72 → 77건</li></ul>
+</section>
+  </main>
+</div>
+<script>
+  const links = document.querySelectorAll('nav.sidebar a');
+  const sections = [...links].map(a => document.querySelector(a.getAttribute('href')));
+  const setActive = (id) => links.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + id));
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => { if (entry.isIntersecting) setActive(entry.target.id); });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+  sections.forEach((el) => el && observer.observe(el));
+</script>
+</body>
+</html>
