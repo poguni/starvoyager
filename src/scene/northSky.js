@@ -79,6 +79,7 @@ export function createNorthSky(container, { date, stars, skip = new Set() }) {
   let dpr = 1;
   let scale = 1;
   let shiftY = 0; // 넓게 볼 때도 지평선이 같은 높이에 오도록 내린다
+  let view = { offsetX: 0, zoom: 1 }; // 미션 패널이 오른쪽을 가릴 때 하늘을 왼쪽으로 옮기고 조금 작게
   let hour = 20;
   let positions = skyPositions(stars, date, hour);
   let light = 0; // 0 어두운 하늘 → 1 주변 불빛
@@ -88,7 +89,7 @@ export function createNorthSky(container, { date, stars, skip = new Set() }) {
   // 고도·방위 → 화면 좌표(px)
   function toScreen(alt, az) {
     const q = stereographic(alt, az, VIEW_ALT, 0);
-    return { x: w / 2 + q.x * scale, y: h / 2 + shiftY - q.y * scale, front: q.front };
+    return { x: w / 2 + view.offsetX + q.x * scale, y: h / 2 + shiftY - q.y * scale, front: q.front };
   }
 
   const limitMag = () => LIMIT_DARK + (LIMIT_CITY - LIMIT_DARK) * light;
@@ -136,7 +137,7 @@ export function createNorthSky(container, { date, stars, skip = new Set() }) {
     // 지평선 쪽 은은한 보라빛(S08), 불빛을 켜면 주황빛 도시 불빛
     for (const [color, alpha] of [[SKY_GLOW, 0.16 * (1 - light)], [CITY, 0.5 * light]]) {
       if (alpha <= 0) continue;
-      const glow = ctx.createRadialGradient(w / 2, north.y + h * 0.15, 0, w / 2, north.y + h * 0.15, h * 0.8);
+      const glow = ctx.createRadialGradient(north.x, north.y + h * 0.15, 0, north.x, north.y + h * 0.15, h * 0.8);
       glow.addColorStop(0, rgba(color, alpha));
       glow.addColorStop(1, rgba(color, 0));
       ctx.fillStyle = glow;
@@ -203,10 +204,12 @@ export function createNorthSky(container, { date, stars, skip = new Set() }) {
       canvas.width = Math.round(w * dpr);
       canvas.height = Math.round(h * dpr);
       const horizonY = Math.abs(stereographic(0, 0, VIEW_ALT, 0).y);
-      scale = ((h * HORIZON_AT - h / 2) / horizonY) * ZOOM;
+      scale = ((h * HORIZON_AT - h / 2) / horizonY) * ZOOM * view.zoom;
       shiftY = h * HORIZON_AT - h / 2 - horizonY * scale;
       milkyDirty = true;
     },
+    // offsetX: 하늘 가운데(북쪽)를 옮길 거리(px), zoom: 크기 비율. 지평선 높이는 그대로 둔다. 다음 resize부터 쓴다.
+    setView(next) { view = { offsetX: 0, zoom: 1, ...next }; },
     // 한국 시간(18~30)
     setTime(next) {
       hour = next;
