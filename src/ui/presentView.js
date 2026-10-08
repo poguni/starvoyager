@@ -1,5 +1,5 @@
 // 발표 화면(S09, 기획서 8-5): 왼쪽에 3D 행성, 오른쪽에 크게 확대한 도감 카드, 닫기 버튼.
-// 3D 행성 배치와 HUD 감추기는 main.js가 한다. 카드 아래 '내가 만든 행성 랩' 자리는 Phase 9B에서 채운다.
+// 3D 행성 배치와 HUD 감추기는 main.js가 한다. 탐사 2에서 만든 행성 랩이 있으면 카드 아래에 보인다(S09).
 import { el } from './components/dom.js';
 import { icon } from './components/icon.js';
 import { FACTS } from '../data/planetFacts.js';
@@ -17,7 +17,7 @@ export function createPresentView(app, { journal, onClose }) {
   return {
     show(id) {
       const name = bodyById(id).name;
-      const { order } = journal.getCard(id);
+      const { order, rap } = journal.getCard(id);
       title.textContent = `${name} 도감 카드`;
       card.setAttribute('aria-label', `${name} 도감 카드`);
       // S09처럼 그 밖의 특징은 고른 것이 있을 때만 줄을 보인다.
@@ -28,7 +28,11 @@ export function createPresentView(app, { journal, onClose }) {
           stampEl(stampNumber(order, journal.total))
         ]),
         recordList(journal, id, { features: hasFeatures }),
-        el('p', { class: 'sv-fact' }, FACTS[id])
+        el('p', { class: 'sv-fact' }, FACTS[id]),
+        ...(rap ? [el('div', { class: 'sv-present-rap' }, [
+          el('span', { class: 'sv-present-rap-title' }, [icon('i-star'), '내가 만든 행성 랩']),
+          ...rap.map((t) => el('p', {}, t))
+        ])] : [])
       );
       root.hidden = false;
       close.focus();

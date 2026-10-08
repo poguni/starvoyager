@@ -32,14 +32,22 @@ import { bodyById, isExplorable, planetNeighbors, SURFACE, canLand } from './mod
 import { createLandingLog } from './model/landingLog.js';
 import { landingPlan, stepAt } from './model/landingPlan.js';
 import { createJournal, PLANET_IDS } from './model/journal.js';
-import { loadJournal, saveJournal } from './model/journalStore.js';
+import { loadJournal, saveJournal, clearJournal } from './model/journalStore.js';
 import { createFpsMeter } from './debug/fpsMeter.js';
 import { createMissionEngine } from './missions/engine.js';
-import { missionById } from './missions/missions.js';
+import { MISSIONS, missionById } from './missions/missions.js';
 import { createMissionPanel } from './ui/missionPanel.js';
+import { createMissionProgress, clearMissionProgress } from './model/missionProgress.js';
+import { loadStudentInfo, saveStudentInfo, clearStudentInfo } from './student/studentInfo.js';
+import { trySubmit, flushQueue, queueSize, onQueueChange } from './submit/submitQueue.js';
+import { createStudentGate } from './ui/studentGate.js';
+import { createMissionSelect } from './ui/missionSelect.js';
 
 const params = new URLSearchParams(location.search);
 const app = document.getElementById('app');
+// 시연 모드(기획서 11장): 학생 정보 입력·시트 제출 생략, 큰 글씨, 이름 라벨 기본 숨김, 기기에 저장하지 않음
+const demo = params.get('mode') === 'demo';
+app.classList.toggle('sv-demo', demo);
 installIconSprite();
 
 // 크롬북 크기(1440px 이하)에서는 components.css의 .sv-stage--cb 배치를 쓴다.
@@ -60,7 +68,8 @@ if (params.get('debug') === 'ui') {
   // ?view=map이 기본이다. ?view=planet은 행성 탐사 화면, ?view=size는 크기 비교 실험실,
   // ?view=sky(&time=21)는 북쪽 밤하늘에서 시작한다.
   // ?debug=arrange(&activity=classify): 크기 비교 실험실에서 끌어다 놓기 활동을 연다(미션 연결 전 확인용).
-  // ?mission=1~4: 그 탐사를 처음부터 바로 시작한다(개발 확인용, 탐사 선택 화면은 Phase 9B). ?debug=missions: 결과 행 패널
+  // ?mission=1~4: 탐사 선택 화면을 건너뛰고 그 탐사로 바로 간다(학생 정보가 없으면 등록 먼저). ?debug=missions: 결과 행 패널
+  // ?mode=demo: 시연 모드
   startSolarMap();
 }
 
@@ -73,7 +82,7 @@ function startSolarMap() {
   // landingLocked: 미션이 착륙 버튼을 잠글 때(Phase 9A). landing: 착륙 연출 중인 정보
   // target: 날아가는 중이면 도착할 천체. presenting: 발표 화면을 보는 중. size: 크기 비교 실험실에 있을 때의 상태
   // pickLocked: 미션 예측 단계에서 태양계 지도의 천체 누르기를 잠글 때. pendingGo: 비행이 끝나면 날아갈 천체(미션 시작 상태)
-  const state = { t: 0, spin: 0, seconds: 0, playing: false, speed: 1, focus: null, target: null, orbitPaused: false, landingLocked: false, landing: null, presenting: false, size: null, sky: null, names: true, pickLocked: false, pendingGo: null };
+  const state = { t: 0, spin: 0, seconds: 0, playing: false, speed: 1, focus: null, target: null, orbitPaused: false, landingLocked: false, landing: null, presenting: false, size: null, sky: null, names: !demo, pickLocked: false, pendingGo: null };
 
   // ---- 3D ----
   const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -106,17 +115,28 @@ function startSolarMap() {
   const fade = el('div', { class: 'sv-fade', 'aria-hidden': 'true' }); // 착륙 장면으로 바뀔 때 잠깐 어두워지는 막
   app.append(renderer.domElement, labelLayer, fade);
   const labels = createLabels({ container: labelLayer, map, onPick: (id) => { if (!state.pickLocked) goTo(id); } });
+  labels.setVisible(state.names);
   // 도감 진행 상태(기획서 10-5): 카드·태양 카드·찾은 구성원·착륙 시도를 브라우저에 저장해 두고 이어서 한다.
-  const saved = loadJournal();
+  const saved = demo ? {} : loadJournal(); // 시연 모드는 매번 새로 시작한다
   const progress = createMemberProgress(Array.isArray(saved.members) ? saved.members : []);
   const landingLog = createLandingLog(Array.isArray(saved.landed) ? saved.landed.filter((id) => PLANET_IDS.includes(id)) : []);
   const journal = createJournal({
     initial: saved,
     hasLanded: landingLog.hasTried,
-    // 카드 한 장을 완성할 때마다 '도감' 탭 한 행(시트 전송 연결은 Phase 9B)
-    onComplete: (row) => dispatchEvent(new CustomEvent('starvoyager:journal-row', { detail: row }))
+    // 카드 한 장을 완성할 때마다 '도감' 탭 한 행
+    onComplete: (row) => submitRow(row)
   });
-  const persist = () => saveJournal({ ...journal.serialize(), members: progress.getState().found, landed: landingLog.list() });
+  // '다른 친구가 사용해요'로 지운 뒤에는 다시 저장하지 않는다(pagehide 등)
+  let saving = !demo;
+  const persist = () => { if (saving) saveJournal({ ...journal.serialize(), members: progress.getState().found, landed: landingLog.list() }); };
+
+  // ---- 학생 정보와 시트 제출(기획서 10장). 학생 이름은 시트로 보내는 요청 본문 말고는 어디에도 남기지 않는다. ----
+  let student = demo ? null : loadStudentInfo();
+  function submitRow(row) {
+    if (demo || !student) return;
+    trySubmit(student, row);
+  }
+  const missionProgress = createMissionProgress(MISSIONS.map((m) => m.id), { persist: !demo });
   const landingView = createLandingScene();
   let sunNotice = null;
 
@@ -136,6 +156,7 @@ function startSolarMap() {
     onUndo: () => { starLinker.undo(); hud.setUndoable(starLink.canUndo()); },
     onCityLights: setCityLights,
     onRealSize: (on) => setRealSize(on),
+    onMissionSelect: () => leaveMission(),
     onSunCompare: (on) => setSunCompare(on),
     onJournal() {
       if (journalPanel.isOpen()) { journalPanel.setOpen(false); return; }
@@ -147,6 +168,7 @@ function startSolarMap() {
     }
   });
   hud.setMode('map');
+  hud.setNames(state.names);
   progress.subscribe((s) => hud.setMembers(s));
 
   function setNames(on) {
@@ -186,7 +208,15 @@ function startSolarMap() {
     onSummary: (i) => engine.submitSummary(i),
     onNext: () => engine.next(),
     onDay(day) { engine.pressDay(day.id); goTo(day.body); },
-    onExit: endMission
+    onExit: leaveMission,
+    donePlanets: () => journal.doneIds(),
+    // 창작(정답 없음): 행성 랩은 그 카드에, 새 별자리 이름은 그 별자리 위에(밤하늘을 떠날 때까지)
+    onCreative(result) {
+      if (result.detail?.planet) journal.setRap(result.detail.planet, result.detail.lines);
+      if (result.detail?.constellation) starLinker?.setCaption(result.detail.constellation, result.detail.lines);
+      engine.submitCreative(result);
+    },
+    onSurvey: (picks) => engine.submitSurvey(picks)
   });
   journal.subscribe(() => { hud.setJournalCount(journal.count(), journal.total); syncRingCue(); persist(); });
   hud.setJournalCount(journal.count(), journal.total);
@@ -499,6 +529,20 @@ function startSolarMap() {
     setSkyTime(hour);
   }
 
+  // 북쪽 밤하늘에서 태양계 지도로(탐사 선택으로 돌아갈 때). 새 별자리 이름 문장은 여기서 사라진다.
+  function exitSky() {
+    state.sky = null;
+    starLinker.setVisible(false);
+    starLinker.setCaption(null);
+    northSky.canvas.hidden = true;
+    renderer.domElement.hidden = false;
+    labelLayer.hidden = false;
+    hud.setMode('map');
+    hud.setDestination('태양계 지도');
+    document.body.dataset.accent = 'default';
+    syncJournalLayout();
+  }
+
   function setSkyTime(hour) {
     state.sky.hour = clampTime(hour);
     northSky.setTime(state.sky.hour);
@@ -627,6 +671,7 @@ function startSolarMap() {
   let missionDebug = null;
 
   function startMission(id) {
+    if (engine) endMission();
     mission = missionById(id);
     engine = createMissionEngine(mission);
     missionKey = null;
@@ -644,9 +689,10 @@ function startSolarMap() {
     if (mission.view === 'sky') enterSky();
     if (starLink) engine.report('constellations', starLink.getState().count);
     engine.onChange(renderMission);
-    // 완성된 결과 행(시트 전송 연결은 Phase 9B)
-    engine.onRow((row) => dispatchEvent(new CustomEvent('starvoyager:mission-row', { detail: row })));
-    engine.start();
+    // 완성된 결과 행 → '미션' 탭(창작·흥미 체크 포함)
+    engine.onRow(submitRow);
+    // 진행 중이던 탐사는 저장한 단계부터 이어서 한다(기획서 10-5)
+    engine.start(missionProgress.startOf(id));
   }
   progress.subscribe((s) => engine?.report('members', s.count, s.found));
   journal.subscribe(() => engine?.report('cards', journal.count()));
@@ -666,7 +712,15 @@ function startSolarMap() {
     afterMissionLayout();
   }
 
+  // '탐사 끝내기'·'탐사 선택': 진행은 이미 저장되어 있다. 탐사 선택 화면으로.
+  function leaveMission() {
+    if (state.landing) return;
+    endMission();
+    showSelect();
+  }
+
   function renderMission(s) {
+    missionProgress.record(mission.id, { resumeIndex: s.resumeIndex, done: s.done, days: s.days });
     const key = `${s.stepIndex}:${s.stage}`;
     if (key !== missionKey) {
       const afterGate = missionKey?.endsWith(':gate') && s.gateOpened;
@@ -827,7 +881,61 @@ function startSolarMap() {
     const time = Number(params.get('time'));
     enterSky({ hour: Number.isFinite(time) && params.has('time') ? time : TIME_DEFAULT });
   }
-  if (missionById(Number(params.get('mission')))) startMission(Number(params.get('mission')));
+
+  // ---- 등록(S01) → 탐사 선택(S02) → 탐사(기획서 7장, 10-1) ----
+  const screen = el('div', { class: 'sv-screen', hidden: true }, ['tl', 'tr', 'bl', 'br'].map((c) => el('div', { class: `sv-corner sv-corner--${c}` })));
+  app.append(screen);
+  const gate = createStudentGate(screen, {
+    onSubmit(info) {
+      student = info;
+      saveStudentInfo(info);
+      gate.hide();
+      afterRegister();
+    }
+  });
+  const select = createMissionSelect(screen, {
+    missions: MISSIONS,
+    onPick(id) {
+      select.hide();
+      screen.hidden = true;
+      startMission(id);
+    },
+    onSwitch() {
+      // 학생 정보·도감·탐사 진행을 지우고 처음부터. 제출 대기열은 남겨 앞 친구 결과를 마저 보낸다.
+      saving = false;
+      clearStudentInfo();
+      clearJournal();
+      clearMissionProgress();
+      location.reload();
+    },
+    onRetry: () => flushQueue()
+  });
+  onQueueChange((n) => select.setQueue(demo ? 0 : n));
+  select.setQueue(demo ? 0 : queueSize());
+
+  // 탐사 선택 화면: 뒤의 장면은 태양계 지도로 돌려 두고 그리지 않는다.
+  function showSelect() {
+    if (state.presenting) endPresent();
+    if (state.sky) exitSky();
+    if (state.size) exitSizeLab();
+    if (state.focus) goHome();
+    document.body.dataset.accent = 'default';
+    const statuses = Object.fromEntries(MISSIONS.map((m) => [m.id, missionProgress.get(m.id).status]));
+    select.show({ student, statuses, journal: { count: journal.count(), total: journal.total }, demo });
+    screen.hidden = false;
+    if (!demo) flushQueue();
+  }
+
+  // ?mission·?view 등 시작 장면이 있으면 탐사 선택을 건너뛴다(docs/결정기록.md 2026-10-08).
+  const urlMission = missionById(Number(params.get('mission')));
+  const urlScene = urlMission || params.has('view') || params.get('debug') === 'arrange';
+  function afterRegister() {
+    if (urlMission) { screen.hidden = true; startMission(urlMission.id); }
+    else if (urlScene) screen.hidden = true;
+    else showSelect();
+  }
+  if (!demo && !student) { screen.hidden = false; gate.show(); }
+  else afterRegister();
 
   // 펼쳐 둔 작성 중 카드의 시간을 더하고(착륙·발표 화면 제외) 5초마다 저장한다.
   let unsaved = 0;
@@ -867,7 +975,8 @@ function startSolarMap() {
     const { clientWidth: w, clientHeight: h } = app;
     camera.zoom = frame.zoom;
     camera.setViewOffset(w, h, frame.x, frame.y, w, h);
-    if (state.sky) {
+    if (!screen.hidden) { /* 등록·탐사 선택 화면 뒤의 3D는 그리지 않는다 */ }
+    else if (state.sky) {
       northSky.update(dt, state.seconds);
       starLinker.update();
     } else if (landingFrame) renderer.render(landingFrame.getScene(), landingFrame.camera);
@@ -875,7 +984,7 @@ function startSolarMap() {
       draw(sizeLab.scene, sizeLab.camera);
       sizeLabels.update(sizeLab.items(), sizeLab.sunInfo(), { real: sizeLab.isReal() });
     } else draw(map.scene, camera);
-    if (!state.size && !state.sky) labels.update(camera, { width: w, height: h });
+    if (!state.size && !state.sky && screen.hidden) labels.update(camera, { width: w, height: h });
     fps?.tick(dt);
     requestAnimationFrame(tick);
   }

@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { MISSIONS } from './missions.js';
+import { RAP_LINES } from '../data/rapLines.js';
+import { PLANET_IDS } from '../model/journal.js';
 import { ARRANGE_ANSWERS, orderText, groupsText } from '../model/arrange.js';
 
 // 기획서 원문과 대조한다(학생용 문구는 한 글자도 바꾸지 않는다).
@@ -13,7 +15,7 @@ const TABLE = Object.fromEntries(
   [...section('### 9-6.', '## 10.').matchAll(/^\| (\d-\d) \| (.+?) \| (.+?) \|$/gm)].map(([, id, answer, how]) => [id, { answer, how }])
 );
 
-const items = MISSIONS.flatMap((m) => m.steps.filter((s) => s.id).map((s) => ({ ...s, mission: m.id })));
+const items = MISSIONS.flatMap((m) => m.steps.filter((s) => ['quiz', 'sort', 'classify'].includes(s.type)).map((s) => ({ ...s, mission: m.id })));
 const quizzes = items.filter((s) => s.type === 'quiz');
 const summaries = MISSIONS.map((m) => m.steps.find((s) => s.type === 'summary'));
 
@@ -118,5 +120,56 @@ describe('시작 상태와 잠금', () => {
       ['월 moon', '화 mars', '수 mercury', '목 jupiter', '금 venus', '토 saturn', '일 sun']
     );
     expect(items.find((s) => s.id === '1-4').memo).toBe('members');
+  });
+});
+
+describe('창작·흥미 체크(9-3, 9-5)', () => {
+  const stepOf = (id, type) => MISSIONS.find((m) => m.id === id).steps.find((s) => s.type === type);
+  const BLOCK_25 = section('- **창작(점수 없음) — 새 별자리 이름 붙이기**', '### 9-6.');
+
+  it('탐사마다 마지막은 흥미 체크, 탐사 2·4는 그 앞에 창작', () => {
+    expect(MISSIONS.map((m) => m.steps.at(-1).type)).toEqual(['survey', 'survey', 'survey', 'survey']);
+    expect(MISSIONS.map((m) => m.steps.at(-1).questions.map((q) => q.id))).toEqual([['흥미1'], ['흥미2'], ['흥미3'], ['흥미4', '흥미5']]);
+    expect(stepOf(2, 'creative').id).toBe('C-1');
+    expect(stepOf(4, 'creative').id).toBe('C-2');
+  });
+
+  it('C-2 문장과 보기가 기획서 그대로', () => {
+    const c = stepOf(4, 'creative');
+    for (const b of c.blanks) {
+      const line = BLOCK_25.split('\n').find((l) => l.includes(b.text.split('[ ]')[0].trim()));
+      expect(line).toContain(`"${b.text}" 보기: ${b.options.join(' / ')}`);
+    }
+    expect(c.constellations.map((x) => x.name)).toEqual(['북두칠성', '카시오페이아자리', '작은곰자리']);
+  });
+
+  it('탐사 4 흥미 체크 두 문항이 기획서 그대로(기록값은 이모지 없이)', () => {
+    const [q4, q5] = stepOf(4, 'survey').questions;
+    expect(BLOCK_25).toContain(`"${q4.text}" ${q4.options.map((o, i) => `${q4.emoji[i]} ${o}`).join(' / ')}`);
+    expect(BLOCK_25).toContain(`"${q5.text}" ${q5.options.join(' / ')}`);
+  });
+
+  it('행성 랩: 행성 8개 × 3줄 × 보기 3개, 화성은 기획서 예시 그대로', () => {
+    expect(Object.keys(RAP_LINES).sort()).toEqual([...PLANET_IDS].sort());
+    for (const lines of Object.values(RAP_LINES)) {
+      expect(lines).toHaveLength(3);
+      for (const opts of lines) expect(opts).toHaveLength(3);
+    }
+    const rap = section('- **창작(점수 없음) — 행성 자기소개 랩 만들기**', '### 9-4.');
+    RAP_LINES.mars.forEach((opts, i) => {
+      expect(rap).toContain(`${i + 2}줄 보기: ${opts.map((t) => `"${t}"`).join(' / ')}`);
+    });
+  });
+
+  it('행성 랩 문장에 쓰지 않는 말(가스, 크레이터)이 없고, 고리·표면 줄이 정답표와 맞다', () => {
+    const all = Object.values(RAP_LINES).flat(2).join(' ');
+    expect(all).not.toMatch(/가스|크레이터/);
+    const solid = ['mercury', 'venus', 'earth', 'mars'];
+    for (const [id, [, surface, ring]] of Object.entries(RAP_LINES)) {
+      const isSolid = solid.includes(id);
+      expect(surface.join(' ')).toMatch(isSolid ? /땅|착륙해도|내려앉을 수 있/ : /기체|땅이 없|내려앉을 수 없/);
+      if (isSolid) expect(ring.join(' ')).toMatch(/고리가 없|고리 없이|다른 친구/);
+      else expect(ring.every((t) => t.includes('고리') && !t.includes('없'))).toBe(true);
+    }
   });
 });

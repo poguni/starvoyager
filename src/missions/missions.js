@@ -10,6 +10,7 @@
 // 조작 이름: sunlight 태양 빛 가리기 · play 재생 · next 다음 행성 · land 착륙하기 · loupe 고리 찾기
 //            real 실제 크기로 보기 · sunCompare 태양과 비교하기 · time 시각 슬라이더 · names 이름 보기 · lights 주변 불빛
 import { MEMBERS } from '../model/memberProgress.js';
+import { CONSTELLATIONS } from '../data/constellations.js';
 
 const MEMBER_LABELS = Object.fromEntries(MEMBERS.map((m) => [m.id, m.label]));
 
@@ -24,6 +25,11 @@ const DAYS = [
   { id: 'sun', label: '일요일', body: 'sun' }
 ];
 
+// 흥미 체크(9-1, 9-5, docs/결정기록.md 2026-10-08). 기록값은 이모지를 뺀 글자, 이모지는 화면에만.
+const FUN = ['재미있었어요', '보통이에요', '별로예요'];
+const FUN_EMOJI = ['😀', '🙂', '😐'];
+const funQuestion = (id, text) => ({ id, text, options: FUN, emoji: FUN_EMOJI });
+
 const MAP = { view: 'map' };
 const JUPITER = { view: 'planet', planet: 'jupiter' };
 const SAME_SIZE = { view: 'size', real: false };
@@ -34,6 +40,8 @@ export const MISSIONS = [
   {
     id: 1,
     code: 'MISSION 01',
+    name: '태양계 구성원과 태양', // 탐사 선택 카드(7장 표)
+    desc: '태양계 지도에서 태양, 행성, 위성, 혜성, 소행성을 찾아요.', // 탐사 선택 카드 설명(S02)
     title: '탐사 1 · 태양계 구성원',
     view: 'map',
     memberLabels: MEMBER_LABELS,
@@ -78,12 +86,15 @@ export const MISSIONS = [
         text: '태양계의 중심에는 [ ]이 있고, 그 주위를 [ ]이 돌아요.',
         options: ['태양 / 행성', '지구 / 태양', '달 / 지구'],
         answerIndex: 0
-      }
+      },
+      { type: 'survey', questions: [funQuestion('흥미1', '오늘 태양계 탐사는 어땠나요?')] }
     ]
   },
   {
     id: 2,
     code: 'MISSION 02',
+    name: '행성 탐사와 도감', // 탐사 선택 카드(7장 표)
+    desc: '행성 8개에 가까이 가서 관찰하고, 탐사 도감을 채워요.', // 탐사 선택 카드 설명(S02)
     title: '탐사 2 · 행성 탐사',
     view: 'map',
     steps: [
@@ -117,12 +128,17 @@ export const MISSIONS = [
         text: '수성·금성·지구·화성은 표면이 [ ]으로, 목성·토성·천왕성·해왕성은 표면이 [ ]로 이루어져 있어요.',
         options: ['단단한 땅 / 기체', '기체 / 단단한 땅', '물 / 얼음'],
         answerIndex: 0
-      }
+      },
+      // 창작 C-1 행성 자기소개 랩: 완성한 카드 하나 → 2~4줄(src/data/rapLines.js)
+      { type: 'creative', id: 'C-1', kind: 'rap', title: '행성 자기소개 랩 만들기' },
+      { type: 'survey', questions: [funQuestion('흥미2', '오늘 행성 탐사는 어땠나요?')] }
     ]
   },
   {
     id: 3,
     code: 'MISSION 03',
+    name: '크기 비교 실험실', // 탐사 선택 카드(7장 표)
+    desc: '행성을 실제 크기로 나란히 놓고, 크기 순서대로 줄 세워요.', // 탐사 선택 카드 설명(S02)
     title: '탐사 3 · 크기 비교 실험실',
     view: 'size',
     steps: [
@@ -156,12 +172,15 @@ export const MISSIONS = [
         options: ['목성·토성·천왕성·해왕성 / 금성·화성·수성', '금성·화성·수성 / 목성·토성·천왕성·해왕성', '목성·토성 / 천왕성·해왕성'],
         answerIndex: 0
       },
-      { type: 'feel', text: "'태양과 비교하기'를 눌러 봐요.", cue: 'sunCompare' }
+      { type: 'feel', text: "'태양과 비교하기'를 눌러 봐요.", cue: 'sunCompare' },
+      { type: 'survey', questions: [funQuestion('흥미3', '오늘 크기 비교 탐사는 어땠나요?')] }
     ]
   },
   {
     id: 4,
     code: 'MISSION 04',
+    name: '북쪽 밤하늘 별자리', // 탐사 선택 카드(7장 표)
+    desc: '별을 이어 북두칠성과 카시오페이아자리를 찾고, 북극성을 찾아요.', // 탐사 선택 카드 설명(S02)
     title: '탐사 4 · 북쪽 밤하늘',
     view: 'sky',
     steps: [
@@ -216,6 +235,22 @@ export const MISSIONS = [
         text: '북쪽 하늘에서 거의 움직이지 않는 별은 [ ]이고, [ ]에 있어요.',
         options: ['북극성 / 작은곰자리', '북극성 / 큰곰자리', '북두칠성 / 작은곰자리'],
         answerIndex: 0
+      },
+      // 창작 C-2 새 별자리 이름 붙이기(9-5 보기 그대로)
+      {
+        type: 'creative', id: 'C-2', kind: 'constellation', title: '새 별자리 이름 붙이기',
+        constellations: CONSTELLATIONS.map((c) => ({ id: c.id, name: c.name })),
+        blanks: [
+          { text: '이 별자리의 새 이름은 [ ]자리예요.', options: ['숟가락', '미끄럼틀', '번개', '왕관', '연', '물고기', '산', '꼬리별'] },
+          { text: '왜냐하면 [ ] 모양처럼 보이기 때문이에요.', options: ['길게 이어진', '지그재그', '손잡이가 달린', '꺾어진', '뾰족뾰족한'] }
+        ]
+      },
+      {
+        type: 'survey',
+        questions: [
+          funQuestion('흥미4', '오늘 밤하늘 탐사는 어땠나요?'),
+          { id: '흥미5', text: '오늘 밤에 실제 북쪽 하늘에서 북극성을 찾아보고 싶나요?', options: ['예', '아니요'] }
+        ]
       }
     ]
   }

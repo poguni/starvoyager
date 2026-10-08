@@ -128,6 +128,7 @@
   display: flex; flex-direction: column; gap: var(--sv-gap-s); padding: 16px 18px;
   border-radius: var(--sv-radius); border: 1.5px dashed var(--sv-option-line); font-size: var(--sv-fs-option);
 }
+.sv-jp-rap-line { color: var(--sv-paper-text); line-height: var(--sv-lh-tight); }
 .sv-jp-actions { margin-top: auto; display: flex; gap: var(--sv-gap-m); }
 .sv-jp-actions > * { flex: 1; }
 .sv-jp-actions .sv-secondary svg { width: 26px; height: 26px; }
@@ -219,6 +220,13 @@
 .sv-present-card .sv-record-row dt { font-size: var(--sv-fs-body); }
 .sv-present-card .sv-swatch { width: 34px; height: 34px; }
 .sv-present-card .sv-fact { margin: 0; font-size: calc(var(--sv-fs-body) * 1.25); }
+/* S09 '내가 만든 행성 랩' */
+.sv-present-rap { display: flex; flex-direction: column; gap: 6px; padding: 20px 24px; border-radius: var(--sv-radius); background: var(--sv-option-bg); border: 1.5px solid var(--sv-option-line); }
+.sv-present-rap-title { display: flex; align-items: center; gap: 8px; font-size: var(--sv-fs-section); font-weight: 700; color: var(--sv-paper-muted); }
+.sv-present-rap-title svg { width: 22px; height: 22px; }
+.sv-present-rap p { margin: 0; font-size: calc(var(--sv-fs-body) * 1.25); line-height: 1.45; }
+.sv-stage--cb .sv-present-rap { padding: 12px 18px; gap: 2px; }
+.sv-stage--cb .sv-present-rap p { font-size: var(--sv-fs-body); }
 .sv-present-close {
   position: absolute; right: 32px; top: 28px; width: 72px; height: 72px; border-radius: var(--sv-radius);
   background: var(--sv-glass); border: 1px solid var(--sv-glass-line-strong); color: var(--sv-text);
@@ -317,6 +325,10 @@
 @keyframes sv-blink { 0%, 100% { opacity: 0.15; } 50% { opacity: 1; } }
 .sv-sky-label { left: 0; top: 0; border-color: var(--sv-accent); }
 .sv-sky-labels .sv-compass { left: 0; top: 0; bottom: auto; }
+/* 창작 C-2 새 별자리 이름 문장 */
+.sv-sky-caption { position: absolute; left: 0; top: 0; max-width: 520px; padding: 10px 16px; border-radius: var(--sv-radius); border-left: 4px solid var(--sv-accent); font-size: var(--sv-fs-body); line-height: var(--sv-lh-body); text-align: center; }
+.sv-sky-caption p { margin: 0; }
+.sv-sky-caption[hidden] { display: none; }
 .sv-compass--n { color: var(--sv-accent); }
 
 /* ?debug=fps */
@@ -351,6 +363,31 @@
 .sv-mp-lead { color: var(--sv-text); }
 .sv-mp-done { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: var(--sv-gap-l); }
 .sv-mp-big { font-size: var(--sv-fs-question); font-weight: 700; }
+/* 창작(C-1 행성 랩, C-2 새 별자리 이름)·흥미 체크: S06 한 줄 정리 부품으로 */
+.sv-mp-kicker { display: flex; align-items: center; gap: 8px; font-size: var(--sv-fs-section); font-weight: 700; color: var(--sv-accent); }
+.sv-mp-kicker svg { width: 22px; height: 22px; }
+.sv-mp-lines { display: flex; flex-direction: column; gap: var(--sv-gap-s); }
+.sv-mp-lines .sv-mp-big { font-size: var(--sv-fs-title); line-height: var(--sv-lh-tight); }
+.sv-mp-rap { display: flex; flex-direction: column; gap: 6px; padding: 14px 16px; border-radius: var(--sv-radius); border: var(--sv-border) solid var(--sv-glass-line); background: var(--sv-glass); }
+.sv-mp-rap-head { display: flex; align-items: center; justify-content: space-between; gap: var(--sv-gap-s); margin-bottom: 4px; }
+.sv-mp-again { min-height: 40px; padding: 0 12px; font-size: var(--sv-fs-small); }
+.sv-mp-again svg { width: 18px; height: 18px; }
+.sv-mp-line {
+  display: block; width: 100%; padding: 6px 10px; margin: 0; border-radius: var(--sv-radius-s); border: var(--sv-border-sel) solid transparent;
+  background: transparent; color: var(--sv-text); font: inherit; font-size: var(--sv-fs-title); line-height: var(--sv-lh-body); text-align: left; cursor: pointer;
+}
+.sv-mp-line.is-fixed { cursor: default; color: var(--sv-text-muted); }
+.sv-mp-line[aria-pressed="true"] { border-color: var(--sv-accent); }
+.sv-mp-line .sv-sentence { font-size: inherit; line-height: inherit; }
+.sv-mp-line .sv-blank { min-width: 96px; }
+.sv-mp-sub { font-size: var(--sv-fs-section); font-weight: 700; color: var(--sv-text-muted); }
+.sv-mp-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.sv-mp-q2 { font-size: var(--sv-fs-title); }
+.sv-mp-emoji { border: none; font-family: var(--sv-font); font-size: var(--sv-fs-title); }
+.sv-stage--cb .sv-mp-line { font-size: var(--sv-fs-body); padding: 2px 8px; }
+.sv-stage--cb .sv-mp-rap-head { margin-bottom: 0; }
+.sv-stage--cb .sv-mp-again { min-height: 36px; }
+.sv-stage--cb .sv-mp-rap { padding: 8px 12px; gap: 2px; }
 .sv-stage--cb { --sv-mp-w-cb: 460px; } /* 크롬북 미션 패널 폭 */
 .sv-stage--cb .sv-mp { width: var(--sv-mp-w-cb); padding: 16px 20px 18px; gap: 12px; }
 .sv-stage--cb .sv-mp-body { gap: 12px; }
@@ -394,3 +431,68 @@
 }
 .sv-mp-on .sv-controls--sky { right: calc(var(--sv-hud-margin) + var(--sv-panel-w) + var(--sv-gap-l)); }
 .sv-stage--cb.sv-mp-on .sv-controls { right: calc(var(--sv-hud-margin) + var(--sv-mp-w-cb) + var(--sv-gap-l)); }
+
+/* ---------- 등록(S01)·탐사 선택(S02) 화면 (Phase 9B) ----------
+   3D 위를 덮는 전체 화면. 배경은 .sv-stage와 같은 짙은 우주색 + 별 무늬(뒤의 3D는 그리지 않는다). */
+.sv-screen { position: absolute; inset: 0; z-index: 60; background-color: var(--sv-space-900); background-image: inherit; background-size: inherit; overflow: auto; }
+.sv-screen[hidden], .sv-reg-wrap[hidden], .sv-ms[hidden], .sv-error[hidden], .sv-queue[hidden] { display: none; }
+.sv-screen .sv-corner { z-index: 1; }
+.sv-reg-wrap { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--sv-gap-m); padding: var(--sv-gap-l); }
+.sv-reg { width: 780px; max-width: 100%; background: var(--sv-glass-strong); border-top: 6px solid var(--sv-accent); }
+.sv-reg-brand { display: flex; flex-direction: column; gap: 6px; }
+.sv-reg-en { font-family: var(--sv-font-num); font-size: var(--sv-fs-small); letter-spacing: .3em; color: var(--sv-accent); }
+.sv-reg-ko { font-size: calc(var(--sv-fs-display) * 1.6); font-weight: 800; letter-spacing: -.01em; margin: 0; line-height: var(--sv-lh-tight); }
+.sv-reg-sub { font-size: var(--sv-fs-body); color: var(--sv-text-muted); }
+.sv-reg-grade { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
+.sv-reg-grade button { height: 68px; border-radius: var(--sv-radius); background: transparent; border: 1.5px solid var(--sv-glass-line-strong); color: var(--sv-text); font-family: var(--sv-font-num); font-size: var(--sv-fs-question); font-weight: 600; cursor: pointer; }
+.sv-reg-grade button[aria-pressed="true"] { background: var(--sv-accent); border-color: var(--sv-accent); color: var(--sv-on-accent); }
+.sv-reg-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+.sv-reg-row2 > div { display: flex; flex-direction: column; gap: 10px; }
+/* 반·번호 숫자 칸: 시안의 output 모양 그대로 입력칸으로 */
+.sv-stepper-num { width: 110px; height: 64px; text-align: center; border-radius: var(--sv-radius); background: var(--sv-glass-hover); border: 1px solid var(--sv-glass-line); color: var(--sv-text); font-family: var(--sv-font-num); font-size: var(--sv-fs-question); font-weight: 600; }
+.sv-stepper-num:focus { outline: 3px solid var(--sv-accent); outline-offset: 2px; }
+.sv-stepper-num.is-error { border: var(--sv-border-sel) solid var(--sv-warn-bright); }
+.sv-reg-start { min-height: 76px; font-size: var(--sv-fs-question); display: flex; align-items: center; justify-content: center; gap: 10px; }
+.sv-reg-credit { margin: 0; font-size: var(--sv-fs-small); color: var(--sv-text-faint); }
+.sv-stage--cb .sv-reg { padding: 26px 36px; gap: 16px; }
+.sv-stage--cb .sv-reg-grade button { height: 56px; }
+.sv-stage--cb .sv-stepper button, .sv-stage--cb .sv-stepper-num { height: 56px; }
+.sv-stage--cb .sv-reg-start { min-height: 64px; }
+
+.sv-ms { position: absolute; inset: 0; padding: 64px 80px 60px; display: flex; flex-direction: column; }
+.sv-ms-top { display: flex; justify-content: space-between; align-items: center; }
+.sv-ms-who { display: flex; align-items: center; gap: 16px; font-size: var(--sv-fs-body); }
+.sv-ms-who svg { width: 34px; height: 34px; color: var(--sv-accent); }
+.sv-ms-who b { font-size: var(--sv-fs-title); }
+.sv-ms-heading { margin: 58px 0 0; font-size: calc(var(--sv-fs-display) * 1.16); font-weight: 800; }
+.sv-ms-heading small { display: block; font-size: var(--sv-fs-body); font-weight: 400; color: var(--sv-text-muted); margin-top: 10px; }
+.sv-ms-cards { margin-top: 70px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 28px; }
+.sv-ms-cards .sv-mission-card { height: 520px; text-align: left; font: inherit; color: var(--sv-text); cursor: pointer; }
+.sv-ms-cards .sv-status { margin-top: auto; }
+.sv-ms-cards .sv-ms-meter + .sv-status { margin-top: 0; }
+.sv-ms-art { height: 150px; flex: none; border-radius: var(--sv-radius); border: 1px solid var(--sv-glass-line); overflow: hidden; background: var(--sv-space-900); }
+.sv-ms-art img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.sv-ms-meter { margin-top: auto; display: flex; align-items: center; gap: 10px; font-size: var(--sv-fs-section); color: var(--sv-text-muted); }
+.sv-ms-meter-bar { flex: 1; height: 8px; border-radius: 4px; background: var(--sv-glass-line-strong); overflow: hidden; }
+.sv-ms-meter-bar span { display: block; height: 100%; background: var(--sv-accent); }
+.sv-ms-meter-num { font-family: var(--sv-font-num); color: var(--sv-text); }
+.sv-ms-bottom { margin-top: auto; display: flex; justify-content: space-between; align-items: center; min-height: 70px; }
+.sv-ms-retry { border-color: var(--sv-warn-bright); }
+.sv-ms-brand { margin-left: auto; display: flex; gap: 14px; font-family: var(--sv-font-num); font-size: var(--sv-fs-small); color: var(--sv-text-faint); letter-spacing: .05em; }
+.sv-stage--cb .sv-ms { padding: 40px 56px 36px; }
+.sv-stage--cb .sv-ms-heading { margin-top: 30px; }
+.sv-stage--cb .sv-ms-cards { margin-top: 36px; gap: 18px; }
+.sv-stage--cb .sv-ms-cards .sv-mission-card { height: 400px; padding: 18px; gap: 10px; }
+.sv-stage--cb .sv-ms-art { height: 110px; }
+.sv-stage--cb .sv-ms-who svg { width: 26px; height: 26px; }
+/* HUD 현재 탐사 칸의 '탐사 선택' */
+.sv-hud-exit { margin-left: var(--sv-gap-s); min-height: 40px; padding: 0 12px; }
+.sv-hud-exit svg { width: 18px; height: 18px; }
+.sv-hud-exit[hidden] { display: none; }
+.sv-hud-exit:disabled { opacity: .4; cursor: default; }
+.sv-stage--cb .sv-hud-exit { min-height: 34px; padding: 0 8px; }
+/* 시연 모드(?mode=demo): 미션 질문·보기 글씨를 키운다(전자칠판에서 교실 뒤까지 보이게) */
+.sv-demo .sv-mp .sv-question { font-size: calc(var(--sv-fs-question) * 1.25); }
+.sv-demo .sv-mp .sv-choice { font-size: calc(var(--sv-fs-body) * 1.2); }
+.sv-demo .sv-mp :is(.sv-hint-dark, .sv-explain, .sv-reveal, .sv-guide) { font-size: calc(var(--sv-fs-body) * 1.15); }
+.sv-demo .sv-mp .sv-sentence { font-size: calc(var(--sv-fs-title) * 1.2); }

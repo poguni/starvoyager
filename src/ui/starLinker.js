@@ -1,7 +1,8 @@
 // 별 이어 그리기 화면 요소(S08, motion.md '북쪽 밤하늘').
 //   별자리 별(점과 64px 누르는 자리), 이은 선(0.3초 동안 그어짐), 점선 안내(시작 전 별자리만),
 //   힌트(다음 별이 1초 주기로 두 번 반짝임), 잘못 누른 별은 작게 흔들림,
-//   완성하면 선화가 1초 동안 은은하게 나타남, 이름표(북극성·완성한 별자리), 방위(북서·북·북동).
+//   완성하면 선화가 1초 동안 은은하게 나타남, 이름표(북극성·완성한 별자리), 방위(북서·북·북동),
+//   창작 C-2에서 붙인 새 이름 문장(별자리 위 유리 상자).
 // 위치는 매 프레임 sky.starOnScreen()으로 맞춘다(시각을 바꾸면 선도 별을 따라 돈다).
 import { el } from './components/dom.js';
 import { POLARIS } from '../data/constellations.js';
@@ -36,8 +37,9 @@ export function createStarLinker(app, { sky, link, constellations, art, after })
     const guideLines = c.lines.map(() => guide.appendChild(svgEl('line')));
     svg.append(artGroup, guide, done);
     const label = el('span', { class: 'sv-label sv-sky-label', hidden: true }, c.label);
-    labelLayer.append(label);
-    groups[c.id] = { c, artGroup, guide, guideLines, done, doneLines: new Map(), label };
+    const caption = el('div', { class: 'sv-glass sv-sky-caption', hidden: true });
+    labelLayer.append(label, caption);
+    groups[c.id] = { c, artGroup, guide, guideLines, done, doneLines: new Map(), label, caption };
   }
   const polarisLabel = el('span', { class: 'sv-label sv-sky-label' }, '북극성');
   labelLayer.append(polarisLabel);
@@ -145,7 +147,13 @@ export function createStarLinker(app, { sky, link, constellations, art, after })
         const bottom = Math.max(...ps.map((p) => p.y));
         const cx = ps.reduce((s, p) => s + p.x, 0) / ps.length;
         // 위 계기판에 가리면 별자리 아래쪽에 단다.
-        place(g.label, cx, top - 44 > LABEL_MIN_Y ? top - 44 : bottom + 44);
+        const above = top - 44 > LABEL_MIN_Y;
+        place(g.label, cx, above ? top - 44 : bottom + 44);
+        // 새 이름 문장은 이름표 바깥쪽(이름표가 위면 더 위, 아래면 더 아래)
+        if (!g.caption.hidden) {
+          const gap = (g.label.hidden ? 0 : 40) + g.caption.offsetHeight / 2;
+          place(g.caption, cx, above ? Math.max(LABEL_MIN_Y, top - 44 - gap) : bottom + 44 + gap);
+        }
       }
       const p = pos.get(POLARIS);
       place(polarisLabel, p.x, p.y + 26);
@@ -166,6 +174,14 @@ export function createStarLinker(app, { sky, link, constellations, art, after })
     },
     undo() { link.undo(); hideHint(); refresh(); },
     setNamesVisible(on) { names = on; refresh(); },
+    // 새 별자리 이름 문장(lines가 없으면 모두 감춤)
+    setCaption(id, lines) {
+      for (const g of Object.values(groups)) {
+        const on = Boolean(lines) && g.c.id === id;
+        g.caption.hidden = !on;
+        g.caption.replaceChildren(...(on ? lines.map((t) => el('p', {}, t)) : []));
+      }
+    },
     setVisible(on) { layer.hidden = !on; },
     refresh
   };
