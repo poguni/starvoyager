@@ -437,7 +437,7 @@
 .sv-screen { position: absolute; inset: 0; z-index: 60; background-color: var(--sv-space-900); background-image: inherit; background-size: inherit; overflow: auto; }
 .sv-screen[hidden], .sv-reg-wrap[hidden], .sv-ms[hidden], .sv-ms-top .sv-ghost[hidden], .sv-error[hidden], .sv-queue[hidden] { display: none; }
 .sv-screen .sv-corner { z-index: 1; }
-.sv-reg-wrap { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--sv-gap-m); padding: var(--sv-gap-l); }
+.sv-reg-wrap { position: absolute; inset: 0; background: var(--sv-space-900) url('/starvoyager_splash.jpg') center / cover no-repeat; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--sv-gap-m); padding: var(--sv-gap-l); }
 .sv-reg { width: 780px; max-width: 100%; background: var(--sv-glass-strong); border-top: 6px solid var(--sv-accent); }
 .sv-reg-brand { display: flex; flex-direction: column; gap: 6px; }
 .sv-reg-en { font-family: var(--sv-font-num); font-size: var(--sv-fs-small); letter-spacing: .3em; color: var(--sv-accent); }
