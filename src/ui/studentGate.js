@@ -4,6 +4,7 @@
 import { el } from './components/dom.js';
 import { icon } from './components/icon.js';
 import { validateStudentInfo } from '../student/studentInfo.js';
+import { createStudentQr } from './studentQr.js';
 
 const CREDIT = '태양·행성 질감: Solar System Scope (CC BY 4.0) · 지구·달 질감: NASA';
 
@@ -88,10 +89,12 @@ export function createStudentGate(screen, { onSubmit }) {
   });
 
   const root = el('div', { class: 'sv-reg-wrap', hidden: true }, [form, el('p', { class: 'sv-reg-credit' }, CREDIT)]);
+  const qr = createStudentQr(root);
   screen.append(root);
 
   return {
     show() {
+      qr.hide();
       grade = null;
       syncGrade();
       cls.input.value = '';

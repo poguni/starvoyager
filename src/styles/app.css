@@ -453,6 +453,21 @@
 .sv-stepper-num:focus { outline: 3px solid var(--sv-accent); outline-offset: 2px; }
 .sv-stepper-num.is-error { border: var(--sv-border-sel) solid var(--sv-warn-bright); }
 .sv-reg-start { min-height: 76px; font-size: var(--sv-fs-question); display: flex; align-items: center; justify-content: center; gap: 10px; }
+/* 학생용 QR 코드: 버튼은 오른쪽 아래, 누르면 가운데에 큰 QR */
+.sv-qr-open { position: absolute; right: var(--sv-gap-xl); bottom: var(--sv-gap-xl); background: var(--sv-glass); }
+.sv-qr-backdrop { position: absolute; inset: 0; z-index: 2; display: flex; align-items: center; justify-content: center; background: var(--sv-glass); backdrop-filter: blur(var(--sv-glass-blur)); }
+.sv-qr-backdrop[hidden] { display: none; }
+.sv-qr { display: flex; flex-direction: column; align-items: center; gap: var(--sv-gap-l); padding: var(--sv-gap-l) var(--sv-gap-xl); background: var(--sv-glass-strong); border-top: 6px solid var(--sv-accent); }
+.sv-qr-head { align-self: stretch; display: flex; align-items: center; justify-content: space-between; gap: var(--sv-gap-l); }
+.sv-qr-title { margin: 0; font-size: var(--sv-fs-title); }
+.sv-qr-close { width: var(--sv-touch-min); height: var(--sv-touch-min); display: inline-flex; align-items: center; justify-content: center; background: transparent; border: var(--sv-border) solid var(--sv-glass-line-strong); border-radius: var(--sv-radius); color: var(--sv-text); cursor: pointer; }
+.sv-qr-close svg { width: 22px; height: 22px; }
+.sv-qr-box { width: 640px; height: 640px; background: var(--sv-paper); border-radius: var(--sv-radius); color: var(--sv-paper-text); }
+.sv-qr-box svg { display: block; width: 100%; height: 100%; fill: currentColor; }
+.sv-qr-help { margin: 0; font-size: var(--sv-fs-body); color: var(--sv-text-muted); }
+.sv-stage--cb .sv-qr { gap: var(--sv-gap-m); padding: var(--sv-gap-m) var(--sv-gap-l); }
+.sv-stage--cb .sv-qr-box { width: 440px; height: 440px; }
+.sv-stage--cb .sv-qr-open { right: var(--sv-gap-l); bottom: var(--sv-gap-l); }
 .sv-reg-credit { margin: 0; font-size: var(--sv-fs-small); color: var(--sv-text-faint); }
 .sv-stage--cb .sv-reg { padding: 26px 36px; gap: 16px; }
 .sv-stage--cb .sv-reg-grade button { height: 56px; }

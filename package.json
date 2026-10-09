@@ -12,10 +12,10 @@
     "qr:all": "node scripts/make-qr.mjs --all"
   },
   "dependencies": {
+    "qrcode": "^1.5.4",
     "three": "^0.186.0"
   },
   "devDependencies": {
-    "qrcode": "^1.5.4",
     "vite": "^8.3.0",
     "vitest": "^5.0.1"
   }
