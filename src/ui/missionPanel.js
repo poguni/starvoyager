@@ -328,6 +328,7 @@ export function createMissionPanel(app, { onPredict, onFinal, onSummary, onNext,
     // action({ label, onClick })이 있으면 띠 오른쪽에 버튼이 붙는다(탐사 2 '질문 풀기')
     setStrip(text, action = null) {
       strip.hidden = !text;
+      app.classList.toggle('sv-strip-on', Boolean(text)); // 안내 띠가 있으면 혜성·소행성 소개 카드를 그 아래로
       stripText.textContent = text ?? '';
       stripGo.hidden = !action;
       stripGo.textContent = action?.label ?? '';

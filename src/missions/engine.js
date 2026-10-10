@@ -164,7 +164,7 @@ export function createMissionEngine(mission, { now = () => Date.now() } = {}) {
     emit();
   }
 
-  // manual 탐색 조건(탐사 2 도감): 조건을 채워도 저절로 넘어가지 않고, 학생이 '질문 풀기'를 눌러야 질문이 열린다.
+  // manual 탐색 조건(탐사 1 구성원 찾기, 탐사 2 도감): 조건을 채워도 저절로 넘어가지 않고, 학생이 '질문 풀기'를 눌러야 질문이 열린다.
   function openGate() {
     const s = step();
     if (stage !== 'gate' || !s.manual || !gateMet(s)) return;

@@ -752,7 +752,7 @@ function startSolarMap() {
     if (missionDebug) renderMissionDebug(s.results);
   }
 
-  // 탐색 단계 안내 띠. 직접 여는 조건(탐사 2)은 채웠을 때 문구가 바뀌고 '질문 풀기' 버튼이 붙는다.
+  // 탐색 단계 안내 띠. 직접 여는 조건(탐사 1·2)은 채웠을 때 문구가 바뀌고 '질문 풀기' 버튼이 붙는다.
   function setGateStrip({ step, gateReady }) {
     if (!step.manual || !gateReady) return missionPanel.setStrip(step.text);
     missionPanel.setStrip(step.readyText, { label: step.goLabel, onClick: () => engine.openGate() });
