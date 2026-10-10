@@ -47,7 +47,11 @@ export const MISSIONS = [
     memberLabels: MEMBER_LABELS,
     days: DAYS,
     steps: [
-      { type: 'intro', title: '요일 속 천체 찾기', text: '요일 카드를 눌러 어떤 천체와 이어지는지 봐요.', days: DAYS },
+      {
+        type: 'intro', title: '요일 속 천체 찾기', text: '요일 카드를 눌러 어떤 천체와 이어지는지 봐요.', days: DAYS,
+        // 일곱 요일을 다 누르면 다음에 할 일을 알려 준다(docs/결정기록.md 2026-10-11)
+        doneText: '일곱 요일을 다 살펴봤어요. 다음으로 태양계 구성원을 찾아봐요.'
+      },
       {
         type: 'gate', condition: 'members', count: 5, text: '태양계 구성원 다섯 가지를 찾아 눌러 봐요.',
         // 다섯 가지를 다 찾아도 저절로 넘어가지 않는다: 설명을 충분히 읽고 학생이 눌러서 질문으로 간다(docs/결정기록.md 2026-10-11)

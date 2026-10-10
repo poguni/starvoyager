@@ -110,6 +110,7 @@ export function createMissionPanel(app, { onPredict, onFinal, onSummary, onNext,
     progressDots(after ? state.itemTotal : state.itemNumber, state.itemTotal);
 
     if (stage === 'intro') {
+      const allDays = step.days.every((d) => state.days.includes(d.id));
       body.append(
         el('h2', { class: 'sv-question' }, step.text),
         el('div', { class: 'sv-choices sv-mp-days' }, step.days.map((d, i) => {
@@ -120,7 +121,10 @@ export function createMissionPanel(app, { onPredict, onFinal, onSummary, onNext,
           return b;
         }))
       );
-      foot.append(primaryButton({ label: ['다음', icon('i-next')], onClick: onNext }));
+      if (allDays && step.doneText) body.append(el('p', { class: 'sv-mp-next-hint' }, [icon('i-star'), step.doneText]));
+      const next = primaryButton({ label: ['다음', icon('i-next')], onClick: onNext });
+      next.classList.toggle('is-cue', allDays); // 다 눌렀으면 '다음'을 강조
+      foot.append(next);
       return;
     }
 

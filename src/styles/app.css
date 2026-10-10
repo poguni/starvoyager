@@ -359,6 +359,9 @@
 .sv-mp-foot { flex: none; display: flex; flex-direction: column; }
 .sv-mp-foot:empty { display: none; }
 .sv-mp-foot .sv-primary { width: 100%; }
+.sv-mp-next-hint { margin: 0; display: flex; align-items: center; gap: var(--sv-gap-m); padding: var(--sv-gap-m) var(--sv-gap-l); border-left: 4px solid var(--sv-accent); background: var(--sv-accent-soft); font-size: var(--sv-fs-body); font-weight: 600; line-height: var(--sv-lh-body); word-break: keep-all; }
+.sv-mp-next-hint svg { flex: none; width: 24px; height: 24px; color: var(--sv-accent); }
+.sv-mp-foot .sv-primary.is-cue { box-shadow: 0 0 0 4px var(--sv-accent-soft), 0 0 28px var(--sv-accent-soft); }
 .sv-mp-days { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .sv-mp-lead { color: var(--sv-text); }
 .sv-mp-done { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: var(--sv-gap-l); }
