@@ -54,6 +54,7 @@ export const MISSIONS = [
       },
       {
         type: 'gate', condition: 'members', count: 5, text: '태양계 구성원 다섯 가지를 찾아 눌러 봐요.',
+        start: MAP, // 요일 도입에서 '다음'을 누르면 태양계 지도로 돌아와 혜성·소행성도 찾아보게 한다(docs/결정기록.md 2026-10-11)
         // 다섯 가지를 다 찾아도 저절로 넘어가지 않는다: 설명을 충분히 읽고 학생이 눌러서 질문으로 간다(docs/결정기록.md 2026-10-11)
         manual: true, readyText: '구성원 다섯 가지를 모두 찾았어요. 더 살펴봐도 되고, 질문을 풀어도 돼요.', goLabel: '질문 풀기'
       },

@@ -768,7 +768,7 @@ function startSolarMap() {
     if (panelOn) journalPanel.setOpen(false);
     missionPanel.setOpen(panelOn);
 
-    if ((stage === 'predict' || stage === 'arrange') && step.start) applyStart(step.start);
+    if ((stage === 'predict' || stage === 'arrange' || stage === 'gate') && step.start) applyStart(step.start);
     if (state.size?.board && state.size.boardStep !== s.stepIndex) destroyMissionBoard(); // 다른 문항의 판
     if (stage === 'arrange' && !state.size.board) {
       state.size.boardStep = s.stepIndex;
