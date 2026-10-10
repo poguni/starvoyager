@@ -64,7 +64,7 @@ export function createMissionEngine(mission, { now = () => Date.now() } = {}) {
     const s = step();
     if (!s) { stage = 'done'; return; }
     if (s.type === 'gate') {
-      if (gateMet(s)) { enter(index + 1); return; } // 이미 채운 조건(저장된 진행)은 건너뛴다
+      if (gateMet(s) && !s.manual) { enter(index + 1); return; } // 이미 채운 조건(저장된 진행)은 건너뛴다(manual은 학생이 열 때까지 머문다)
       stage = 'gate';
     } else if (s.type === 'quiz') stage = 'predict';
     else if (s.type === 'sort' || s.type === 'classify') stage = 'arrange';
@@ -160,7 +160,15 @@ export function createMissionEngine(mission, { now = () => Date.now() } = {}) {
     counts[condition] = count;
     if (condition === 'members' && Array.isArray(detail)) members = [...detail];
     const s = step();
-    if (stage === 'gate' && s.condition === condition && gateMet(s)) enter(stepIndex + 1, { byGate: true });
+    if (stage === 'gate' && !s.manual && s.condition === condition && gateMet(s)) enter(stepIndex + 1, { byGate: true });
+    emit();
+  }
+
+  // manual 탐색 조건(탐사 2 도감): 조건을 채워도 저절로 넘어가지 않고, 학생이 '질문 풀기'를 눌러야 질문이 열린다.
+  function openGate() {
+    const s = step();
+    if (stage !== 'gate' || !s.manual || !gateMet(s)) return;
+    enter(stepIndex + 1);
     emit();
   }
 
@@ -230,6 +238,7 @@ export function createMissionEngine(mission, { now = () => Date.now() } = {}) {
       missionId: mission.id, stepIndex, stage, step: step(),
       itemNumber: itemPosition(), itemTotal: itemSteps.length,
       counts: { ...counts }, days: [...days], felt, gateOpened,
+      gateReady: stage === 'gate' && gateMet(step()),
       lastFeedback: lastFeedback && { ...lastFeedback },
       results: results.map((r) => ({ ...r })),
       done: stage === 'done',
@@ -239,7 +248,7 @@ export function createMissionEngine(mission, { now = () => Date.now() } = {}) {
 
   return {
     start, submitPredict, submitFinal, submitArrange, submitSummary, next,
-    report, pressDay, markFelt, submitCreative, submitSurvey, getState,
+    report, openGate, pressDay, markFelt, submitCreative, submitSurvey, getState,
     onChange(fn) { listeners.add(fn); return () => listeners.delete(fn); },
     // 시트로 보낼 수 있게 완성된 결과 행(한 줄 정리가 붙은 뒤)
     onRow(fn) { rowListeners.add(fn); return () => rowListeners.delete(fn); }

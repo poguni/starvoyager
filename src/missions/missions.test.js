@@ -110,6 +110,8 @@ describe('시작 상태와 잠금', () => {
     const gates = MISSIONS.map((m) => m.steps.filter((s) => s.type === 'gate').map((g) => [g.condition, g.count]));
     expect(gates).toEqual([[['members', 5]], [['cards', 4]], [], [['constellations', 3]]]);
     // 탐사 4는 4-1 뒤에 열린다
+    // 탐사 2의 카드 탐색만 학생이 '질문 풀기'를 눌러 직접 연다(1·4는 조건을 채우면 저절로 열림)
+    expect(MISSIONS.flatMap((m) => m.steps.filter((s) => s.type === 'gate' && s.manual).map(() => m.id))).toEqual([2]);
     expect(MISSIONS[3].steps.map((s) => s.id ?? s.type).slice(0, 3)).toEqual(['4-1', 'gate', '4-2']);
   });
 

@@ -9,6 +9,15 @@ function memoryStorage() {
 describe('탐사 진행 상태(기획서 10-5)', () => {
   beforeEach(() => { globalThis.localStorage = memoryStorage(); });
 
+  it('끝낸 탐사에 다시 들어와 첫 단계에만 머무는 동안은 완료로 남고, 앞으로 나아가면 진행 중이 된다', () => {
+    const p = createMissionProgress([2], { persist: false });
+    p.record(2, { resumeIndex: 9, done: true });
+    p.record(2, { resumeIndex: 0, done: false });
+    expect(p.get(2).status).toBe('done');
+    p.record(2, { resumeIndex: 1, done: false });
+    expect(p.get(2)).toMatchObject({ status: 'doing', from: 1 });
+  });
+
   it('처음에는 모두 시작 전, 처음부터', () => {
     const p = createMissionProgress([1, 2]);
     expect(p.get(1)).toEqual({ status: 'todo', from: 0, days: [] });

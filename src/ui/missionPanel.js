@@ -29,7 +29,8 @@ export function createMissionPanel(app, { onPredict, onFinal, onSummary, onNext,
     el('div', { class: 'sv-mission-progress' }, [progressText, dots]), body, foot
   ]);
   const stripText = el('span');
-  const strip = el('div', { class: 'sv-glass sv-mp-strip', role: 'status', hidden: true }, [icon('i-star'), stripText]);
+  const stripGo = el('button', { type: 'button', class: 'sv-ghost sv-mp-strip-go', hidden: true });
+  const strip = el('div', { class: 'sv-glass sv-mp-strip', role: 'status', hidden: true }, [icon('i-star'), stripText, stripGo]);
   app.append(panel, strip);
 
   let open = false;
@@ -324,7 +325,14 @@ export function createMissionPanel(app, { onPredict, onFinal, onSummary, onNext,
     setHidden(on) { hidden = on; layout(); },
     element: panel,
     // 탐색 단계 안내 띠(text가 없으면 숨김)
-    setStrip(text) { strip.hidden = !text; stripText.textContent = text ?? ''; },
+    // action({ label, onClick })이 있으면 띠 오른쪽에 버튼이 붙는다(탐사 2 '질문 풀기')
+    setStrip(text, action = null) {
+      strip.hidden = !text;
+      stripText.textContent = text ?? '';
+      stripGo.hidden = !action;
+      stripGo.textContent = action?.label ?? '';
+      stripGo.onclick = action ? action.onClick : null;
+    },
     reset() { lastKey = null; summaryPick = null; }
   };
 }

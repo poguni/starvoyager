@@ -43,6 +43,7 @@ export function createMissionProgress(ids, { persist = true } = {}) {
     record(id, { resumeIndex, done, days = [] }) {
       const p = all[id];
       if (done) Object.assign(p, { status: 'done', from: 0, days: [] });
+      else if (p.status === 'done' && resumeIndex === 0) return; // 끝낸 탐사에 다시 들어와 첫 단계(탐사 2 도감 탐색)에만 머물면 '완료'를 그대로 둔다
       else Object.assign(p, { status: 'doing', from: resumeIndex, days: [...days] });
       save();
     }

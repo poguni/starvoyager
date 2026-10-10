@@ -98,7 +98,11 @@ export const MISSIONS = [
     title: '탐사 2 · 행성 탐사',
     view: 'map',
     steps: [
-      { type: 'gate', condition: 'cards', count: 4, text: '행성 카드를 4장 이상 완성하면 질문이 열려요.' },
+      {
+        type: 'gate', condition: 'cards', count: 4, text: '행성 카드를 4장 이상 완성하면 질문이 열려요.',
+        // 4장을 채워도 저절로 넘어가지 않는다: 나머지 카드를 더 채우다가 학생이 눌러서 질문으로 간다(docs/결정기록.md 2026-10-11)
+        manual: true, readyText: '카드 4장을 완성했어요. 더 채워도 되고, 질문을 풀어도 돼요.', goLabel: '질문 풀기'
+      },
       {
         type: 'quiz', id: '2-1', start: JUPITER, lock: ['land'], cue: 'land',
         question: '탐사선을 목성에 착륙시킬 수 있을까요?',
