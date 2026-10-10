@@ -409,7 +409,8 @@
   border-left: 4px solid var(--sv-accent); font-size: var(--sv-fs-body); font-weight: 600;
 }
 .sv-mp-strip svg { flex: none; width: 24px; height: 24px; color: var(--sv-accent); }
-.sv-mp-strip[hidden] { display: none; }
+.sv-mp-strip[hidden], .sv-mp-strip-go[hidden] { display: none; }
+.sv-mp-strip-go { flex: none; background: var(--sv-accent); border-color: var(--sv-accent); color: var(--sv-on-accent); font-weight: 700; }
 #app:is([data-mode="map"], [data-mode="focus"]) .sv-mp-strip { top: calc(var(--sv-panel-top) + 56px); }
 .sv-presenting .sv-mp-strip { display: none; }
 

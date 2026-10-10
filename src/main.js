@@ -735,6 +735,7 @@ function startSolarMap() {
   function renderMission(s) {
     missionProgress.record(mission.id, { resumeIndex: s.resumeIndex, done: s.done, days: s.days });
     const key = `${s.stepIndex}:${s.stage}`;
+    const keepStrip = s.stage === 'gate' && s.step.manual; // 카드를 채울 때마다 안내 띠(와 '질문 풀기' 버튼)를 갱신
     if (key !== missionKey) {
       const afterGate = missionKey?.endsWith(':gate') && s.gateOpened;
       missionKey = key;
@@ -745,9 +746,16 @@ function startSolarMap() {
         missionTimer = setTimeout(() => { if (engine) applyStage(engine.getState()); }, GATE_DELAY_MS);
       } else applyStage(s);
     }
+    if (keepStrip) setGateStrip(s);
     missionPanel.render(s, mission);
     if (mission.view === 'size') hud.setItemCount(s.itemNumber > 0 ? { count: s.itemNumber, total: s.itemTotal } : null);
     if (missionDebug) renderMissionDebug(s.results);
+  }
+
+  // 탐색 단계 안내 띠. 직접 여는 조건(탐사 2)은 채웠을 때 문구가 바뀌고 '질문 풀기' 버튼이 붙는다.
+  function setGateStrip({ step, gateReady }) {
+    if (!step.manual || !gateReady) return missionPanel.setStrip(step.text);
+    missionPanel.setStrip(step.readyText, { label: step.goLabel, onClick: () => engine.openGate() });
   }
 
   // 단계가 바뀔 때 한 번: 패널·안내 띠·잠금·시작 상태
@@ -755,7 +763,8 @@ function startSolarMap() {
     const { stage, step } = s;
     const arrange = step && (step.type === 'sort' || step.type === 'classify');
     const panelOn = stage !== 'gate' && !arrange;
-    missionPanel.setStrip(stage === 'gate' ? step.text : null);
+    if (stage === 'gate') setGateStrip(s);
+    else missionPanel.setStrip(null);
     if (panelOn) journalPanel.setOpen(false);
     missionPanel.setOpen(panelOn);
 

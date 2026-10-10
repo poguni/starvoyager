@@ -139,6 +139,46 @@ describe('탐색 게이트(조건 이름과 필요한 개수)', () => {
   });
 });
 
+describe('직접 여는 탐색 게이트(manual, 탐사 2 도감)', () => {
+  const manualFixture = () => {
+    const m = fixture();
+    m.steps[1] = { ...m.steps[1], manual: true };
+    return m;
+  };
+
+  it('조건을 채워도 저절로 넘어가지 않고 gateReady만 켜진다. openGate를 하면 질문이 열린다', () => {
+    const engine = createMissionEngine(manualFixture());
+    engine.start();
+    engine.next();
+    engine.report('cards', 1);
+    expect(engine.getState()).toMatchObject({ stage: 'gate', gateReady: false });
+    engine.openGate(); // 아직 조건 미달: 열리지 않는다
+    expect(engine.getState().stage).toBe('gate');
+    engine.report('cards', 2);
+    expect(engine.getState()).toMatchObject({ stage: 'gate', gateReady: true });
+    engine.report('cards', 5); // 더 채워도 머문다
+    expect(engine.getState()).toMatchObject({ stage: 'gate', gateReady: true });
+    engine.openGate();
+    expect(engine.getState()).toMatchObject({ stage: 'predict', gateOpened: false });
+  });
+
+  it('이미 채운 조건이어도 건너뛰지 않고 게이트에서 시작한다(끝낸 탐사에 다시 들어올 때)', () => {
+    const engine = createMissionEngine(manualFixture());
+    engine.report('cards', 8);
+    engine.start();
+    engine.next();
+    expect(engine.getState()).toMatchObject({ stage: 'gate', gateReady: true, resumeIndex: 1 });
+  });
+
+  it('manual이 아닌 게이트에서는 openGate가 아무것도 하지 않는다', () => {
+    const engine = createMissionEngine(fixture());
+    engine.start();
+    engine.next();
+    engine.openGate();
+    expect(engine.getState().stage).toBe('gate');
+  });
+});
+
 describe('요일 도입과 1-4 메모', () => {
   it('요일 카드를 모두 누르면 완료, 구성원 목록과 함께 메모에 남는다', () => {
     const engine = createMissionEngine(fixture());
