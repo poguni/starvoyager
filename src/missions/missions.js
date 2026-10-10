@@ -48,7 +48,11 @@ export const MISSIONS = [
     days: DAYS,
     steps: [
       { type: 'intro', title: '요일 속 천체 찾기', text: '요일 카드를 눌러 어떤 천체와 이어지는지 봐요.', days: DAYS },
-      { type: 'gate', condition: 'members', count: 5, text: '태양계 구성원 다섯 가지를 찾아 눌러 봐요.' },
+      {
+        type: 'gate', condition: 'members', count: 5, text: '태양계 구성원 다섯 가지를 찾아 눌러 봐요.',
+        // 다섯 가지를 다 찾아도 저절로 넘어가지 않는다: 설명을 충분히 읽고 학생이 눌러서 질문으로 간다(docs/결정기록.md 2026-10-11)
+        manual: true, readyText: '구성원 다섯 가지를 모두 찾았어요. 더 살펴봐도 되고, 질문을 풀어도 돼요.', goLabel: '질문 풀기'
+      },
       {
         type: 'quiz', id: '1-1', start: MAP, lock: ['sunlight'], cue: 'sunlight',
         question: '태양계에서 스스로 빛을 내는 천체는 무엇일까요?',

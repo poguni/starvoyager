@@ -520,6 +520,7 @@
   border-left: 4px solid var(--sv-accent);
 }
 .sv-body-info[hidden] { display: none; }
+.sv-strip-on .sv-body-info { top: calc(var(--sv-panel-top) + 56px + var(--sv-touch-min) + var(--sv-gap-l) + var(--sv-gap-m)); }
 .sv-body-info-head { display: flex; align-items: center; gap: var(--sv-gap-s); }
 .sv-body-info-head > svg { width: 26px; height: 26px; color: var(--sv-accent); flex: none; }
 .sv-body-info-title { margin: 0; flex: 1; font-size: var(--sv-fs-title); line-height: var(--sv-lh-tight); }
